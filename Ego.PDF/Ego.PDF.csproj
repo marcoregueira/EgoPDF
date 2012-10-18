@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{240623D2-377D-4F2A-9E89-B69BD063484F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Ego.PDF</RootNamespace>
+    <AssemblyName>Ego.PDF</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Data\Enums.cs" />
+    <Compile Include="Data\ImageInfo.cs" />
+    <Compile Include="Font\FontBuilder.cs" />
+    <Compile Include="Font\FontDefinition.cs" />
+    <Compile Include="FPdf.cs" />
+    <Compile Include="Data\PageSize.cs" />
+    <Compile Include="PHP.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tools.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Font\symbol.txt">
+      <SubType>Form</SubType>
+    </Content>
+    <Content Include="Font\timesb.txt">
+      <SubType>Form</SubType>
+    </Content>
+    <Content Include="Font\timesbi.txt">
+      <SubType>Form</SubType>
+    </Content>
+    <Content Include="Font\zapfdingbats.TXT">
+      <SubType>Form</SubType>
+    </Content>
+    <Content Include="makefont\makefont.aspx.txt">
+      <SubType>Form</SubType>
+    </Content>
+    <Content Include="makefont\ttfparser.aspx.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1250.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1251.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1252.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1253.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1254.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1255.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1257.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp1258.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\cp874.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-1.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-11.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-15.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-16.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-2.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-4.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-5.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-7.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\iso-8859-9.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\koi8-r.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="makefont\koi8-u.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FPdf.php" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
