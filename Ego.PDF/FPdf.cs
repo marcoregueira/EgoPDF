@@ -33,7 +33,7 @@ namespace Ego.PDF
         /// <summary>
         ///current page number
         /// </summary>
-        public int page { get; set; }
+        public int Page { get; set; }
         /// <summary>
         /// current object number
         /// </summary>
@@ -41,117 +41,119 @@ namespace Ego.PDF
         /// <summary>
         /// array of object offsets
         /// </summary>
-        public PHP.OrderedMap offsets = new PHP.OrderedMap();
+        public PHP.OrderedMap Offsets { get; set; }
         /// <summary>
         /// buffer holding in-memory PDF
         /// </summary>
-        public string buffer;
+        public string Buffer { get; set; }
 
         /// <summary>
         /// array containing pages
         /// </summary>
-        public Dictionary<int, StringBuilder> pages = new Dictionary<int, StringBuilder>();
+        public Dictionary<int, StringBuilder> Pages { get; set; }
 
         /// <summary>
         /// current document state
         /// </summary>
-        public int state { get; set; }
+        public int State { get; set; }
         /// <summary>
         /// compression flag
         /// </summary>
-        public bool compress { get; set; }
+        public bool Compress { get; set; }
         /// <summary>
         /// scale factor (number of points in user unit)
         /// </summary>
-        public double k;
+        public double k { get; set; }
         /// <summary>
         /// default orientation
         /// </summary>
-        public PageOrientation DefOrientation;
+        public PageOrientation DefOrientation { get; set; }
         /// <summary>
         /// current orientation
         /// </summary>
-        public PageOrientation CurOrientation;
+        public PageOrientation CurOrientation { get; set; }
         /// <summary>
         /// standard page sizes
         /// </summary>
-        public List<PageSize> StdPageSizes;
+        public List<PageSize> StdPageSizes { get; set; }
         /// <summary>
         /// default page size
         /// </summary>
-        public Dimensions DefPageSize;
+        public Dimensions DefPageSize { get; set; }
         /// <summary>
         /// current page size
         /// </summary>
-        public Dimensions CurPageSize;
+        public Dimensions CurPageSize { get; set; }
         /// <summary>
         /// used for pages with non default sizes or orientations
         /// </summary>
-        public Dictionary<int, Dimensions> PageSizes = new Dictionary<int, Dimensions>();
+        public Dictionary<int, Dimensions> PageSizes { get; set; }
         /// <summary>
-        /// dimensions of current page in points
+        /// Current page width in points
         /// </summary>
-        public double wPt;
-        public double hPt;
+        public double wPt { get; set; }
+        /// <summary>
+        /// Current page height in points
+        /// </summary>
+        public double hPt { get; set; }
         /// <summary>
         /// dimensions of current page in user unit
         /// </summary>
-        public double w;
-        public double h;
+        public double w { get; set; }
+        public double h { get; set; }
         /// <summary>
         /// left margin
         /// </summary>
-        public double lMargin;
+        public double LeftMargin { get; set; }
         /// <summary>
         /// top margin
         /// </summary>
-        public double tMargin;
+        public double TopMargin { get; set; }
         /// <summary>
         /// right margin
         /// </summary>
-        public double rMargin;
+        public double RightMargin { get; set; }
         /// <summary>
         /// page break margin
         /// </summary>
-        public double bMargin;
-        public double cMargin;
-        public double x;
-        public double y;
-        public double lasth;
-        public double LineWidth;
-        public List<string> CoreFonts;
-        Dictionary<string, FontDefinition> fonts = new Dictionary<string, FontDefinition>();
-        Dictionary<string, FontDefinition> fontFiles = new Dictionary<string, FontDefinition>();
+        public double PageBreakMargin { get; set; }
+        public double cMargin { get; set; }
+        public double x { get; set; }
+        public double y { get; set; }
+        public double lasth { get; set; }
+        public double LineWidth { get; set; }
+        public List<string> CoreFonts { get; set; }
+        Dictionary<string, FontDefinition> Fonts { get; set; }
+        Dictionary<string, FontDefinition> FontFiles { get; set; }
         
-        public PHP.OrderedMap diffs = new PHP.OrderedMap();
-        public string FontFamily;
-        public string FontStyle;
-        public bool underline;
-        public FontDefinition CurrentFont;
-        public double FontSizePt;
-        public double FontSize;
-        public string DrawColor;
-        public string FillColor;
-        public string TextColor;
+        public PHP.OrderedMap diffs { get; set; }
+        public string FontFamily { get; set; }
+        public string FontStyle { get; set; }
+        public bool Underline { get; set; }
+        public FontDefinition CurrentFont { get; set; }
+        public double FontSizePt { get; set; }
+        public double FontSize { get; set; }
+        public string DrawColor { get; set; }
+        public string FillColor { get; set; }
+        public string TextColor { get; set; }
         public bool ColorFlag;
         public double ws;
-        public Dictionary<string, ImageInfo> images = new Dictionary<string, ImageInfo>();
-        //public PHP.OrderedMap images = new PHP.OrderedMap();
-        public PHP.OrderedMap PageLinks = new PHP.OrderedMap();
-        public PHP.OrderedMap links = new PHP.OrderedMap();
-        public bool AutoPageBreak;
-        public double PageBreakTrigger;
-        public bool InHeader;
-        public bool InFooter;
+        public Dictionary<string, ImageInfo> images { get; set; }
+        public PHP.OrderedMap PageLinks { get; set; }
+        public PHP.OrderedMap links { get; set; }
+        public bool AutoPageBreak { get; set; }
+        public double PageBreakTrigger { get; set; }
+        public bool InHeader { get; set; }
+        public bool InFooter { get; set; }
         public string ZoomMode;
         public string LayoutMode;
-        public string title;
-        public string subject;
-        public string author;
-        public string keywords;
-        public string creator;
-        public string AliasNbPages_Renamed;
-        public string PDFVersion;
+        public string Title { get; set; }
+        public string Subject { get; set; }
+        public string Author { get; set; }
+        public string Keywords { get; set; }
+        public string Creator { get; set; }
+        public string AliasNbPages_Renamed { get; set; }
+        public string PDFVersion { get; set; }
 
         public string FPDF_FONTPATH { get; set; }
         private string fontpath { get; set; }
@@ -167,13 +169,16 @@ namespace Ego.PDF
             double margin;
             this._dochecks();
             // Initialization of properties
-            this.page = 0;
+            this.Page = 0;
             this.n = 2;
-            this.buffer = "";
-            this.pages = new Dictionary<int, StringBuilder>();
+            this.Buffer = "";
+            this.PageLinks = new PHP.OrderedMap();
+            this.Offsets = new PHP.OrderedMap();
+            this.Pages = new Dictionary<int, StringBuilder>();
             this.PageSizes = new Dictionary<int, Dimensions>();
-            this.state = 0;
-            this.fonts = new Dictionary<string, FontDefinition>();
+            this.State = 0;
+            this.FontFiles = new Dictionary<string, FontDefinition>();
+            this.Fonts = new Dictionary<string, FontDefinition>();
             this.diffs = new PHP.OrderedMap();
             this.images = new Dictionary<string, ImageInfo>();
             this.links = new PHP.OrderedMap();
@@ -183,7 +188,7 @@ namespace Ego.PDF
             this.FontFamily = "";
             this.FontStyle = "";
             this.FontSizePt = 12;
-            this.underline = false;
+            this.Underline = false;
             this.DrawColor = "0 G";
             this.FillColor = "0 g";
             this.TextColor = "0 g";
@@ -264,7 +269,7 @@ namespace Ego.PDF
             this.hPt = this.h * this.k;
             // Page margins (1 cm)
             margin = 28.35 / this.k;
-            this.SetMargins(margin, margin, System.Convert.ToDouble(null));
+            this.SetMargins(margin, margin);
             // Interior cell margin (1 mm)
             this.cMargin = margin / 10;
             // Line width (0.2 mm)
@@ -302,16 +307,16 @@ namespace Ego.PDF
         /// <param name="right"></param>
         public virtual void SetMargins(double left, double top, double right)
         {
-            this.lMargin = left;
-            this.tMargin = top;
-            this.rMargin = right;
+            this.LeftMargin = left;
+            this.TopMargin = top;
+            this.RightMargin = right;
         }
 
         public virtual void SetLeftMargin(double margin)
         {
             // Set left margin
-            this.lMargin = margin;
-            if (this.page > 0 && this.x < margin)
+            this.LeftMargin = margin;
+            if (this.Page > 0 && this.x < margin)
             {
                 this.x = margin;
             }
@@ -320,20 +325,20 @@ namespace Ego.PDF
         public virtual void SetTopMargin(double margin)
         {
             // Set top margin
-            this.tMargin = margin;
+            this.TopMargin = margin;
         }
 
         public virtual void SetRightMargin(double margin)
         {
             // Set right margin
-            this.rMargin = margin;
+            this.RightMargin = margin;
         }
 
         public virtual void SetAutoPageBreak(bool auto, double margin)
         {
             // Set auto page break mode and triggering margin
             this.AutoPageBreak = auto;
-            this.bMargin = margin;
+            this.PageBreakMargin = margin;
             this.PageBreakTrigger = PHP.TypeSupport.ToDouble(this.h) - margin;
         }
 
@@ -370,11 +375,11 @@ namespace Ego.PDF
         {
             if (this.GetType().GetMethod("gzcompress") != null)
             {
-                this.compress = compress;
+                this.Compress = compress;
             }
             else
             {
-                this.compress = false;
+                this.Compress = false;
             }
         }
 
@@ -384,7 +389,7 @@ namespace Ego.PDF
         /// <param name="title"></param>
         public virtual void SetTitle(string title)
         {
-            this.title = title;
+            this.Title = title;
         }
 
         /// <summary>
@@ -393,7 +398,7 @@ namespace Ego.PDF
         /// <param name="subject"></param>
         public virtual void SetSubject(string subject)
         {
-            this.subject = subject;
+            this.Subject = subject;
         }
 
         /// <summary>
@@ -403,7 +408,7 @@ namespace Ego.PDF
         public virtual void SetAuthor(string author)
         {
             // Author of document
-            this.author = author;
+            this.Author = author;
         }
 
         /// <summary>
@@ -412,7 +417,7 @@ namespace Ego.PDF
         /// <param name="keywords"></param>
         public virtual void SetKeywords(string keywords)
         {
-            this.keywords = keywords;
+            this.Keywords = keywords;
         }
 
         /// <summary>
@@ -421,7 +426,7 @@ namespace Ego.PDF
         /// <param name="creator"></param>
         public virtual void SetCreator(string creator)
         {
-            this.creator = creator;
+            this.Creator = creator;
         }
 
         /// <summary>
@@ -455,7 +460,7 @@ namespace Ego.PDF
         /// </summary>
         public virtual void Open()
         {
-            this.state = 1;
+            this.State = 1;
         }
 
         /// <summary>
@@ -463,11 +468,11 @@ namespace Ego.PDF
         /// </summary>
         public virtual void Close()
         {
-            if (this.state == 3)
+            if (this.State == 3)
             {
                 return;
             }
-            if (this.page == 0)
+            if (this.Page == 0)
             {
                 this.AddPage(PageOrientation.Default, null);
             }
@@ -513,19 +518,19 @@ namespace Ego.PDF
             string fc;
             string tc;
             bool cf;
-            if (this.state == 0)
+            if (this.State == 0)
             {
                 this.Open();
             }
             family = this.FontFamily;
-            style = this.FontStyle + (this.underline ? "U" : "");
+            style = this.FontStyle + (this.Underline ? "U" : "");
             fontsize = this.FontSizePt;
             lw = this.LineWidth;
             dc = this.DrawColor;
             fc = this.FillColor;
             tc = this.TextColor;
             cf = this.ColorFlag;
-            if (this.page > 0)
+            if (this.Page > 0)
             {
                 // Page footer
                 this.InFooter = true;
@@ -605,7 +610,7 @@ namespace Ego.PDF
         public virtual int PageNo()
         {
             // Get current page number
-            return this.page;
+            return this.Page;
         }
 
         public virtual void SetDrawColor(int red, int? green, int? blue)
@@ -623,7 +628,7 @@ namespace Ego.PDF
             {
                 this.DrawColor = sprintf("%.3F %.3F %.3F RG", r / 255, g / 255, b / 255);
             }
-            if (this.page > 0)
+            if (this.Page > 0)
             {
                 this._out(this.DrawColor);
             }
@@ -646,7 +651,7 @@ namespace Ego.PDF
                 this.FillColor = sprintf("%.3F %.3F %.3F rg", r / 255, g / 255, b / 255);
             }
             this.ColorFlag = (this.FillColor != this.TextColor);
-            if (this.page > 0)
+            if (this.Page > 0)
             {
                 this._out(this.FillColor);
             }
@@ -698,7 +703,7 @@ namespace Ego.PDF
         {
             // Set line width
             this.LineWidth = width;
-            if (this.page > 0)
+            if (this.Page > 0)
             {
 
                 this._out(sprintf("%.2F w", width * this.k));
@@ -751,13 +756,13 @@ namespace Ego.PDF
             }
 
             fontkey = family + style;
-            if (this.fonts.ContainsKey(fontkey))
+            if (this.Fonts.ContainsKey(fontkey))
             {
                 return;
             }
 
             FontDefinition fontInfo = this._loadfont(file);
-            fontInfo.i = PHP.OrderedMap.CountElements(this.fonts) + 1;
+            fontInfo.i = PHP.OrderedMap.CountElements(this.Fonts) + 1;
 
             if (fontInfo.diff != null)
             {
@@ -776,21 +781,21 @@ namespace Ego.PDF
                 // Embedded font
                 if (fontInfo.type == FontTypeEnum.TrueType)
                 {
-                    this.fontFiles[fontInfo.file] = new FontDefinition()
+                    this.FontFiles[fontInfo.file] = new FontDefinition()
                     {
                         length1 = fontInfo.originalsize
                     };
                 }
                 else
                 {
-                    this.fontFiles[fontInfo.file] = new FontDefinition()
+                    this.FontFiles[fontInfo.file] = new FontDefinition()
                     {
                         length1 = fontInfo.size1,
                         length2 = fontInfo.size2
                     };
                 }
             }
-            this.fonts[fontkey] = fontInfo;
+            this.Fonts[fontkey] = fontInfo;
         }
 
         public virtual void SetFont(string family, string style)
@@ -813,13 +818,13 @@ namespace Ego.PDF
             style = (style ?? string.Empty).ToUpper();
             if (style.Contains("U"))
             {
-                this.underline = true;
+                this.Underline = true;
                 //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
                 style = PHP.TypeSupport.ToString(PHP.StringSupport.StringReplace(style, "U", ""));
             }
             else
             {
-                this.underline = false;
+                this.Underline = false;
             }
             if (style == "IB")
             {
@@ -836,7 +841,7 @@ namespace Ego.PDF
             }
             // Test if font is already loaded
             fontkey = family + style;
-            if (!this.fonts.ContainsKey(fontkey))
+            if (!this.Fonts.ContainsKey(fontkey))
             {
                 // Test if one of the core fonts
                 if (family == "arial")
@@ -850,7 +855,7 @@ namespace Ego.PDF
                         style = "";
                     }
                     fontkey = family + style;
-                    if (!(this.fonts.ContainsKey(fontkey)))
+                    if (!(this.Fonts.ContainsKey(fontkey)))
                     {
                         this.AddFont(family, style, "");
                     }
@@ -865,8 +870,8 @@ namespace Ego.PDF
             this.FontStyle = style;
             this.FontSizePt = size;
             this.FontSize = size / this.k;
-            this.CurrentFont = this.fonts[fontkey];
-            if (this.page > 0)
+            this.CurrentFont = this.Fonts[fontkey];
+            if (this.Page > 0)
             {
                 this._out(sprintf("BT /F%d %.2F Tf ET", this.CurrentFont.i, this.FontSizePt));
             }
@@ -881,7 +886,7 @@ namespace Ego.PDF
             }
             this.FontSizePt = size;
             this.FontSize = size / this.k;
-            if (this.page > 0)
+            if (this.Page > 0)
             {
                 this._out(sprintf("BT /F%d %.2F Tf ET", this.CurrentFont.i, this.FontSizePt));
             }
@@ -905,7 +910,7 @@ namespace Ego.PDF
             }
             if (page == -1)
             {
-                page = this.page;
+                page = this.Page;
             }
             this.links[link] = new PHP.OrderedMap(page, y);
         }
@@ -913,7 +918,7 @@ namespace Ego.PDF
         public virtual void Link(double x, double y, double w, double h, string link)
         {
             // Put a link on the page
-            this.PageLinks[this.page] = new PHP.OrderedMap(x * this.k, this.hPt - y * this.k, w * this.k, h * this.k, link);
+            this.PageLinks[this.Page] = new PHP.OrderedMap(x * this.k, this.hPt - y * this.k, w * this.k, h * this.k, link);
         }
 
         public virtual void Text(double x, double y, string txt)
@@ -921,7 +926,7 @@ namespace Ego.PDF
             // Output a string
             object s;
             s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x * this.k, (this.h - y) * this.k, this._escape(txt));
-            if (this.underline && PHP.TypeSupport.ToString(txt) != "")
+            if (this.Underline && PHP.TypeSupport.ToString(txt) != "")
             {
                 s = PHP.TypeSupport.ToString(s) + " " + this._dounderline(x, y, txt);
             }
@@ -994,7 +999,7 @@ namespace Ego.PDF
             }
             if (w == 0)
             {
-                w = PHP.TypeSupport.ToDouble(this.w) - this.rMargin - this.x;
+                w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
             }
             s = "";
             if (System.Convert.ToBoolean(fill) || PHP.TypeSupport.ToInt32(border) == 1)
@@ -1058,7 +1063,7 @@ namespace Ego.PDF
                 
 		        //$s .= sprintf('BT %.2F %.2F Td (%s) Tj ET',($this->x+$dx)*$k,($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k,$txt2);
                 s = PHP.TypeSupport.ToString(s) + sprintf("BT %.2F %.2F Td (%s) Tj ET", (this.x + dx) * k, (this.h - (this.y + .5 * h + .3 * this.FontSize)) * k, txt2);
-                if (this.underline)
+                if (this.Underline)
                 {
                     s = PHP.TypeSupport.ToString(s) + " " + this._dounderline(this.x + dx, this.y + .5 * h.Value + .3 * this.FontSize, txt);
                 }
@@ -1082,7 +1087,7 @@ namespace Ego.PDF
                 this.y += h.Value;
                 if (ln == 1)
                 {
-                    this.x = this.lMargin;
+                    this.x = this.LeftMargin;
                 }
             }
             else
@@ -1120,7 +1125,7 @@ namespace Ego.PDF
             FontDefinition cw = this.CurrentFont;
             if (w == 0)
             {
-                w = PHP.TypeSupport.ToDouble(this.w) - this.rMargin - this.x;
+                w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
             }
             wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
             //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
@@ -1252,7 +1257,7 @@ namespace Ego.PDF
             }
             //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
             this.Cell(w, h, PHP.TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, "");
-            this.x = this.lMargin;
+            this.x = this.LeftMargin;
         }
 
         public virtual void Write(int h, string txt, string link)
@@ -1269,7 +1274,7 @@ namespace Ego.PDF
             int nl;
             string c;
             FontDefinition cw = this.CurrentFont;
-            w = PHP.TypeSupport.ToDouble(this.w) - this.rMargin - this.x;
+            w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
             wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
             //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
             s = PHP.StringSupport.StringReplace(txt, "\r", "");
@@ -1294,8 +1299,8 @@ namespace Ego.PDF
                     l = 0;
                     if (nl == 1)
                     {
-                        this.x = this.lMargin;
-                        w = PHP.TypeSupport.ToDouble(this.w) - this.rMargin - this.x;
+                        this.x = this.LeftMargin;
+                        w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
                         wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
                     }
                     nl++;
@@ -1311,12 +1316,12 @@ namespace Ego.PDF
                     // Automatic line break
                     if (sep == -1)
                     {
-                        if (this.x > this.lMargin)
+                        if (this.x > this.LeftMargin)
                         {
                             // Move to next line
-                            this.x = this.lMargin;
+                            this.x = this.LeftMargin;
                             this.y += h;
-                            w = PHP.TypeSupport.ToDouble(this.w) - this.rMargin - this.x;
+                            w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
                             wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
                             i++;
                             nl++;
@@ -1340,8 +1345,8 @@ namespace Ego.PDF
                     l = 0;
                     if (nl == 1)
                     {
-                        this.x = this.lMargin;
-                        w = PHP.TypeSupport.ToDouble(this.w) - this.rMargin - this.x;
+                        this.x = this.LeftMargin;
+                        w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
                         wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
                     }
                     nl++;
@@ -1362,14 +1367,14 @@ namespace Ego.PDF
         public virtual void Ln()
         {
             // Line feed; default value is last cell height
-            this.x = this.lMargin;
+            this.x = this.LeftMargin;
             this.y += this.lasth;
         }
 
         public virtual void Ln(int h)
         {
             // Line feed; 
-            this.x = this.lMargin;
+            this.x = this.LeftMargin;
             this.y += h;
         }
 
@@ -1505,7 +1510,7 @@ namespace Ego.PDF
         public virtual void SetY(double y)
         {
             // Set y position and reset x
-            this.x = this.lMargin;
+            this.x = this.LeftMargin;
             if (y >= 0)
             {
                 this.y = y;
@@ -1527,7 +1532,7 @@ namespace Ego.PDF
         {
             // Output PDF to some destination
             System.IO.FileStream f;
-            if (this.state < 3)
+            if (this.State < 3)
             {
                 this.Close();
             }
@@ -1558,7 +1563,7 @@ namespace Ego.PDF
                     HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
                     //CONVERSION_WARNING: Method 'header' was converted to 'System.Web.HttpResponse.AppendHeader' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/header.htm 
                     HttpContext.Current.Response.AppendHeader("Pragma: public", "");
-                    HttpContext.Current.Response.Write(this.buffer);
+                    HttpContext.Current.Response.Write(this.Buffer);
                     break;
 
                 case OutputDevice.Download:
@@ -1568,7 +1573,7 @@ namespace Ego.PDF
                     HttpContext.Current.Response.AppendHeader("Content-Disposition: attachment; filename=\"" + name + "\"", "");
                     HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
                     HttpContext.Current.Response.AppendHeader("Pragma: public", "");
-                    HttpContext.Current.Response.Write(this.buffer);
+                    HttpContext.Current.Response.Write(this.Buffer);
                     break;
 
                 case OutputDevice.SaveToFile:
@@ -1580,14 +1585,14 @@ namespace Ego.PDF
                         this.Error("Unable to create output file: " + name);
                     }
                     //CONVERSION_WARNING: Method 'fwrite' was converted to 'PHPFileSystemSupport.Write' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fwrite.htm 
-                    PHP.FileSystemSupport.Write(f, this.buffer, this.buffer.Length);
+                    PHP.FileSystemSupport.Write(f, this.Buffer, this.Buffer.Length);
                     //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
                     PHP.FileSystemSupport.Close(f);
                     break;
 
                 case OutputDevice.ReturnAsString:
                     // Return as a string
-                    return this.buffer;
+                    return this.Buffer;
 
                 default:
                     //CONVERSION_ISSUE: Void functions cannot be used as part of an expression. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1019.htm 
@@ -1640,11 +1645,11 @@ namespace Ego.PDF
 
         public virtual void _beginpage(PageOrientation orientation, Dimensions size)
         {
-            this.page++;
-            this.pages[this.page] = new StringBuilder(string.Empty);
-            this.state = 2;
-            this.x = this.lMargin;
-            this.y = this.tMargin;
+            this.Page++;
+            this.Pages[this.Page] = new StringBuilder(string.Empty);
+            this.State = 2;
+            this.x = this.LeftMargin;
+            this.y = this.TopMargin;
             this.FontFamily = "";
             // Check page size and orientation
             if (orientation == PageOrientation.Default)
@@ -1676,19 +1681,19 @@ namespace Ego.PDF
 
                 this.wPt = PHP.TypeSupport.ToDouble(this.w) * this.k;
                 this.hPt = PHP.TypeSupport.ToDouble(this.h) * this.k;
-                this.PageBreakTrigger = PHP.TypeSupport.ToDouble(this.h) - this.bMargin;
+                this.PageBreakTrigger = PHP.TypeSupport.ToDouble(this.h) - this.PageBreakMargin;
                 this.CurOrientation = orientation;
                 this.CurPageSize = size;
             }
             if (orientation != this.DefOrientation || size.Width != this.DefPageSize.Width || size.Heigth != this.DefPageSize.Heigth)
             {
-                this.PageSizes[this.page] = new Dimensions() { Width = this.wPt, Heigth = this.hPt };
+                this.PageSizes[this.Page] = new Dimensions() { Width = this.wPt, Heigth = this.hPt };
             }
         }
 
         public virtual void _endpage()
         {
-            this.state = 1;
+            this.State = 1;
         }
 
         public virtual FontDefinition _loadfont(string font)
@@ -2109,7 +2114,7 @@ namespace Ego.PDF
         {
             // Begin a new object
             this.n++;
-            this.offsets[this.n] = this.buffer.Length;
+            this.Offsets[this.n] = this.Buffer.Length;
             this._out(this.n.ToString() + " 0 obj");
         }
 
@@ -2123,17 +2128,17 @@ namespace Ego.PDF
         public virtual void _out(object s)
         {
             // Add a line to the document
-            if (this.state == 2)
+            if (this.State == 2)
             {
                 //TODO: APPENDLN ?
-                this.pages[this.page]
+                this.Pages[this.Page]
                     .Append (PHP.TypeSupport.ToString(s)); 
-                this.pages[this.page]
+                this.Pages[this.Page]
                     .Append ("\n");
             }
             else
             {
-                this.buffer += PHP.TypeSupport.ToString(s) + "\n";
+                this.Buffer += PHP.TypeSupport.ToString(s) + "\n";
             }
         }
 
@@ -2150,14 +2155,14 @@ namespace Ego.PDF
             string p;
             string kids;
             int i;
-            nb = this.page;
+            nb = this.Page;
             if (!PHP.VariableSupport.Empty(this.AliasNbPages_Renamed))
             {
                 // Replace number of pages
                 for (n = 1; n <= nb; n++)
                 {
                     //string page = Convert.ToString(this.pages[n]);
-                    this.pages[n].Replace(this.AliasNbPages_Renamed, nb.ToString());
+                    this.Pages[n].Replace(this.AliasNbPages_Renamed, nb.ToString());
                 }
             }
             if (this.DefOrientation == PageOrientation.Portrait)
@@ -2170,7 +2175,7 @@ namespace Ego.PDF
                 wPt = PHP.TypeSupport.ToDouble(this.DefPageSize.Heigth) * this.k;
                 hPt = PHP.TypeSupport.ToDouble(this.DefPageSize.Width) * this.k;
             }
-            filter = (this.compress) ? "/Filter /FlateDecode " : "";
+            filter = (this.Compress) ? "/Filter /FlateDecode " : "";
             for (n = 1; n <= nb; n++)
             {
                 // Page
@@ -2220,13 +2225,13 @@ namespace Ego.PDF
                 this._out("/Contents " + (this.n + 1).ToString() + " 0 R>>");
                 this._out("endobj");
                 // Page content
-                if (this.compress)
+                if (this.Compress)
                 {
-                    p = gzcompress(this.pages[n].ToString());
+                    p = gzcompress(this.Pages[n].ToString());
                 }
                 else
                 {
-                    p = this.pages[n].ToString();
+                    p = this.Pages[n].ToString();
                 }
 
                 this._newobj();
@@ -2235,7 +2240,7 @@ namespace Ego.PDF
                 this._out("endobj");
             }
             // Pages root
-            this.offsets[1] = this.buffer.Length;
+            this.Offsets[1] = this.Buffer.Length;
             this._out("1 0 obj");
             this._out("<</Type /Pages");
             kids = "/Kids [";
@@ -2268,9 +2273,9 @@ namespace Ego.PDF
                 this._out("endobj");
             }
 
-            foreach (string file in this.fontFiles.Keys)
+            foreach (string file in this.FontFiles.Keys)
             {
-                FontDefinition info = this.fonts[file];
+                FontDefinition info = this.Fonts[file];
                 // Font file embedding
                 this._newobj();
                 info.n = this.n;
@@ -2302,9 +2307,9 @@ namespace Ego.PDF
                 this._out("endobj");
             }
 
-            foreach (string k in this.fonts.Keys)
+            foreach (string k in this.Fonts.Keys)
             {
-                FontDefinition font1 = this.fonts[k];
+                FontDefinition font1 = this.Fonts[k];
                 // Font objects
                 font1.n = this.n + 1;
                 type = font1.type;
@@ -2362,7 +2367,7 @@ namespace Ego.PDF
 
                     if (!string.IsNullOrEmpty(font1.file))
                     {
-                        s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " + PHP.TypeSupport.ToString(this.fonts[font1.file].n) + " 0 R";
+                        s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " + PHP.TypeSupport.ToString(this.Fonts[font1.file].n) + " 0 R";
                     }
                     this._out(s + ">>");
                     this._out("endobj");
@@ -2467,8 +2472,8 @@ namespace Ego.PDF
             // Palette
             if (PHP.TypeSupport.ToString(info.cs) == "Indexed")
             {
-                filter = (this.compress) ? "/Filter /FlateDecode " : "";
-                if (this.compress)
+                filter = (this.Compress) ? "/Filter /FlateDecode " : "";
+                if (this.Compress)
                 {
                     pal = gzcompress(PHP.TypeSupport.ToString(info.pal));
                 }
@@ -2495,7 +2500,7 @@ namespace Ego.PDF
         {
             this._out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]");
             this._out("/Font <<");
-            foreach (FontDefinition font in this.fonts.Values)
+            foreach (FontDefinition font in this.Fonts.Values)
             {
                 this._out("/F" + PHP.TypeSupport.ToString(font.i) + " " + PHP.TypeSupport.ToString(font.n) + " 0 R");
             }
@@ -2510,7 +2515,7 @@ namespace Ego.PDF
             this._putfonts();
             this._putimages();
             // Resource dictionary
-            this.offsets[2] = this.buffer.Length;
+            this.Offsets[2] = this.Buffer.Length;
             this._out("2 0 obj");
             this._out("<<");
             this._putresourcedict();
@@ -2522,25 +2527,25 @@ namespace Ego.PDF
         public virtual void _putinfo()
         {
             this._out("/Producer " + this._textstring("FPDF " + FPDF_VERSION));
-            if (!PHP.VariableSupport.Empty(this.title))
+            if (!PHP.VariableSupport.Empty(this.Title))
             {
-                this._out("/Title " + this._textstring(this.title));
+                this._out("/Title " + this._textstring(this.Title));
             }
-            if (!PHP.VariableSupport.Empty(this.subject))
+            if (!PHP.VariableSupport.Empty(this.Subject))
             {
-                this._out("/Subject " + this._textstring(this.subject));
+                this._out("/Subject " + this._textstring(this.Subject));
             }
-            if (!PHP.VariableSupport.Empty(this.author))
+            if (!PHP.VariableSupport.Empty(this.Author))
             {
-                this._out("/Author " + this._textstring(this.author));
+                this._out("/Author " + this._textstring(this.Author));
             }
-            if (!PHP.VariableSupport.Empty(this.keywords))
+            if (!PHP.VariableSupport.Empty(this.Keywords))
             {
-                this._out("/Keywords " + this._textstring(this.keywords));
+                this._out("/Keywords " + this._textstring(this.Keywords));
             }
-            if (!PHP.VariableSupport.Empty(this.creator))
+            if (!PHP.VariableSupport.Empty(this.Creator))
             {
-                this._out("/Creator " + this._textstring(this.creator));
+                this._out("/Creator " + this._textstring(this.Creator));
             }
             //CONVERSION_WARNING: Method 'date' was converted to 'System.DateTime.ToString' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/date.htm 
             //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
@@ -2613,13 +2618,13 @@ namespace Ego.PDF
             this._out(">>");
             this._out("endobj");
             // Cross-ref
-            o = this.buffer.Length;
+            o = this.Buffer.Length;
             this._out("xref");
             this._out("0 " + (this.n + 1).ToString());
             this._out("0000000000 65535 f ");
             for (i = 1; i <= this.n; i++)
             {
-                this._out(sprintf("%010d 00000 n ", this.offsets[i]));
+                this._out(sprintf("%010d 00000 n ", this.Offsets[i]));
                 /*
                  * Warning: string.format has a different behaviour for negative numbers
                 if (this.offsets[i] < 0)
@@ -2639,7 +2644,7 @@ namespace Ego.PDF
             this._out("startxref");
             this._out(o);
             this._out("%%EOF");
-            this.state = 3;
+            this.State = 3;
         }
 
 
