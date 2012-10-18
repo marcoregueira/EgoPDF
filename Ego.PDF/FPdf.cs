@@ -730,7 +730,7 @@ namespace Ego.PDF
             {
                 op = "S";
             }
-            this._out(sprintf("%.2F %.2F %.2F %.2F re %s", x * this.k, (PHP.TypeSupport.ToDouble(this.h) - y) * this.k, w * this.k, (-h) * this.k, op));
+            this._out(sprintf("%.2F %.2F %.2F %.2F re %s", x * this.k, (this.h - y) * this.k, w * this.k, (-h) * this.k, op));
         }
 
         public virtual void AddFont(string family, string style, string file)
@@ -920,7 +920,7 @@ namespace Ego.PDF
         {
             // Output a string
             object s;
-            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x * this.k, (PHP.TypeSupport.ToDouble(this.h) - y) * this.k, this._escape(txt));
+            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x * this.k, (this.h - y) * this.k, this._escape(txt));
             if (this.underline && PHP.TypeSupport.ToString(txt) != "")
             {
                 s = PHP.TypeSupport.ToString(s) + " " + this._dounderline(x, y, txt);
@@ -1006,7 +1006,8 @@ namespace Ego.PDF
                 {
                     op = "S";
                 }
-                s = sprintf("%.2F %.2F %.2F %.2F re %s ", this.x * k, (PHP.TypeSupport.ToDouble(this.h) - this.y) * k, w * k, (-h) * k, op);
+                //$s = sprintf('%.2F %.2F %.2F %.2F re %s ',$this->x*$k,($this->h-$this->y)*$k,$w*$k,-$h*$k,$op);
+                s = sprintf("%.2F %.2F %.2F %.2F re %s ", this.x * k, (this.h - this.y) * k, w * k, -h * k, op);
             }
             if (!string.IsNullOrEmpty(border))
             {
@@ -1014,19 +1015,19 @@ namespace Ego.PDF
                 y = this.y;
                 if (border.Contains("L"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (PHP.TypeSupport.ToDouble(this.h) - y) * k, x * k, (PHP.TypeSupport.ToDouble(this.h) - (y + h)) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (this.h - y) * k, x * k, (this.h - (y + h)) * k);
                 }
                 if (border.Contains("T"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (PHP.TypeSupport.ToDouble(this.h) - y) * k, (x + w) * k, (PHP.TypeSupport.ToDouble(this.h) - y) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (this.h - y) * k, (x + w) * k, (this.h - y) * k);
                 }
                 if (border.Contains("R"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", (x + w) * k, (PHP.TypeSupport.ToDouble(this.h) - y) * k, (x + w) * k, (PHP.TypeSupport.ToDouble(this.h) - (y + h)) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", (x + w) * k, (this.h - y) * k, (x + w) * k, (this.h - (y + h)) * k);
                 }
                 if (border.Contains("B"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (PHP.TypeSupport.ToDouble(this.h) - (y + h)) * k, (x + w) * k, (PHP.TypeSupport.ToDouble(this.h) - (y + h)) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (this.h - (y + h)) * k, (x + w) * k, (this.h - (y + h)) * k);
                 }
             }
             if (!string.IsNullOrEmpty(txt))
@@ -1054,7 +1055,9 @@ namespace Ego.PDF
                     .Replace("(", "\\(")
                     .Replace(")", "\\)");
                 
-                s = PHP.TypeSupport.ToString(s) + sprintf("BT %.2F %.2F Td (%s) Tj ET", (this.x + dx) * k, (PHP.TypeSupport.ToDouble(this.h) - (this.y + .5 * h + .3 * this.FontSize)) * k, txt2);
+                
+		        //$s .= sprintf('BT %.2F %.2F Td (%s) Tj ET',($this->x+$dx)*$k,($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k,$txt2);
+                s = PHP.TypeSupport.ToString(s) + sprintf("BT %.2F %.2F Td (%s) Tj ET", (this.x + dx) * k, (this.h - (this.y + .5 * h + .3 * this.FontSize)) * k, txt2);
                 if (this.underline)
                 {
                     s = PHP.TypeSupport.ToString(s) + " " + this._dounderline(this.x + dx, this.y + .5 * h.Value + .3 * this.FontSize, txt);
@@ -1467,7 +1470,7 @@ namespace Ego.PDF
             {
                 x = this.x;
             }
-            this._out(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q", w * this.k, h * this.k, x * this.k, (PHP.TypeSupport.ToDouble(this.h) - (y + h)) * this.k, imageInfo.i));
+            this._out(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q", w * this.k, h * this.k, x * this.k, ((this.h - (y + h)) * this.k), imageInfo.i));
             if (PHP.TypeSupport.ToBoolean(link))
             {
                 this.Link(x.Value, y.Value, w, h, link);
@@ -1732,7 +1735,7 @@ namespace Ego.PDF
             up = this.CurrentFont.up;
             ut = this.CurrentFont.ut;
             w = this.GetStringWidth(txt) + this.ws * PHP.StringSupport.SubstringCount(txt, " ");
-            return sprintf("%.2F %.2F %.2F %.2F re f", x * this.k, (PHP.TypeSupport.ToDouble(this.h) - (y - up / 1000 * this.FontSize)) * this.k, w * this.k, (-ut) / 1000 * this.FontSizePt);
+            return sprintf("%.2F %.2F %.2F %.2F re f", x * this.k, (PHP.TypeSupport.ToDouble(this.h) - (y - up / 1000 * this.FontSize)* this.k) , w * this.k, (-ut) / 1000 * this.FontSizePt);
         }
 
         public virtual ImageInfo _parsejpg(string file)

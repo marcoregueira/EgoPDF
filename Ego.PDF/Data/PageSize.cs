@@ -32,7 +32,7 @@ namespace Ego.PDF.Data
 
         public Dimensions GetDimensions(double k)
         {
-            return new Dimensions() { Width = this.Width, Heigth = this.Height };
+            return new Dimensions() { Width = this.Width /k , Heigth = this.Height / k };
         }
     }
 
