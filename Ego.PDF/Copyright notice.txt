@@ -1,0 +1,34 @@
+﻿
+
+Third Party Software Notice
+==============================
+
+This project includes code from several open source projects.
+
+
+
+
+============================================================================
+= A printf implementation in C#
+= Richard Prinz
+============================================================================
+Codeproject 26 jan 2009
+
+http://www.codeproject.com/Articles/19274/A-printf-implementation-in-C
+
+
+
+
+============================================================================
+= "Miscellaneous Utility Library" 
+= (fragments)
+============================================================================
+"Miscellaneous Utility Library" Software Licence
+Version 1.0
+
+This product includes software developed by Jon Skeet
+and Marc Gravell. Contact skeet@pobox.com, or see 
+http://www.pobox.com/~skeet/
+
+Copyright (c) 2004-2008 Jon Skeet and Marc Gravell.
+All rights reserved.

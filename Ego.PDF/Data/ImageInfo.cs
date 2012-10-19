@@ -29,22 +29,23 @@ namespace Ego.PDF.Data
         /// </summary>
         public string dp { get; set; }
 
-        public string pal { get; set; }
+        public byte[] pal { get; set; }
 
-        public List<string> trns { get; set; }
+        public int[] trns { get; set; }
 
         /// <summary>
         /// gzipped strema o algo así
         /// </summary>
-        public string smask { get; set; }
+        public byte[] smask { get; set; }
 
-        public string data { get; set; }
+        public List<byte[]> data { get; set; }
 
         public int i { get; set; }
 
         public ImageInfo()
         {
-            this.trns = new List<string>();
+            this.trns = new int[] { };
+            this.data = new List<byte[]>();
         }
     }
 }

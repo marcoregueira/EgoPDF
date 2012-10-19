@@ -3844,6 +3844,28 @@ namespace PHP
 			return result;
 		}
 
+        /// <summary>
+        /// Reads a block of bytes from the file stream.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="length">The lenght of the data to be read.</param>
+        /// <returns>Returns the string representation of the read block of bytes.</returns>
+        public static string Read(MiscUtil.IO.EndianBinaryReader stream, long length)
+        {
+            int theLength = (int)length;
+            string result = null;
+            try
+            {
+                byte[] bytes = new byte[length];
+                int readBytes = stream.Read(bytes, 0, theLength);
+                if (readBytes > 0)
+                    result = System.Text.Encoding.ASCII.GetString(bytes, 0, readBytes);
+            }
+            catch
+            { }
+            return result;
+        }
+
 		/// <summary>
 		/// Reads the contents of the specified file.
 		/// </summary>
@@ -3863,6 +3885,17 @@ namespace PHP
 			{}
 			return result;
 		}
+
+        public static byte[] ReadContentBytes(string fileName)
+        {
+           
+            System.IO.FileStream file = new System.IO.FileStream(fileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read);    
+            System.IO.BinaryReader reader = new System.IO.BinaryReader(file);
+            int size = Convert.ToInt32(file.Length);
+            var result = reader.ReadBytes(size);
+            reader.Close();
+            return result;
+        }
 
 		/// <summary>
 		/// Reads a byte from the file stream and advances the read position one byte.

@@ -1,0 +1,8 @@
+
+
+A printf implementation in C#
+Richard Prinz
+============================================================================
+Codeproject 26 jan 2009
+
+http://www.codeproject.com/Articles/19274/A-printf-implementation-in-C

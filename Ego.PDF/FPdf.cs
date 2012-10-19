@@ -1,13 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Windows.Media.Imaging;
 using System.Text;
 using System.Web;
 
+using AForge;
+using AForge.Imaging;
+using AForge.Imaging.Filters;
+
+using MiscUtil.IO;
+using MiscUtil.Conversion;
+
 using Ego.PDF.Font;
 using Ego.PDF.Data;
+
+
 
 /*******************************************************************************
 * FPDF                                                                         *
@@ -171,7 +182,7 @@ namespace Ego.PDF
             // Initialization of properties
             this.Page = 0;
             this.n = 2;
-            this.Buffer = "";
+            this.Buffer = System.Text.Encoding.GetEncoding(1252).GetString(new byte[] { });
             this.PageLinks = new PHP.OrderedMap();
             this.Offsets = new PHP.OrderedMap();
             this.Pages = new Dictionary<int, StringBuilder>();
@@ -1578,16 +1589,19 @@ namespace Ego.PDF
 
                 case OutputDevice.SaveToFile:
                     // Save to local file
-                    //CONVERSION_WARNING: Method 'fopen' was converted to 'PHP.FileSystemSupport.FileOpen' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fopen.htm 
                     f = PHP.FileSystemSupport.FileOpen(name, "wb");
                     if (!PHP.TypeSupport.ToBoolean(f))
                     {
                         this.Error("Unable to create output file: " + name);
                     }
-                    //CONVERSION_WARNING: Method 'fwrite' was converted to 'PHPFileSystemSupport.Write' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fwrite.htm 
-                    PHP.FileSystemSupport.Write(f, this.Buffer, this.Buffer.Length);
+                    
+                    StreamWriter w=new StreamWriter(f,Encoding.GetEncoding(1252));
+                    w.Write(this.Buffer);
+
+                    w.Close();
+                    //PHP.FileSystemSupport.Write(f, this.Buffer, this.Buffer.Length);
                     //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
-                    PHP.FileSystemSupport.Close(f);
+                    //PHP.FileSystemSupport.Close(f);
                     break;
 
                 case OutputDevice.ReturnAsString:
@@ -1745,49 +1759,56 @@ namespace Ego.PDF
 
         public virtual ImageInfo _parsejpg(string file)
         {
-            throw new NotImplementedException();
-            /*
             // Extract info from a JPEG file
-            object a;
             string colspace;
-            object bpc;
-            string data;
-            a = getimagesize(file);
-            if (!PHP.TypeSupport.ToBoolean(a))
-            {
-                this.Error("Missing or incorrect image file: " + file);
-            }
-            //CONVERSION_TODO: The equivalent in .NET for converting to integer may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-            if (PHP.TypeSupport.ToInt32(a[2]) != 2)
-            {
-                this.Error("Not a JPEG file: " + file);
-            }
-            //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
-            //CONVERSION_TODO: The equivalent in .NET for converting to integer may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-            if (!(a["channels"] != null) || PHP.TypeSupport.ToInt32(a["channels"]) == 3)
+            int bpc;
+            List<byte[]> data;
+
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            path = Path.Combine(path, file);
+            BitmapImage bi=new BitmapImage(new System.Uri(path));
+
+            /*           
+                        if (!PHP.TypeSupport.ToBoolean(a))
+                        {
+                            this.Error("Missing or incorrect image file: " + file);
+                        }
+
+                        if (PHP.TypeSupport.ToInt32(a[2]) != 2)
+                        {
+                            this.Error("Not a JPEG file: " + file);
+                        }
+                        */
+            int channels = 3;
+     
+            colspace ="DeviceRGB";
+            /*
+            if (b.PixelFormat== System.Drawing.Imaging.PixelFormat.)
             {
                 colspace = "DeviceRGB";
             }
-            else
-            {
-                //CONVERSION_TODO: The equivalent in .NET for converting to integer may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                if (PHP.TypeSupport.ToInt32(a["channels"]) == 4)
+            else if (channels == 4)
                 {
                     colspace = "DeviceCMYK";
                 }
                 else
                 {
                     colspace = "DeviceGray";
-                }
             }
-            //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
-            //CONVERSION_TODO: The equivalent in .NET for converting to integer may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-            bpc = (a["bits"] != null) ? PHP.TypeSupport.ToInt32(a["bits"]) : 8;
-            //CONVERSION_WARNING: Method 'file_get_contents' was converted to 'PHP.FileSystemSupport.ReadContents' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/file_get_contents.htm 
-            data = PHP.FileSystemSupport.ReadContents(file);
-            return new PHP.OrderedMap(new object[] { "w", a[0] }, new object[] { "h", a[1] }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "DCTDecode" }, new object[] { "data", data });
-        
-             */
+             * */
+            bpc = bi.Format.BitsPerPixel;// (a["bits"] != null) ? PHP.TypeSupport.ToInt32(a["bits"]) : 8;
+            data = new List<byte[]> { PHP.FileSystemSupport.ReadContentBytes(file)};
+            return new ImageInfo()
+            {
+                w = bi.PixelWidth,
+                h = bi.PixelHeight,
+                cs = colspace,
+                bpc = bpc,
+                f = "DCTDecode",
+                data = data
+            };
+            //return new PHP.OrderedMap(new object[] { "w", b.Width }, new object[] { "h", a[1] }, new object[] { "cs", colspace },
+            //    new object[] { "bpc", bpc }, new object[] { "f", "DCTDecode" }, new object[] { "data", data });
         }
 
         public virtual ImageInfo _parsepng(string file)
@@ -1800,55 +1821,67 @@ namespace Ego.PDF
             {
                 this.Error("Can\'t open image file: " + file);
             }
-            BinaryReader reader = new BinaryReader(f, System.Text.Encoding.ASCII);
+
+            EndianBitConverter converter = new BigEndianBitConverter();
+
+            EndianBinaryReader reader = new EndianBinaryReader(converter ,   f, System.Text.Encoding.ASCII);
+
             info = this._parsepngstream(f, reader, file);
             reader.Close();
             return info;
         }
 
-        public virtual ImageInfo _parsepngstream(System.IO.FileStream f, BinaryReader reader,  string file)
+        public virtual ImageInfo _parsepngstream(FileStream f, EndianBinaryReader reader, string file)
         {
-            throw new NotImplementedException();
-            /*
-            // Check signature
             int w;
-            double h;
+            int h;
             int bpc;
             int ct;
             string colspace;
             string dp;
-            string pal;
-            string trns;
-            string data;
-            long n;
+            byte[] pal;
+            int[] trns;
+            List<byte[]> data = new List<byte[]>() ;
+            int n;
             string type;
             string t;
             int pos;
-            PHP.OrderedMap info = new PHP.OrderedMap();
+            ImageInfo info = new ImageInfo();
             string color;
             string alpha;
             int len;
             int i;
             string line;
-            if (this._readstream(f, 8) != System.Convert.ToString((char)137) + "PNG" + System.Convert.ToString((char)13) + System.Convert.ToString((char)10) + System.Convert.ToString((char)26) + System.Convert.ToString((char)10))
+            var signature =this._readstream(reader, 8);
+            if (!signature.Contains("PNG"))
             {
                 this.Error("Not a PNG file: " + file);
             }
+            
+            /*
+            if ( signature != System.Convert.ToString((char)137) + "PNG" + System.Convert.ToString((char)13) + System.Convert.ToString((char)10) + System.Convert.ToString((char)26) + System.Convert.ToString((char)10))
+            {
+                this.Error("Not a PNG file: " + file);
+            }
+            */
 
             // Read header chunk
-            this._readstream(f, 4);
-            if (this._readstream(f, 4) != "IHDR")
+            this._readstream(reader, 4);
+            if (this._readstream(reader, 4) != "IHDR")
             {
                 this.Error("Incorrect PNG file: " + file);
             }
-            w = this._readint(f);
-            h = this._readint(f);
-            bpc = (int)this._readstream(f, 1)[0];
+            w = reader.ReadInt32();
+            h = reader.ReadInt32();
+            bpc = (int)this._readstream(reader, 1)[0];
             if (bpc > 8)
             {
                 this.Error("16-bit depth not supported: " + file);
             }
-            ct = (int)this._readstream(f, 1)[0];
+            ct = (int)this._readstream(reader, 1)[0];
+
+            colspace = "DeviceRGB";
+
             if (ct == 0 || ct == 4)
             {
                 colspace = "DeviceGray";
@@ -1865,73 +1898,72 @@ namespace Ego.PDF
             {
                 this.Error("Unknown color type: " + file);
             }
-            if ((int)this._readstream(f, 1)[0] != 0)
+            if ((int)this._readstream(reader, 1)[0] != 0)
             {
                 this.Error("Unknown compression method: " + file);
             }
-            if ((int)this._readstream(f, 1)[0] != 0)
+            if ((int)this._readstream(reader, 1)[0] != 0)
             {
                 this.Error("Unknown filter method: " + file);
             }
-            if ((int)this._readstream(f, 1)[0] != 0)
+            if ((int)this._readstream(reader, 1)[0] != 0)
             {
                 this.Error("Interlacing not supported: " + file);
             }
-            this._readstream(f, 4);
+            this._readstream(reader, 4);
             dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1).ToString() + " /BitsPerComponent " + bpc.ToString() + " /Columns " + w.ToString();
 
             // Scan chunks looking for palette, transparency and image data
-            pal = "";
-            trns = "";
-            data = "";
+            pal = new byte[] {};
+            trns = new int[] { };
+            data = new List<byte[]>();
             do
             {
-                n = this._readint(f);
-                type = this._readstream(f, 4);
+                n = reader.ReadInt32();
+                type = this._readstream(reader, 4);
                 if (type == "PLTE")
                 {
                     // Read palette
-                    pal = this._readstream(f, n);
-                    this._readstream(f, 4);
+                    pal = this._readStreamBytes(reader, n);
+                    this._readstream(reader, 4);
                 }
                 else if (type == "tRNS")
                 {
                     // Read transparency info
-                    t = this._readstream(f, n);
+                    t = this._readstream(reader, n);
                     if (ct == 0)
                     {
-                        //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        trns = new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
+                        trns = new int[] { Convert.ToInt32(t[1]) }; // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
                     }
                     else if (ct == 2)
                     {
-                        //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        trns = new PHP.OrderedMap((int)t.Substring(1, 1)[0], (int)t.Substring(3, 1)[0], (int)t.Substring(5, 1)[0]);
+                        //trns = new PHP.OrderedMap((int)t.Substring(1, 1)[0], (int)t.Substring(3, 1)[0], (int)t.Substring(5, 1)[0]);
+                        trns = new int[] { Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5]) };
                     }
                     else
                     {
-                        //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
                         pos = t.IndexOf(System.Convert.ToString((char)0));
-                        if (!(pos == System.Convert.ToInt32(false)) || !(pos.GetType() == false.GetType()))
+                        if (pos > 0)
                         {
-                            trns = new PHP.OrderedMap(pos);
+                            trns = new int[] { pos };
                         }
                     }
-                    this._readstream(f, 4);
+                    this._readstream(reader, 4);
                 }
                 else if (type == "IDAT")
                 {
                     // Read image data block
-                    data += this._readstream(f, n);
-                    this._readstream(f, 4);
+                    data.Add(this._readStreamBytes(reader, n));
+                    this._readstream(reader, 4);
                 }
+
                 else if (type == "IEND")
                 {
                     break;
                 }
                 else
                 {
-                    this._readstream(f, n + 4);
+                    this._readstream(reader, n + 4);
                 }
             }
             while (System.Convert.ToBoolean(n));
@@ -1940,7 +1972,21 @@ namespace Ego.PDF
             {
                 this.Error("Missing palette in " + file);
             }
-            info = new PHP.OrderedMap(new object[] { "w", w }, new object[] { "h", h }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "FlateDecode" }, new object[] { "dp", dp }, new object[] { "pal", pal }, new object[] { "trns", trns });
+            info =
+                new ImageInfo()
+                {
+                    w = w,
+                    h = h,
+                    cs = colspace,
+                    bpc = bpc,
+                    f = "FlateDecode",
+                    dp = dp,
+                    pal = pal,
+                    trns = trns
+                };
+            //new PHP.OrderedMap(new object[] { "w", w }, new object[] { "h", h }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "FlateDecode" }, new object[] { "dp", dp }, new object[] { "pal", pal }, new object[] { "trns", trns });
+
+            /*
             if (ct >= 4)
             {
                 // Extract alpha channel
@@ -1997,15 +2043,18 @@ namespace Ego.PDF
                     this.PDFVersion = "1.4";
                 }
             }
-            info["data"] = data;
+              */
+            info.data = data;
             return info;
-             * */
         }
 
+        public virtual byte[] _readStreamBytes(EndianBinaryReader br, int n)
+        {
+            byte[] result = br.ReadBytes(n);
+            return result;
+        }
 
-        
-
-        public virtual string _readstream(BinaryReader br, int n)
+        public virtual string _readstream(EndianBinaryReader br, int n)
         {
             // Read n bytes from stream
             string res;
@@ -2125,6 +2174,20 @@ namespace Ego.PDF
             this._out("endstream");
         }
 
+        public virtual void _putstream(byte[] bytes)
+        {
+            this._out("stream");
+            this._out(bytes);
+            this._out("endstream");
+        }
+
+        public virtual void _putstream(List<byte[]> bytes)
+        {
+            this._out("stream");
+            this._out(bytes);
+            this._out("endstream");
+        }
+
         public virtual void _out(object s)
         {
             // Add a line to the document
@@ -2132,13 +2195,29 @@ namespace Ego.PDF
             {
                 //TODO: APPENDLN ?
                 this.Pages[this.Page]
-                    .Append (PHP.TypeSupport.ToString(s)); 
+                    .Append(PHP.TypeSupport.ToString(s));
                 this.Pages[this.Page]
-                    .Append ("\n");
+                    .Append("\n");
             }
             else
             {
-                this.Buffer += PHP.TypeSupport.ToString(s) + "\n";
+                if (s is List<byte[]>)
+                {
+                    foreach (var v in (s as List<byte[]>))
+                    {
+                        this.Buffer += System.Text.Encoding.GetEncoding(1252).GetString((byte[])v);
+                    }
+                    this.Buffer += "\n";
+                }
+                else if (s is byte[])
+                {
+                    this.Buffer += System.Text.Encoding.GetEncoding(1252).GetString((byte[])s);
+                    this.Buffer += "\n";
+                }
+                else
+                {
+                    this.Buffer += PHP.TypeSupport.ToString(s) + "\n";
+                }
             }
         }
 
@@ -2152,7 +2231,7 @@ namespace Ego.PDF
             string annots;
             string rect;
             double h;
-            string p;
+            byte[] p;
             string kids;
             int i;
             nb = this.Page;
@@ -2228,16 +2307,19 @@ namespace Ego.PDF
                 if (this.Compress)
                 {
                     p = gzcompress(this.Pages[n].ToString());
+                    this._newobj();
+                    this._out("<<" + filter + "/Length " + p.Length.ToString() + ">>");
+                    this._putstream(p);
+                    this._out("endobj");
                 }
                 else
                 {
-                    p = this.Pages[n].ToString();
+                    string p1 = this.Pages[n].ToString();
+                    this._newobj();
+                    this._out("<<" + filter + "/Length " + p1.Length.ToString() + ">>");
+                    this._putstream(p1);
+                    this._out("endobj");
                 }
-
-                this._newobj();
-                this._out("<<" + filter + "/Length " + PHP.TypeSupport.ToString(p).Length.ToString() + ">>");
-                this._putstream(p);
-                this._out("endobj");
             }
             // Pages root
             this.Offsets[1] = this.Buffer.Length;
@@ -2292,7 +2374,7 @@ namespace Ego.PDF
                     font = PHP.TypeSupport.ToString(font).Substring(6, info.length1)
                         + PHP.TypeSupport.ToString(font).Substring(6 + info.length1 + 6, info.length2);
                 }
-                this._out("<</Length " + PHP.TypeSupport.ToString(font).Length.ToString());
+                this._out("<</Length " + font.Length.ToString());
                 if (compressed)
                 {
                     this._out("/Filter /FlateDecode");
@@ -2395,7 +2477,7 @@ namespace Ego.PDF
             string dp;
             ImageInfo smask;
             string filter;
-            string pal;
+            byte[] pal;
             this._newobj();
             info.n = this.n;
             this._out("<</Type /XObject");
@@ -2426,7 +2508,7 @@ namespace Ego.PDF
                 this._out("/DecodeParms <<" + PHP.TypeSupport.ToString(info.dp) + ">>");
             }
             //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
-            if (info.trns != null && info.trns.Count > 0)
+            if (info.trns != null && info.trns.Count() > 0)
             {
                 trns = "";
                 foreach (var trn in info.trns)
@@ -2439,7 +2521,10 @@ namespace Ego.PDF
             {
                 this._out("/SMask " + (this.n + 1).ToString() + " 0 R");
             }
-            this._out("/Length " + info.data.Length.ToString() + ">>");
+
+            int largo = info.data.Select(x => x.Length).Sum();
+
+            this._out("/Length " + largo.ToString() + ">>");
             this._putstream(info.data);
             this._out("endobj");
             // Soft mask
@@ -2449,13 +2534,13 @@ namespace Ego.PDF
                 dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + PHP.TypeSupport.ToString(info.w);
                 smask = new ImageInfo()
                 {
-                    w=info.w,
-                    h=info.h,
-                    cs="DeviceGray",
-                    bpc=8,
-                    f=info.f,
-                    dp=dp,
-                    data=info.smask
+                    w = info.w,
+                    h = info.h,
+                    cs = "DeviceGray",
+                    bpc = 8,
+                    f = info.f,
+                    dp = dp,
+                    data = new List<byte[]> { info.smask }
                 };
                 /*
                 smask = new PHP.OrderedMap(
@@ -2479,10 +2564,10 @@ namespace Ego.PDF
                 }
                 else
                 {
-                    pal=PHP.TypeSupport.ToString(info.pal);
+                    pal = info.pal;
                 }
                 this._newobj();
-                this._out("<<" + filter + "/Length " + PHP.TypeSupport.ToString(pal).Length.ToString() + ">>");
+                this._out("<<" + filter + "/Length " + pal.Length.ToString() + ">>");
                 this._putstream(pal);
                 this._out("endobj");
             }
@@ -2650,11 +2735,11 @@ namespace Ego.PDF
 
         public static string sprintf(string Format, params object[] Parameters)
         {
-            string result = PDF.Tools.sprintf(Format, Parameters);
+            string result = PDF.SprintfTools.sprintf(Format, Parameters);
             return result;
         }
 
-        public string gzcompress(string value)
+        public byte[] gzcompress(string value)
         {
             //http://www.codeproject.com/Articles/27203/GZipStream-Compress-Decompress-a-string
             throw new NotImplementedException();

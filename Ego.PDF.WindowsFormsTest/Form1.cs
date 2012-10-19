@@ -59,7 +59,7 @@ namespace Ego.PDF.WindowsFormsTest
             {
                 base.Header();
 
-                //this.Image("logo.png", 10, 6, 30, 0);
+                this.Image("logo.png", 10, 6, 30, 0);
                 this.SetFont("Arial", "B", 15);
                 this.Cell(80);
                 this.Cell(30, 10, "Title", "1", 0, AlignEnum.Center);
