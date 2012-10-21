@@ -8,10 +8,6 @@ using System.Windows.Media.Imaging;
 using System.Text;
 using System.Web;
 
-using AForge;
-using AForge.Imaging;
-using AForge.Imaging.Filters;
-
 using MiscUtil.IO;
 using MiscUtil.Conversion;
 
@@ -40,6 +36,8 @@ namespace Ego.PDF
 {
     public class FPdf
     {
+        public static readonly Encoding PrivateEnconding = Encoding.GetEncoding(1252);
+
         public readonly string FPDF_VERSION = "1.7";
         /// <summary>
         ///current page number
@@ -182,7 +180,7 @@ namespace Ego.PDF
             // Initialization of properties
             this.Page = 0;
             this.n = 2;
-            this.Buffer = System.Text.Encoding.GetEncoding(1252).GetString(new byte[] { });
+            this.Buffer = PrivateEnconding.GetString(new byte[] { });
             this.PageLinks = new PHP.OrderedMap();
             this.Offsets = new PHP.OrderedMap();
             this.Pages = new Dictionary<int, StringBuilder>();
@@ -292,7 +290,7 @@ namespace Ego.PDF
             // Enable compression
 
             //TODO: PONER TRUE
-            this.SetCompression(false);
+            this.SetCompression(true);
             // Set default PDF version number
             this.PDFVersion = "1.3";
         }
@@ -384,14 +382,7 @@ namespace Ego.PDF
         /// <param name="compress"></param>
         public virtual void SetCompression(bool compress)
         {
-            if (this.GetType().GetMethod("gzcompress") != null)
-            {
-                this.Compress = compress;
-            }
-            else
-            {
-                this.Compress = false;
-            }
+            this.Compress = compress;
         }
 
         /// <summary>
@@ -1595,7 +1586,7 @@ namespace Ego.PDF
                         this.Error("Unable to create output file: " + name);
                     }
                     
-                    StreamWriter w=new StreamWriter(f,Encoding.GetEncoding(1252));
+                    StreamWriter w=new StreamWriter(f,PrivateEnconding);
                     w.Write(this.Buffer);
 
                     w.Close();
@@ -1834,21 +1825,21 @@ namespace Ego.PDF
         public virtual ImageInfo _parsepngstream(FileStream f, EndianBinaryReader reader, string file)
         {
             int w;
-            int h;
+            int height;
             int bpc;
             int ct;
             string colspace;
             string dp;
             byte[] pal;
             int[] trns;
-            List<byte[]> data = new List<byte[]>() ;
+            byte[] data = new byte[] { };
             int n;
             string type;
             string t;
             int pos;
             ImageInfo info = new ImageInfo();
-            string color;
-            string alpha;
+            StringBuilder color;
+            StringBuilder alpha;
             int len;
             int i;
             string line;
@@ -1872,7 +1863,7 @@ namespace Ego.PDF
                 this.Error("Incorrect PNG file: " + file);
             }
             w = reader.ReadInt32();
-            h = reader.ReadInt32();
+            height = reader.ReadInt32();
             bpc = (int)this._readstream(reader, 1)[0];
             if (bpc > 8)
             {
@@ -1916,7 +1907,7 @@ namespace Ego.PDF
             // Scan chunks looking for palette, transparency and image data
             pal = new byte[] {};
             trns = new int[] { };
-            data = new List<byte[]>();
+            data = new byte[] { };
             do
             {
                 n = reader.ReadInt32();
@@ -1953,7 +1944,7 @@ namespace Ego.PDF
                 else if (type == "IDAT")
                 {
                     // Read image data block
-                    data.Add(this._readStreamBytes(reader, n));
+                    data = _readStreamBytes(reader, n);
                     this._readstream(reader, 4);
                 }
 
@@ -1976,7 +1967,7 @@ namespace Ego.PDF
                 new ImageInfo()
                 {
                     w = w,
-                    h = h,
+                    h = height,
                     cs = colspace,
                     bpc = bpc,
                     f = "FlateDecode",
@@ -1986,66 +1977,52 @@ namespace Ego.PDF
                 };
             //new PHP.OrderedMap(new object[] { "w", w }, new object[] { "h", h }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "FlateDecode" }, new object[] { "dp", dp }, new object[] { "pal", pal }, new object[] { "trns", trns });
 
-            /*
+
             if (ct >= 4)
             {
                 // Extract alpha channel
-                if (!(this.GetType().GetMethod("gzuncompress") != null))
-                {
-                    this.Error("Zlib not available, can\'t handle alpha channel: " + file);
-                }
-                data = gzuncompress(data);
-                color = "";
-                alpha = "";
+                string newData = GzUncompressString(data);
+                color = new StringBuilder();
+                alpha = new StringBuilder();
                 if (ct == 4)
                 {
                     // Gray image
                     len = 2 * w;
-                    for (i = 0; i < h; i++)
+                    for (i = 0; i < height; i++)
                     {
                         pos = (1 + len) * i;
-                        color += data[pos];
-                        alpha += data[pos];
-                        //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        line = data.Substring(pos + 1, len);
-                        //CONVERSION_TODO: The equivalent in .NET for preg_replace may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                        //CONVERSION_TODO: Regular expression should be reviewed in order to make it .NET compliant. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1022.htm 
-                        color += new System.Text.RegularExpressions.Regex("/(.)./s").Replace(line, "$1");
-                        //CONVERSION_TODO: The equivalent in .NET for preg_replace may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                        //CONVERSION_TODO: Regular expression should be reviewed in order to make it .NET compliant. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1022.htm 
-                        alpha += new System.Text.RegularExpressions.Regex("/.(.)/s").Replace(line, "$1");
+                        color.Append(newData[pos]);
+                        alpha.Append(newData[pos]);
+                        line = newData.Substring(pos + 1, len);
+                        color.Append(new System.Text.RegularExpressions.Regex("/(.)./s").Replace(line, "$1"));
+                        alpha.Append(new System.Text.RegularExpressions.Regex("/.(.)/s").Replace(line, "$1"));
                     }
                 }
                 else
                 {
                     // RGB image
                     len = 4 * w;
-                    for (i = 0; i < h; i++)
+                    for (i = 0; i < height; i++)
                     {
                         pos = (1 + len) * i;
-                        color += data[pos];
-                        alpha += data[pos];
-                        //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        line = data.Substring(pos + 1, len);
-                        //CONVERSION_TODO: The equivalent in .NET for preg_replace may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                        //CONVERSION_TODO: Regular expression should be reviewed in order to make it .NET compliant. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1022.htm 
-                        color += new System.Text.RegularExpressions.Regex("/(.{3})./s").Replace(line, "$1");
-                        //CONVERSION_TODO: The equivalent in .NET for preg_replace may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                        //CONVERSION_TODO: Regular expression should be reviewed in order to make it .NET compliant. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1022.htm 
-                        alpha += new System.Text.RegularExpressions.Regex("/.{3}(.)/s").Replace(line, "$1");
+                        color.Append(newData[pos]);
+                        alpha.Append(newData[pos]);
+                        line = newData.Substring(pos + 1, len);
+                        color.Append(new System.Text.RegularExpressions.Regex("/(.{3})./s").Replace(line, "$1"));
+                        alpha.Append(new System.Text.RegularExpressions.Regex("/.{3}(.)/s").Replace(line, "$1"));
                     }
                 }
-                data = null;
-                data = gzcompress(color);
-                info["smask"] = gzcompress(alpha);
+                data = GzCompressString(color.ToString());
+                info.smask = GzCompressString(alpha.ToString());
                 if (this.PDFVersion.CompareTo("1.4") < 0)
                 {
                     this.PDFVersion = "1.4";
                 }
             }
-              */
-            info.data = data;
-            return info;
+            else
+            {
+                info.data = new List<byte[]>() { data };
+            } return info;
         }
 
         public virtual byte[] _readStreamBytes(EndianBinaryReader br, int n)
@@ -2205,13 +2182,13 @@ namespace Ego.PDF
                 {
                     foreach (var v in (s as List<byte[]>))
                     {
-                        this.Buffer += System.Text.Encoding.GetEncoding(1252).GetString((byte[])v);
+                        this.Buffer += PrivateEnconding.GetString((byte[])v);
                     }
                     this.Buffer += "\n";
                 }
                 else if (s is byte[])
                 {
-                    this.Buffer += System.Text.Encoding.GetEncoding(1252).GetString((byte[])s);
+                    this.Buffer += PrivateEnconding.GetString((byte[])s);
                     this.Buffer += "\n";
                 }
                 else
@@ -2306,7 +2283,7 @@ namespace Ego.PDF
                 // Page content
                 if (this.Compress)
                 {
-                    p = gzcompress(this.Pages[n].ToString());
+                    p = GzCompressString(this.Pages[n].ToString());
                     this._newobj();
                     this._out("<<" + filter + "/Length " + p.Length.ToString() + ">>");
                     this._putstream(p);
@@ -2560,7 +2537,7 @@ namespace Ego.PDF
                 filter = (this.Compress) ? "/Filter /FlateDecode " : "";
                 if (this.Compress)
                 {
-                    pal = gzcompress(PHP.TypeSupport.ToString(info.pal));
+                    pal = GzCompressString(PHP.TypeSupport.ToString(info.pal));
                 }
                 else
                 {
@@ -2739,10 +2716,38 @@ namespace Ego.PDF
             return result;
         }
 
-        public byte[] gzcompress(string value)
+        public byte[] gzcompress(byte[] value)
         {
-            //http://www.codeproject.com/Articles/27203/GZipStream-Compress-Decompress-a-string
-            throw new NotImplementedException();
+            MemoryStream outstream = new MemoryStream();
+            Ionic.Zlib.ZlibStream g = new Ionic.Zlib.ZlibStream(outstream, Ionic.Zlib.CompressionMode.Compress);
+            g.Write(value, 0, value.Length);
+            g.Close();
+            var result = outstream.ToArray();
+            return result;
+        }
+        
+        public byte[] gzuncompress(byte[] value)
+        {
+            MemoryStream instream = new MemoryStream(value, false);
+            Ionic.Zlib.ZlibStream g = new Ionic.Zlib.ZlibStream(instream, Ionic.Zlib.CompressionMode.Decompress);
+            BinaryReader reader = new BinaryReader(g);
+            byte[] bytes = reader.ReadBytes(Int16.MaxValue*100);
+            g.Close();
+            return bytes;
+        }
+
+        public string GzUncompressString(byte[] value)
+        {
+            byte[] uncompressedArray = gzuncompress(value);
+            string result = PrivateEnconding.GetString(uncompressedArray);
+            return result;
+        }
+
+        public byte[] GzCompressString(string value)
+        {
+            byte[] bytes = PrivateEnconding.GetBytes(value);
+            byte[] result = gzcompress(bytes);
+            return result;
         }
     }
 }

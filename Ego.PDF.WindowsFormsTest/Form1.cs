@@ -58,7 +58,6 @@ namespace Ego.PDF.WindowsFormsTest
             public override void Header()
             {
                 base.Header();
-
                 this.Image("logo.png", 10, 6, 30, 0);
                 this.SetFont("Arial", "B", 15);
                 this.Cell(80);

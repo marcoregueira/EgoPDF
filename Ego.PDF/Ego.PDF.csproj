@@ -31,14 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AForge">
-      <HintPath>..\packages\AForge.2.2.4\lib\AForge.dll</HintPath>
-    </Reference>
-    <Reference Include="AForge.Imaging">
-      <HintPath>..\packages\AForge.Imaging.2.2.4\lib\AForge.Imaging.dll</HintPath>
-    </Reference>
-    <Reference Include="AForge.Math">
-      <HintPath>..\packages\AForge.Math.2.2.4\lib\AForge.Math.dll</HintPath>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\packages\DotNetZip.1.9.1.8\lib\net20\Ionic.Zip.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
@@ -86,7 +80,7 @@
     </Content>
     <Content Include="Copyright notice.txt" />
     <Content Include="makefont\makefont.aspx.txt">
-      <SubType>Form</SubType>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="makefont\ttfparser.aspx.txt" />
     <Content Include="Miscellaneous Utility Library\_licence.txt" />
