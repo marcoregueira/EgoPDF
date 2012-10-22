@@ -28,5 +28,10 @@ namespace Ego.PDF.WebTest.Controllers
 
             return View();
         }
+
+        public ActionResult Samples()
+        {
+            return View();
+        }
     }
 }
