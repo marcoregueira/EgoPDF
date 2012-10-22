@@ -7,5 +7,4 @@ obj
 TestResults
 
 #nuget
-packages/*
-!packages/repositories.config
+packages
