@@ -43,8 +43,7 @@ namespace Ego.PDF.WindowsFormsTest
             PdfSample2 p = new PdfSample2();
             p.AliasNbPages();
             p.AddPage();
-            //TODO: Times
-            p.SetFont("Arial", "", 12);
+            p.SetFont("Times", "", 12);
 
             for (int i = 1; i <= 40; i++)
             {

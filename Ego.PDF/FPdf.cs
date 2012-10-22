@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 
 using MiscUtil.IO;
@@ -290,7 +291,7 @@ namespace Ego.PDF
             // Enable compression
 
             //TODO: PONER TRUE
-            this.SetCompression(true);
+            this.SetCompression(false);
             // Set default PDF version number
             this.PDFVersion = "1.3";
         }
@@ -1553,17 +1554,10 @@ namespace Ego.PDF
             switch (dest)
             {
                 case OutputDevice.StandardOutput:
-                    // Send to standard output
-                    //CONVERSION_ISSUE: Void functions cannot be used as part of an expression. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1019.htm 
                     this._checkoutput();
-                    // We send to a browser
-                    //CONVERSION_WARNING: Method 'header' was converted to 'System.Web.HttpResponse.AppendHeader' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/header.htm 
                     HttpContext.Current.Response.AppendHeader("Content-Type: application/pdf", "");
-                    //CONVERSION_WARNING: Method 'header' was converted to 'System.Web.HttpResponse.AppendHeader' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/header.htm 
                     HttpContext.Current.Response.AppendHeader("Content-Disposition: inline; filename=\"" + name + "\"", "");
-                    //CONVERSION_WARNING: Method 'header' was converted to 'System.Web.HttpResponse.AppendHeader' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/header.htm 
                     HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
-                    //CONVERSION_WARNING: Method 'header' was converted to 'System.Web.HttpResponse.AppendHeader' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/header.htm 
                     HttpContext.Current.Response.AppendHeader("Pragma: public", "");
                     HttpContext.Current.Response.Write(this.Buffer);
                     break;
@@ -1994,8 +1988,13 @@ namespace Ego.PDF
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
-                        color.Append(new System.Text.RegularExpressions.Regex("/(.)./s").Replace(line, "$1"));
-                        alpha.Append(new System.Text.RegularExpressions.Regex("/.(.)/s").Replace(line, "$1"));
+                        //color.Append(new System.Text.RegularExpressions.Regex("/(.)./s").Replace(line, "$1"));
+                        //alpha.Append(new System.Text.RegularExpressions.Regex("/.(.)/s").Replace(line, "$1"));
+                        for (int posLinea = 0; posLinea < line.Length; posLinea += 2)
+                        {
+                            color.Append(line[posLinea]);
+                            alpha.Append(line[posLinea + 1]);
+                        }
                     }
                 }
                 else
@@ -2008,11 +2007,17 @@ namespace Ego.PDF
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
-                        color.Append(new System.Text.RegularExpressions.Regex("/(.{3})./s").Replace(line, "$1"));
-                        alpha.Append(new System.Text.RegularExpressions.Regex("/.{3}(.)/s").Replace(line, "$1"));
+                        for (int posLinea = 0; posLinea < line.Length; posLinea += 4 )
+                        {
+                            color.Append(line.Substring(posLinea, 3));
+                            alpha.Append(line[posLinea + 3]);
+                        }
+                        //color.Append(new Regex("/(.{3})./s").Replace(line, new MatchEvaluator(FPdf.CapText)));
+                        //alpha.Append(new Regex("/.{3}(.)/s").Replace(line, "$1"));
                     }
                 }
                 data = GzCompressString(color.ToString());
+                info.data.Add(data);
                 info.smask = GzCompressString(alpha.ToString());
                 if (this.PDFVersion.CompareTo("1.4") < 0)
                 {
@@ -2024,6 +2029,21 @@ namespace Ego.PDF
                 info.data = new List<byte[]>() { data };
             } return info;
         }
+
+
+        static string CapText(Match m)
+        {
+            // Get the matched string.
+            string x = m.ToString();
+            // If the first char is lower case...
+            if (char.IsLower(x[0]))
+            {
+                // Capitalize it.
+                return char.ToUpper(x[0]) + x.Substring(1, x.Length - 1);
+            }
+            return x;
+        }
+
 
         public virtual byte[] _readStreamBytes(EndianBinaryReader br, int n)
         {
@@ -2474,17 +2494,14 @@ namespace Ego.PDF
                 }
             }
             this._out("/BitsPerComponent " + PHP.TypeSupport.ToString(info.bpc));
-            //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
             if (info.f != null)
             {
                 this._out("/Filter /" + PHP.TypeSupport.ToString(info.f));
             }
-            //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
             if (info.dp != null)
             {
                 this._out("/DecodeParms <<" + PHP.TypeSupport.ToString(info.dp) + ">>");
             }
-            //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
             if (info.trns != null && info.trns.Count() > 0)
             {
                 trns = "";
@@ -2537,7 +2554,7 @@ namespace Ego.PDF
                 filter = (this.Compress) ? "/Filter /FlateDecode " : "";
                 if (this.Compress)
                 {
-                    pal = GzCompressString(PHP.TypeSupport.ToString(info.pal));
+                    pal = gzcompress(info.pal);
                 }
                 else
                 {
@@ -2709,8 +2726,7 @@ namespace Ego.PDF
             this.State = 3;
         }
 
-
-        public static string sprintf(string Format, params object[] Parameters)
+         public static string sprintf(string Format, params object[] Parameters)
         {
             string result = PDF.SprintfTools.sprintf(Format, Parameters);
             return result;
