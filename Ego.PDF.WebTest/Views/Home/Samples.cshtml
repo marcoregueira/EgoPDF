@@ -30,7 +30,7 @@
 				Tutorial 1
 			</td>
 			<td>
-				Tutorial 1
+				@Html.ActionLink("Tutorial 1", "GetSample1", null, new { @class = "link_out" })
 			</td>
 		</tr>
 		<tr>
@@ -41,9 +41,9 @@
 				Tutorial 2
 			</td>
 			<td>
-				Tutorial 2 (png image)<br />
-				Tutorial 2 (png image with channel alpha)<br />
-				Tutorial 2 (jpg image)
+				@Html.ActionLink("Tutorial 2 (png image)", "GetSample2", null, new { @class = "link_out" })<br />
+				@Html.ActionLink("Tutorial 2 (png image with alpha channel)", "GetSample2b", null, new { @class = "link_out" })<br />
+				@Html.ActionLink("Tutorial 2 (jpg image)", "GetSample2c", null, new { @class = "link_out" })
 			</td>
 		</tr>
 		<tr>
@@ -54,10 +54,9 @@
 				Tutorial 3
 			</td>
 			<td>
-				Tutorial 3
+			@Html.ActionLink("Tutorial 3", "GetSample3", null, new { @class = "link_out" })
 			</td>
 		</tr>
-		
 		<tr>
 			<td>
 				<b>Sample 4</b>. Multi-columns
@@ -66,10 +65,9 @@
 				Tutorial 4
 			</td>
 			<td>
-				Tutorial 4
+				@Html.ActionLink("Tutorial 1", "GetSample1", null, new { @class = "link_out" })
 			</td>
 		</tr>
-		
 		<tr>
 			<td>
 				<b>Sample 5</b>. Tables
@@ -80,8 +78,7 @@
 			<td>
 				Tutorial 5
 			</td>
-		</tr>	
-		
+		</tr>
 		<tr>
 			<td>
 				<b>Sample 6</b>. Links and flowing text
@@ -93,7 +90,6 @@
 				Tutorial 6
 			</td>
 		</tr>
-		
 		<tr>
 			<td>
 				<b>Sample 7</b>. Adding new fonts and encoding support

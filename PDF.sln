@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E655C6
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.PDF.Samples", "Ego.PDF.Samples\Ego.PDF.Samples.csproj", "{770011E2-1F6D-401C-BF89-EF1A6FC7F145}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,16 @@ Global
 		{A8D8BBE1-FFF8-4748-8ACF-C4165AB89675}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{A8D8BBE1-FFF8-4748-8ACF-C4165AB89675}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{A8D8BBE1-FFF8-4748-8ACF-C4165AB89675}.Release|x86.ActiveCfg = Release|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Release|Any CPU.Build.0 = Release|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{770011E2-1F6D-401C-BF89-EF1A6FC7F145}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -117,20 +117,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="20k_c1.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="20k_c2.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="gift.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="logo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\Ego.PDF.Samples\Ego.PDF.Samples.csproj">
+      <Project>{770011E2-1F6D-401C-BF89-EF1A6FC7F145}</Project>
+      <Name>Ego.PDF.Samples</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Ego.PDF\Ego.PDF.csproj">
       <Project>{240623D2-377D-4F2A-9E89-B69BD063484F}</Project>
       <Name>Ego.PDF</Name>

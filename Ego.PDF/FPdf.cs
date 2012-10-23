@@ -1579,10 +1579,8 @@ namespace Ego.PDF
                     {
                         this.Error("Unable to create output file: " + name);
                     }
-                    
                     StreamWriter w=new StreamWriter(f,PrivateEnconding);
                     w.Write(this.Buffer);
-
                     w.Close();
                     //PHP.FileSystemSupport.Write(f, this.Buffer, this.Buffer.Length);
                     //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
