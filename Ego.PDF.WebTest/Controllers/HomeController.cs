@@ -77,7 +77,7 @@ namespace Ego.PDF.WebTest.Controllers
 
         public FileStreamResult GetSample3()
         {
-            var pdf = Sample3.GetSample();
+            var pdf = Sample3.GetSample(Server.MapPath("../bin"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
             MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
@@ -86,7 +86,7 @@ namespace Ego.PDF.WebTest.Controllers
 
         public FileStreamResult GetSample4()
         {
-            var pdf = Sample4.GetSample();
+            var pdf = Sample4.GetSample(Server.MapPath("../bin"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
             MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");

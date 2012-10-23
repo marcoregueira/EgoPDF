@@ -12,10 +12,13 @@ namespace Ego.PDF.Samples
     {
         double y0;
         int col = 0;
+        public string LocalPath { get; set; }
 
-        public static FPdf GetSample()
+        public static FPdf GetSample(string path)
         {
             var pdf = new Sample4();
+
+            pdf.LocalPath = path;
             pdf.AliasNbPages();
             pdf.SetTitle("20000 Leagues Under the Seas");
             pdf.SetAuthor("Jules Verne");
@@ -90,7 +93,7 @@ namespace Ego.PDF.Samples
         public void ChapterBody(string file)
         {
             // Read text file
-            string txt = System.IO.File.ReadAllText(file, System.Text.Encoding.UTF8);
+            string txt = System.IO.File.ReadAllText(System.IO.Path.Combine(this.LocalPath, file), System.Text.Encoding.UTF8);
             // Times 12
             //TODO: TIMES
             this.SetFont("Times", "", 12);

@@ -50,14 +50,14 @@ namespace Ego.PDF.WindowsFormsTest
        
         public void DoSample3()
         {
-            var pdf = Sample3.GetSample();
-            pdf.Output("sample3.pdf", OutputDevice.SaveToFile);
+            //var pdf = Sample3.GetSample();
+            //pdf.Output("sample3.pdf", OutputDevice.SaveToFile);
         }
 
         public void DoSample4()
         {
-            var pdf = Sample4.GetSample();
-            pdf.Output("sample3.pdf", OutputDevice.SaveToFile);
+            //var pdf = Sample4.GetSample();
+            //pdf.Output("sample3.pdf", OutputDevice.SaveToFile);
         }
     }
 }
