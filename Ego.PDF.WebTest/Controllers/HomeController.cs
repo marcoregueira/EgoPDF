@@ -92,6 +92,14 @@ namespace Ego.PDF.WebTest.Controllers
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
-
+        
+        public FileStreamResult GetSample5()
+        {
+            var pdf = Sample5.GetSample(Server.MapPath("../bin"));
+            string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
+            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            var result = new FileStreamResult(m, "application/pdf");
+            return result;
+        }
     }
 }

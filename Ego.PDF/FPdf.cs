@@ -801,6 +801,12 @@ namespace Ego.PDF
             this.Fonts[fontkey] = fontInfo;
         }
 
+
+        public virtual void SetFont(string family)
+        {
+            SetFont(family, string.Empty);
+        }
+
         public virtual void SetFont(string family, string style)
         {
             SetFont(family, style, 0);
@@ -956,6 +962,11 @@ namespace Ego.PDF
             this.Cell(w, h, txt, "0", 0, AlignEnum.Default, false, null);
         }
 
+        public virtual void Cell(double w, double? h, string txt, string border)
+        {
+            this.Cell(w, h, txt, border, 0, AlignEnum.Default, false, null);
+        }
+
         public virtual void Cell(double w, double? h, string txt, string border, double ln)
         {
             this.Cell(w, h, txt, border, ln , AlignEnum.Default, false, null);
@@ -964,6 +975,11 @@ namespace Ego.PDF
         public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align)
         {
             this.Cell(w, h, txt, border, ln, align, false, null);
+        }
+
+        public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align, bool fill)
+        {
+            this.Cell(w, h, txt, border, ln, align, fill, string.Empty);
         }
 
         public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align, bool fill, string link)
