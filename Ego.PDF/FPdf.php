@@ -822,7 +822,7 @@ function Write($h, $txt, $link='')
 			$nl++;
 			continue;
 		}
-		if($c==' ')
+		if($c=' ')
 			$sep = $i;
 		$l += $cw[$c];
 		if($l>$wmax)

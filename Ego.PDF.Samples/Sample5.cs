@@ -80,8 +80,8 @@ namespace Ego.PDF.Samples
             {
                 this.Cell(w[0], 6, row[0], "LR");
                 this.Cell(w[1], 6, row[1], "LR");
-                this.Cell(w[2], 6, row[2], "LR", 0, AlignEnum.Right);
-                this.Cell(w[3], 6, row[3], "LR", 0, AlignEnum.Right);
+                this.Cell(w[2], 6, string.Format("{0:N0}", Convert.ToInt32(row[2])), "LR", 0, AlignEnum.Right);
+                this.Cell(w[3], 6, string.Format("{0:N0}", Convert.ToInt32(row[3])), "LR", 0, AlignEnum.Right);
                 this.Ln();
             }
             this.Cell(w.Sum(), 0, "", "T");
@@ -98,7 +98,7 @@ namespace Ego.PDF.Samples
             int[] w = { 40, 35, 40, 45 };
             for (int i = 0; i < headers.Count(); i++)
             {
-                this.Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center);
+                this.Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center, true);
             }
             this.Ln();
             SetFillColor(224,235,255);
@@ -110,8 +110,8 @@ namespace Ego.PDF.Samples
             {
                 this.Cell(w[0], 6, row[0], "LR", 0, AlignEnum.Left, fill);
                 this.Cell(w[1], 6, row[1], "LR", 0, AlignEnum.Left, fill);
-                this.Cell(w[2], 6, row[2], "LR", 0, AlignEnum.Right,fill);
-                this.Cell(w[3], 6, row[3], "LR", 0, AlignEnum.Right,fill);
+                this.Cell(w[2], 6, string.Format("{0:N0}", Convert.ToInt32( row[2])), "LR", 0, AlignEnum.Right, fill);
+                this.Cell(w[3], 6, string.Format("{0:N0}", Convert.ToInt32( row[3])), "LR", 0, AlignEnum.Right, fill);
                 this.Ln();
                 fill = !fill;
             }

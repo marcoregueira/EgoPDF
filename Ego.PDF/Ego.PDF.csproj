@@ -53,6 +53,9 @@
   <ItemGroup>
     <Compile Include="Data\Enums.cs" />
     <Compile Include="Data\ImageInfo.cs" />
+    <Compile Include="Data\Link.cs" />
+    <Compile Include="Data\Page.cs" />
+    <Compile Include="Data\PageLink.cs" />
     <Compile Include="Miscellaneous Utility Library\BigEndianBitConverter.cs" />
     <Compile Include="Miscellaneous Utility Library\DoubleConverter.cs" />
     <Compile Include="Miscellaneous Utility Library\EndianBinaryReader.cs" />
