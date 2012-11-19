@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using HtmlAgilityPack;
+
 using Ego.PDF;
 using Ego.PDF.Data;
 
@@ -20,17 +22,21 @@ namespace Ego.PDF.Samples
             var pdf = new Sample6();
 
             string html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
-                    <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
+                    <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br> You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
 
             // First page
             pdf.AddPage();
             pdf.SetFont("Arial", "", 20);
-            pdf.Write(5, "To find out what's new in this tutorial, click ");
+            pdf.Write(10, "To find out what's new in this tutorial, click ");
             pdf.SetFont("", "U");
             var link = pdf.AddLink();
-            pdf.Write(5, "here", link);
+            pdf.Write(10, "here", link);
             pdf.SetFont(string.Empty);
+
+            pdf.Ln();
+            pdf.WriteHtml(html);
+
             // Second page
             pdf.AddPage();
             pdf.SetLink(link);
@@ -42,33 +48,67 @@ namespace Ego.PDF.Samples
             return pdf;
         }
 
-        int i;
         public void WriteHtml(string html)
         {
-            html = html.Replace('\n', ' ').Replace("\t", " ");
-            Regex r = new Regex("/<(.*)>/U");
-            string[] fragments = r.Split(html);
-            foreach (var fragment in fragments)
+            html = html.Replace("\n", string.Empty).Replace("\t", string.Empty).Replace("\r", string.Empty);
+
+            int l;
+            do
             {
-                if ( i % 2 == 0)
+                l = html.Length;
+                html = html.Replace("  ", " ");
+            }
+            while (l > html.Length);
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            WriteChildNode(doc.DocumentNode.ChildNodes);
+        }
+
+        public void WriteChildNode(HtmlAgilityPack.HtmlNodeCollection nodes)
+        {
+            foreach (var node in (nodes))
+            {
+                if (node.Name == "#text")
                 {
-                    if (!string.IsNullOrEmpty(this.href))
-                    {
-                    }
+                    this.Write(10, node.InnerText);
+                }
+                else if (node.Name == "u")
+                {
+                    string style = this.FontStyle;
+                    this.SetFont("", style + "U");
+                    WriteChildNode(node.ChildNodes);
+                    this.SetFont("", style);
+                }
+                else if (node.Name == "i")
+                {
+                    string style = this.FontStyle;
+                    this.SetFont("", style + "I");
+                    WriteChildNode(node.ChildNodes);
+                    this.SetFont("", style);
+                }
+                else if (node.Name == "b")
+                {
+                    string style = this.FontStyle;
+                    this.SetFont("", style + "B");
+                    WriteChildNode(node.ChildNodes);
+                    this.SetFont("", style);
+                }
+                else if (node.Name == "a:todo")
+                {
+                    //TODO: GENERALIZAR
+                    PutLink(node.GetAttributeValue("href", string.Empty), node.InnerText);
                 }
                 else
                 {
+                    if (node.ChildNodes.Count > 0)
+                    {
+                        WriteChildNode(node.ChildNodes);
+                    }
                 }
             }
         }
 
-        public void CloseTag(string tag)
-        {
-            if (tag == "B" || tag == "I" || tag == "U")
-                this.SetStyle(tag, false);
-            if (tag == "A")
-                this.href = string.Empty;
-        }
 
         public void SetStyle(string tag, bool enable)
         {
@@ -95,9 +135,11 @@ namespace Ego.PDF.Samples
         {
             this.SetTextColor(0, 0, 255);
             this.SetStyle("U", true);
-            this.Write(5, text, href);
+            this.Write(10, text, href);
             this.SetStyle("U", false);
             this.SetTextColor(0);
         }
+
+        
     }
 }
