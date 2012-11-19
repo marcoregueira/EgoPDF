@@ -152,7 +152,9 @@
     <Content Include="makefont\koi8-u.map" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FPdf.php" />
+    <None Include="FPdf.php">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

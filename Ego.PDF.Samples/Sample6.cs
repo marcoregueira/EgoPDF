@@ -27,7 +27,7 @@ namespace Ego.PDF.Samples
             pdf.AddPage();
             pdf.SetFont("Arial", "", 20);
             pdf.Write(5, "To find out what's new in this tutorial, click ");
-            //pdf.SetFont("", "U");
+            pdf.SetFont("", "U");
             var link = pdf.AddLink();
             pdf.Write(5, "here", link);
             pdf.SetFont(string.Empty);

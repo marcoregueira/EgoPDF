@@ -813,7 +813,7 @@ namespace Ego.PDF
             {
                 this.Underline = true;
                 //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
-                style = PHP.TypeSupport.ToString(PHP.StringSupport.StringReplace(style, "U", ""));
+                style = style.Replace("U", string.Empty);
             }
             else
             {
@@ -989,46 +989,44 @@ namespace Ego.PDF
         public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align, bool fill, LinkData link)
         {
             // Output a cell
-            double k;
-            double x;
-            double ws;
             string s;
-            string op;
-            double y;
-            double dx;
             object txt2;
-            k = this.k;
 
             if (!h.HasValue) h = 0;
 
             if (this.y + h > this.PageBreakTrigger && !this.InHeader && !this.InFooter && this.AcceptPageBreak())
             {
                 // Automatic page break
-                x = this.x;
-                ws = this.ws;
+                var xxx = this.x;
+                double ws = this.ws;
                 if (ws > 0)
                 {
                     this.ws = 0;
                     this._out("0 Tw");
                 }
                 this.AddPage(this.CurOrientation, this.CurPageSize);
-                this.x = x;
+                this.x = xxx;
                 if (ws > 0)
                 {
                     this.ws = ws;
-
                     this._out(sprintf("%.3F Tw", ws * k));
                 }
             }
+
             if (w == 0)
             {
-                w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
+                w = this.w - this.RightMargin - this.x;
             }
-            s = "";
-            if (System.Convert.ToBoolean(fill) || PHP.TypeSupport.ToInt32(border) == 1)
+
+            s = string.Empty;
+
+            int borderi=PHP.TypeSupport.ToInt32(border);
+            if (fill || borderi == 1)
             {
-                if (fill)                {
-                    op = (PHP.TypeSupport.ToInt32(border) == 1) ? "B" : "f";
+                var op = string.Empty;
+                if (fill)
+                {
+                    op = (borderi == 1) ? "B" : "f";
                 }
                 else
                 {
@@ -1036,29 +1034,30 @@ namespace Ego.PDF
                 }
                 s = sprintf("%.2F %.2F %.2F %.2F re %s ", this.x * k, (this.h - this.y) * k, w * k, -h * k, op);
             }
+
             if (!string.IsNullOrEmpty(border))
             {
-                x = this.x;
-                y = this.y;
                 if (border.Contains("L"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (this.h - y) * k, x * k, (this.h - (y + h)) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, this.x * k, (this.h - (y + h)) * k);
                 }
                 if (border.Contains("T"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (this.h - y) * k, (x + w) * k, (this.h - y) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, (this.x + w) * k, (this.h - y) * k);
                 }
                 if (border.Contains("R"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", (x + w) * k, (this.h - y) * k, (x + w) * k, (this.h - (y + h)) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", (this.x + w) * k, (this.h - y) * k, (this.x + w) * k, (this.h - (y + h)) * k);
                 }
                 if (border.Contains("B"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", x * k, (this.h - (y + h)) * k, (x + w) * k, (this.h - (y + h)) * k);
+                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - (y + h)) * k, (this.x + w) * k, (this.h - (y + h)) * k);
                 }
             }
+
             if (!string.IsNullOrEmpty(txt))
             {
+                double dx;
                 if (align == AlignEnum.Right)
                 {
                     dx = w - this.cMargin - this.GetStringWidth(txt);
@@ -1390,9 +1389,11 @@ namespace Ego.PDF
             // Last chunk
             if (i != j)
             {
-                this._out(l + " " + this.x + " " + this.ws + " " + this.RightMargin);
-                this.Cell(l / 1000 * this.FontSize, h, s.Substring(j), 0.ToString(), 0, AlignEnum.Default, false, link);
-                this._out(l + " " + this.x + " " + this.ws + " " + this.RightMargin);
+                this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
+                double w2 = (double)l / 1000 * this.FontSize;
+                this.Cell(w2, h, s.Substring(j), 0.ToString(), 0, AlignEnum.Default, false, link);
+                string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
+                this._out(tail);
             }
         }
 
@@ -1770,13 +1771,13 @@ namespace Ego.PDF
         internal virtual string _dounderline(double x, double y, string txt)
         {
             // Underline text
-            int up;
-            int ut;
+            double up;
+            double ut;
             double w;
             up = this.CurrentFont.up;
             ut = this.CurrentFont.ut;
             w = this.GetStringWidth(txt) + this.ws * PHP.StringSupport.SubstringCount(txt, " ");
-            return sprintf("%.2F %.2F %.2F %.2F re f", x * this.k, (PHP.TypeSupport.ToDouble(this.h) - (y - up / 1000 * this.FontSize)* this.k) , w * this.k, (-ut) / 1000 * this.FontSizePt);
+            return sprintf("%.2F %.2F %.2F %.2F re f", x * this.k, (this.h - (y - up / 1000 * this.FontSize)) * this.k, w * this.k, (-ut) / 1000 * this.FontSizePt);
         }
 
         internal virtual ImageInfo _parsejpg(string file)
