@@ -1291,7 +1291,7 @@ namespace Ego.PDF
         public virtual void Write(int h, string txt, string uri)
         {
             LinkDataUri data = new LinkDataUri( uri);
-            this.Write(h, txt, uri);
+            this.Write(h, txt, data);
         }
 
         protected virtual void Write(int h, string txt, LinkData link)
@@ -2305,7 +2305,7 @@ namespace Ego.PDF
                 if (this.Pages[n].PageLinks.Count > 0)
                 {
                     // Links
-                    annots = "/Annots [";
+                     annots = "/Annots [";
                     foreach (var pl in this.Pages[n].PageLinks)
                     {
                         rect = sprintf("%.2F %.2F %.2F %.2F", pl.P0, pl.P1, pl.P0 + pl.P2, pl.P1 - pl.P3);
@@ -2322,7 +2322,7 @@ namespace Ego.PDF
                         }
                         else if (pl.Link is LinkDataUri)
                         {
-                            annots += "/A <</S /URI /URI " + (pl.Link as LinkDataUri).Uri + ">>>>";
+                            annots += "/A <</S /URI /URI (" + (pl.Link as LinkDataUri).Uri + ")>>>>";
                         }
                         else
                             throw new NotImplementedException();

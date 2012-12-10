@@ -22,29 +22,24 @@ namespace Ego.PDF.Samples
             var pdf = new Sample6();
 
             string html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
-                    <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br> You can also insert links on
+                    <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
 
             // First page
             pdf.AddPage();
             pdf.SetFont("Arial", "", 20);
-            pdf.Write(10, "To find out what's new in this tutorial, click ");
+            pdf.Write(5, "To find out what's new in this tutorial, click ");
             pdf.SetFont("", "U");
             var link = pdf.AddLink();
-            pdf.Write(10, "here", link);
+            pdf.Write(5, "here", link);
             pdf.SetFont(string.Empty);
-
-            pdf.Ln();
-            pdf.WriteHtml(html);
-
             // Second page
             pdf.AddPage();
             pdf.SetLink(link);
-            pdf.Image( System.IO.Path.Combine( path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
+           // pdf.Image( System.IO.Path.Combine( path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
             pdf.SetLeftMargin(45);
             pdf.SetFontSize(14);
             pdf.WriteHtml(html);
-
             return pdf;
         }
 
@@ -71,7 +66,7 @@ namespace Ego.PDF.Samples
             {
                 if (node.Name == "#text")
                 {
-                    this.Write(10, node.InnerText);
+                    this.Write(5, node.InnerText);
                 }
                 else if (node.Name == "u")
                 {
@@ -94,10 +89,14 @@ namespace Ego.PDF.Samples
                     WriteChildNode(node.ChildNodes);
                     this.SetFont("", style);
                 }
-                else if (node.Name == "a:todo")
+                else if (node.Name == "a")
                 {
-                    //TODO: GENERALIZAR
-                    PutLink(node.GetAttributeValue("href", string.Empty), node.InnerText);
+                    var url=node.GetAttributeValue("href", string.Empty);
+                    PutLink(url, node.InnerText);
+                }
+                else if (node.Name == "br")
+                {
+                    Ln();
                 }
                 else
                 {
@@ -133,13 +132,12 @@ namespace Ego.PDF.Samples
 
         public void PutLink(string href, string text)
         {
-            this.SetTextColor(0, 0, 255);
+            this.SetTextColor(220, 50, 50);
+            //this.SetTextColor(0, 0, 255);
             this.SetStyle("U", true);
-            this.Write(10, text, href);
+            this.Write(5, text, href);
             this.SetStyle("U", false);
-            this.SetTextColor(0);
+            //this.SetTextColor(0);
         }
-
-        
     }
 }

@@ -1487,7 +1487,7 @@ function _putpages()
 				$rect = sprintf('%.2F %.2F %.2F %.2F',$pl[0],$pl[1],$pl[0]+$pl[2],$pl[1]-$pl[3]);
 				$annots .= '<</Type /Annot /Subtype /Link /Rect ['.$rect.'] /Border [0 0 0] ';
 				if(is_string($pl[4]))
-					$annots .= '/A <</S /URI /URI '.$this->_textstring($pl[4]).'>>>>';
+					$annots .= '/A <</S /URI x '.$this->_textstring($pl[4]).'>>>>';
 				else
 				{
 					$l = $this->links[$pl[4]];
