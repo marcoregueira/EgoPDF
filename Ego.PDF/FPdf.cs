@@ -1039,19 +1039,19 @@ namespace Ego.PDF
             {
                 if (border.Contains("L"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, this.x * k, (this.h - (y + h)) * k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, this.x * k, (this.h - (y + h)) * k);
                 }
                 if (border.Contains("T"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, (this.x + w) * k, (this.h - y) * k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, (this.x + w) * k, (this.h - y) * k);
                 }
                 if (border.Contains("R"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", (this.x + w) * k, (this.h - y) * k, (this.x + w) * k, (this.h - (y + h)) * k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", (this.x + w) * k, (this.h - y) * k, (this.x + w) * k, (this.h - (y + h)) * k);
                 }
                 if (border.Contains("B"))
                 {
-                    s = PHP.TypeSupport.ToString(s) + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - (y + h)) * k, (this.x + w) * k, (this.h - (y + h)) * k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - (y + h)) * k, (this.x + w) * k, (this.h - (y + h)) * k);
                 }
             }
 
@@ -1072,7 +1072,7 @@ namespace Ego.PDF
                 }
                 if (this.ColorFlag)
                 {
-                    s = PHP.TypeSupport.ToString(s) + "q " + PHP.TypeSupport.ToString(this.TextColor) + " ";
+                    s = s + "q " + PHP.TypeSupport.ToString(this.TextColor) + " ";
                 }
 
                 txt2 = txt
@@ -1080,14 +1080,14 @@ namespace Ego.PDF
                     .Replace("(", "\\(")
                     .Replace(")", "\\)");
                 
-                s = PHP.TypeSupport.ToString(s) + sprintf("BT %.2F %.2F Td (%s) Tj ET", (this.x + dx) * k, (this.h - (this.y + .5 * h + .3 * this.FontSize)) * k, txt2);
+                s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (this.x + dx) * k, (this.h - (this.y + .5 * h + .3 * this.FontSize)) * k, txt2);
                 if (this.Underline)
                 {
-                    s = PHP.TypeSupport.ToString(s) + " " + this._dounderline(this.x + dx, this.y + .5 * h.Value + .3 * this.FontSize, txt);
+                    s =s + " " + this._dounderline(this.x + dx, this.y + .5 * h.Value + .3 * this.FontSize, txt);
                 }
                 if (this.ColorFlag)
                 {
-                    s = PHP.TypeSupport.ToString(s) + " Q";
+                    s = s + " Q";
                 }
                 if (PHP.TypeSupport.ToBoolean(link))
                 {
@@ -1148,7 +1148,7 @@ namespace Ego.PDF
             wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
             //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
             s = PHP.StringSupport.StringReplace(txt, "\r", "");
-            nb = PHP.TypeSupport.ToString(s).Length;
+            nb = s.Length;
             if (nb > 0 && PHP.TypeSupport.ToString(s[nb - 1]) == "\n")
             {
                 nb--;
@@ -1389,11 +1389,11 @@ namespace Ego.PDF
             // Last chunk
             if (i != j)
             {
-                this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
+                //this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
                 double w2 = (double)l / 1000 * this.FontSize;
                 this.Cell(w2, h, s.Substring(j), 0.ToString(), 0, AlignEnum.Default, false, link);
-                string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
-                this._out(tail);
+                //string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
+                //this._out(tail);
             }
         }
 

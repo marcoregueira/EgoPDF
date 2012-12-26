@@ -12,11 +12,24 @@ namespace Ego.PDF.Samples
     {
         public static FPdf GetSample()
         {
+
+            FPdf pdf = new FPdf();
+            pdf.AddPage(PageSizeEnum.A4);
+                
+            pdf.SetFont("Arial","B",16);
+            pdf.SetTextColor(0, 0, 255);
+            pdf.Cell(40, 10, "Hello World cell!");
+            
+            pdf.Write(5, "Hello World!");
+            
+            return pdf;
+
+            /*
             FPdf pdf = new FPdf();
             pdf.AddPage(PageSizeEnum.A4);
             pdf.SetFont("Arial", "", 16);
-            pdf.Cell(40, 10, "Hello");
-            return pdf;
+            pdf.Cell(40, 10, "Hello World!");
+            return pdf;*/
         }
     }
 }

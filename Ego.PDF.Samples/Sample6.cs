@@ -20,7 +20,6 @@ namespace Ego.PDF.Samples
         public static FPdf GetSample(string path)
         {
             var pdf = new Sample6();
-
             string html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
                     <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
@@ -133,11 +132,11 @@ namespace Ego.PDF.Samples
         public void PutLink(string href, string text)
         {
             this.SetTextColor(220, 50, 50);
-            //this.SetTextColor(0, 0, 255);
+            this.SetTextColor(0, 0, 255);
             this.SetStyle("U", true);
             this.Write(5, text, href);
             this.SetStyle("U", false);
-            //this.SetTextColor(0);
+            this.SetTextColor(0);
         }
     }
 }

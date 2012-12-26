@@ -22,12 +22,11 @@ namespace Ego.PDF.WindowsFormsTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            /*     DoSample1();
-                 DoSample2();
-                 DoSample3();
-                 DoSample4();
-                 DoSample5();
-              */
+            DoSample1();
+            DoSample2();
+            DoSample3();
+            DoSample4();
+            DoSample5();
             DoSample6();
             Close();
         }
