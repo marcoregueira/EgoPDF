@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows.Media.Imaging;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
-
-using MiscUtil.IO;
-using MiscUtil.Conversion;
-
-using Ego.PDF.Font;
+using System.Windows.Media.Imaging;
 using Ego.PDF.Data;
-
-
+using Ego.PDF.Font;
+using Ionic.Zlib;
+using MiscUtil.Conversion;
+using MiscUtil.IO;
+using PHP;
 
 /*******************************************************************************
 * FPDF                                                                         *
@@ -38,105 +36,253 @@ namespace Ego.PDF
     public class FPdf
     {
         public static readonly Encoding PrivateEnconding = Encoding.GetEncoding(1252);
+        public readonly string FpdfVersion = "1.7";
+        public bool ColorFlag;
+        public string LayoutMode;
+        public double Ws;
+        public string ZoomMode;
 
-        public readonly string FPDF_VERSION = "1.7";
+        public FPdf(PageOrientation orientation, UnitEnum unit, PageSizeEnum pageSize)
+        {
+            pageSize = pageSize == PageSizeEnum.Default ? PageSizeEnum.A4 : pageSize;
+            unit = unit == UnitEnum.Default ? UnitEnum.Milimeter : unit;
+            pageSize = pageSize == PageSizeEnum.Default ? PageSizeEnum.A4 : pageSize;
+
+            // Some checks
+            _dochecks();
+            // Initialization of properties
+            Page = 0;
+            n = 2;
+            Buffer = PrivateEnconding.GetString(new byte[] {});
+            Offsets = new OrderedMap();
+            Pages = new Dictionary<int, Page>();
+            PageSizes = new Dictionary<int, Dimensions>();
+            State = 0;
+            FontFiles = new Dictionary<string, FontDefinition>();
+            Fonts = new Dictionary<string, FontDefinition>();
+            Diffs = new OrderedMap();
+            Images = new Dictionary<string, ImageInfo>();
+            Links = new List<LinkDataInternal>();
+            InHeader = false;
+            InFooter = false;
+            Lasth = 0;
+            FontFamily = "";
+            FontStyle = "";
+            FontSizePt = 12;
+            Underline = false;
+            DrawColor = "0 G";
+            FillColor = "0 g";
+            TextColor = "0 g";
+            ColorFlag = false;
+            Ws = 0;
+            // Font path
+            //TODO: SET A DEFAULT FONT PATH
+            FpdfFontpath = "C:/";
+            Fontpath = FpdfFontpath;
+
+            // Core fonts
+            CoreFonts = new List<string> {"courier", "helvetica", "times", "symbol", "zapfdingbats"};
+            // Scale factor
+            k = 72/25.4; // unidades en milímetros
+
+            // Page sizes
+            StdPageSizes = new List<PageSize>
+                {
+                    new PageSize("a3", 841.89, 1190.55),
+                    new PageSize("a4", 595.28, 841.89),
+                    new PageSize("a5", 420.94, 595.28),
+                    new PageSize("legal", 612, 792),
+                    new PageSize("letter", 612, 1008),
+                };
+
+            if (unit == UnitEnum.Point)
+            {
+                k = 1;
+            }
+            else if (unit == UnitEnum.Milimeter)
+            {
+                k = 72/25.4;
+            }
+            else if (unit == UnitEnum.Centimeter)
+            {
+                k = 72/2.54;
+            }
+            else if (unit == UnitEnum.Inch)
+            {
+                k = 72;
+            }
+            else
+            {
+                Error("Incorrect unit: " + unit);
+            }
+
+            Dimensions size = _getpagesize(pageSize);
+            DefPageSize = size;
+            CurPageSize = size;
+
+            // Page orientation
+            DefOrientation = orientation;
+            CurOrientation = DefOrientation;
+
+            if (orientation == PageOrientation.Portrait)
+            {
+                DefOrientation = PageOrientation.Portrait;
+                W = size.Width;
+                H = size.Heigth;
+            }
+            else if (orientation == PageOrientation.Landscape)
+            {
+                DefOrientation = PageOrientation.Landscape;
+                W = size.Heigth;
+                H = size.Width;
+            }
+            else
+            {
+                Error("Incorrect orientation: " + orientation);
+            }
+
+            WPt = W*k;
+            HPt = H*k;
+            // Page margins (1 cm)
+            double margin = 28.35/k;
+            SetMargins(margin, margin);
+            // Interior cell margin (1 mm)
+            CMargin = margin/10;
+            // Line width (0.2 mm)
+            LineWidth = .567/k;
+            // Automatic page break
+            SetAutoPageBreak(true, 2*margin);
+            // Default display mode
+            SetDisplayMode("default", "default");
+            // Enable compression
+
+            //TODO: PONER TRUE
+            SetCompression(false);
+            // Set default PDF version number
+            PdfVersion = "1.3";
+        }
+
+        public FPdf() : this(PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4)
+        {
+        }
+
         /// <summary>
-        ///current page number
+        ///     current page number
         /// </summary>
         public int Page { get; set; }
+
         /// <summary>
-        /// current object number
+        ///     current object number
         /// </summary>
         public int n { get; set; }
+
         /// <summary>
-        /// array of object offsets
+        ///     array of object offsets
         /// </summary>
-        public PHP.OrderedMap Offsets { get; set; }
+        public OrderedMap Offsets { get; set; }
+
         /// <summary>
-        /// buffer holding in-memory PDF
+        ///     buffer holding in-memory PDF
         /// </summary>
         public string Buffer { get; set; }
 
         /// <summary>
-        /// array containing pages
+        ///     array containing pages
         /// </summary>
         public Dictionary<int, Page> Pages { get; set; }
 
         /// <summary>
-        /// current document state
+        ///     current document state
         /// </summary>
         public int State { get; set; }
+
         /// <summary>
-        /// compression flag
+        ///     compression flag
         /// </summary>
         public bool Compress { get; set; }
+
         /// <summary>
-        /// scale factor (number of points in user unit)
+        ///     scale factor (number of points in user unit)
         /// </summary>
         public double k { get; set; }
+
         /// <summary>
-        /// default orientation
+        ///     default orientation
         /// </summary>
         public PageOrientation DefOrientation { get; set; }
+
         /// <summary>
-        /// current orientation
+        ///     current orientation
         /// </summary>
         public PageOrientation CurOrientation { get; set; }
+
         /// <summary>
-        /// standard page sizes
+        ///     standard page sizes
         /// </summary>
         public List<PageSize> StdPageSizes { get; set; }
+
         /// <summary>
-        /// default page size
+        ///     default page size
         /// </summary>
         public Dimensions DefPageSize { get; set; }
+
         /// <summary>
-        /// current page size
+        ///     current page size
         /// </summary>
         public Dimensions CurPageSize { get; set; }
+
         /// <summary>
-        /// used for pages with non default sizes or orientations
+        ///     used for pages with non default sizes or orientations
         /// </summary>
         public Dictionary<int, Dimensions> PageSizes { get; set; }
+
         /// <summary>
-        /// Current page width in points
+        ///     Current page width in points
         /// </summary>
-        public double wPt { get; set; }
+        public double WPt { get; set; }
+
         /// <summary>
-        /// Current page height in points
+        ///     Current page height in points
         /// </summary>
-        public double hPt { get; set; }
+        public double HPt { get; set; }
+
         /// <summary>
-        /// dimensions of current page in user unit
+        ///     dimensions of current page in user unit
         /// </summary>
-        public double w { get; set; }
-        public double h { get; set; }
+        public double W { get; set; }
+
+        public double H { get; set; }
+
         /// <summary>
-        /// left margin
+        ///     left margin
         /// </summary>
         public double LeftMargin { get; set; }
+
         /// <summary>
-        /// top margin
+        ///     top margin
         /// </summary>
         public double TopMargin { get; set; }
+
         /// <summary>
-        /// right margin
+        ///     right margin
         /// </summary>
         public double RightMargin { get; set; }
+
         /// <summary>
-        /// page break margin
+        ///     page break margin
         /// </summary>
         public double PageBreakMargin { get; set; }
-        public double cMargin { get; set; }
-        public double x { get; set; }
-        public double y { get; set; }
-        public double lasth { get; set; }
+
+        public double CMargin { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Lasth { get; set; }
         public double LineWidth { get; set; }
         public List<string> CoreFonts { get; set; }
-        Dictionary<string, FontDefinition> Fonts { get; set; }
-        Dictionary<string, FontDefinition> FontFiles { get; set; }
-        
-        public PHP.OrderedMap diffs { get; set; }
+        private Dictionary<string, FontDefinition> Fonts { get; set; }
+        private Dictionary<string, FontDefinition> FontFiles { get; set; }
+
+        public OrderedMap Diffs { get; set; }
         public string FontFamily { get; set; }
         public string FontStyle { get; set; }
         public bool Underline { get; set; }
@@ -146,304 +292,179 @@ namespace Ego.PDF
         public string DrawColor { get; set; }
         public string FillColor { get; set; }
         public string TextColor { get; set; }
-        public bool ColorFlag;
-        public double ws;
-        public Dictionary<string, ImageInfo> images { get; set; }
-        public List<LinkDataInternal> links { get; set; }
+        public Dictionary<string, ImageInfo> Images { get; set; }
+        public List<LinkDataInternal> Links { get; set; }
         public bool AutoPageBreak { get; set; }
         public double PageBreakTrigger { get; set; }
         public bool InHeader { get; set; }
         public bool InFooter { get; set; }
-        public string ZoomMode;
-        public string LayoutMode;
         public string Title { get; set; }
         public string Subject { get; set; }
         public string Author { get; set; }
         public string Keywords { get; set; }
         public string Creator { get; set; }
-        public string AliasNbPages_Renamed { get; set; }
-        public string PDFVersion { get; set; }
+        public string AliasNbPagesRenamed { get; set; }
+        public string PdfVersion { get; set; }
 
-        public string FPDF_FONTPATH { get; set; }
-        private string fontpath { get; set; }
+        public string FpdfFontpath { get; set; }
+        private string Fontpath { get; set; }
 
-
-        public FPdf(PageOrientation orientation, UnitEnum unit, PageSizeEnum pageSize)
-        {
-            pageSize = pageSize == PageSizeEnum.Default ? PageSizeEnum.A4 : pageSize;
-            unit = unit == UnitEnum.Default ? UnitEnum.Milimeter : unit;
-            pageSize = pageSize== PageSizeEnum.Default? PageSizeEnum.A4: pageSize;
-
-            // Some checks
-            double margin;
-            this._dochecks();
-            // Initialization of properties
-            this.Page = 0;
-            this.n = 2;
-            this.Buffer = PrivateEnconding.GetString(new byte[] { });
-            this.Offsets = new PHP.OrderedMap();
-            this.Pages = new Dictionary<int,Page>();
-            this.PageSizes = new Dictionary<int, Dimensions>();
-            this.State = 0;
-            this.FontFiles = new Dictionary<string, FontDefinition>();
-            this.Fonts = new Dictionary<string, FontDefinition>();
-            this.diffs = new PHP.OrderedMap();
-            this.images = new Dictionary<string, ImageInfo>();
-            this.links = new List<LinkDataInternal>();
-            this.InHeader = false;
-            this.InFooter = false;
-            this.lasth = 0;
-            this.FontFamily = "";
-            this.FontStyle = "";
-            this.FontSizePt = 12;
-            this.Underline = false;
-            this.DrawColor = "0 G";
-            this.FillColor = "0 g";
-            this.TextColor = "0 g";
-            this.ColorFlag = false;
-            this.ws = 0;
-            // Font path
-            //TODO: SET A DEFAULT FONT PATH
-            this.FPDF_FONTPATH = "C:/";
-            this.fontpath = FPDF_FONTPATH;
-
-            // Core fonts
-            this.CoreFonts = new List<string> { "courier", "helvetica", "times", "symbol", "zapfdingbats" };
-            // Scale factor
-            this.k = 72 / 25.4; // unidades en milímetros
-
-            // Page sizes
-            this.StdPageSizes = new List<PageSize>()
-            {
-                new PageSize ("a3",841.89, 1190.55),
-                new PageSize ("a4",595.28, 841.89),
-                new PageSize ("a5",420.94, 595.28),
-                new PageSize ("legal",612, 792),
-                new PageSize ("letter",612, 1008),
-            };
-
-            if (unit == UnitEnum.Point)
-            {
-                this.k = 1;
-            }
-            else if (unit == UnitEnum.Milimeter)
-            {
-                this.k = 72 / 25.4;
-            }
-            else if (unit == UnitEnum.Centimeter)
-            {
-                this.k = 72 / 2.54;
-            }
-            else if (unit == UnitEnum.Inch)
-            {
-                this.k = 72;
-            }
-            else
-            {
-                this.Error("Incorrect unit: " + unit);
-            }
-
-            Dimensions size = this._getpagesize(pageSize);
-            this.DefPageSize = size;
-            this.CurPageSize = size;
-
-            // Page orientation
-            this.DefOrientation = orientation;
-            this.CurOrientation = this.DefOrientation;
-
-            if (orientation == PageOrientation.Portrait)
-            {
-                this.DefOrientation = PageOrientation.Portrait;
-                this.w = size.Width;
-                this.h = size.Heigth;
-            }
-            else if (orientation == PageOrientation.Landscape)
-            {
-                this.DefOrientation = PageOrientation.Landscape;
-                this.w = size.Heigth;
-                this.h = size.Width;
-            }
-            else
-            {
-                this.Error("Incorrect orientation: " + orientation);
-            }
-
-            this.wPt = this.w * this.k;
-            this.hPt = this.h * this.k;
-            // Page margins (1 cm)
-            margin = 28.35 / this.k;
-            this.SetMargins(margin, margin);
-            // Interior cell margin (1 mm)
-            this.cMargin = margin / 10;
-            // Line width (0.2 mm)
-            this.LineWidth = .567 / this.k;
-            // Automatic page break
-            this.SetAutoPageBreak(true, 2 * margin);
-            // Default display mode
-            this.SetDisplayMode("default", "default");
-            // Enable compression
-
-            //TODO: PONER TRUE
-            this.SetCompression(false);
-            // Set default PDF version number
-            this.PDFVersion = "1.3";
-        }
-
-        public FPdf():this( PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4)
-        {
-        }
 
         /// <summary>
-        /// El margen derecho es igual al izquierdo
-        /// </name="left"></param>
-        /// <param name="top"></param>
+        ///     El margen derecho es igual al izquierdo
+        ///     <param name="top"></param>
+        /// </summary>
         public virtual void SetMargins(double left, double top)
         {
-            this.SetMargins(left, top, left);
+            SetMargins(left, top, left);
         }
 
         /// <summary>
-        /// Set left, top and right margins
+        ///     Set left, top and right margins
         /// </summary>
         /// <param name="left"></param>
         /// <param name="top"></param>
         /// <param name="right"></param>
         public virtual void SetMargins(double left, double top, double right)
         {
-            this.LeftMargin = left;
-            this.TopMargin = top;
-            this.RightMargin = right;
+            LeftMargin = left;
+            TopMargin = top;
+            RightMargin = right;
         }
 
         public virtual void SetLeftMargin(double margin)
         {
             // Set left margin
-            this.LeftMargin = margin;
-            if (this.Page > 0 && this.x < margin)
+            LeftMargin = margin;
+            if (Page > 0 && X < margin)
             {
-                this.x = margin;
+                X = margin;
             }
         }
 
         public virtual void SetTopMargin(double margin)
         {
             // Set top margin
-            this.TopMargin = margin;
+            TopMargin = margin;
         }
 
         public virtual void SetRightMargin(double margin)
         {
             // Set right margin
-            this.RightMargin = margin;
+            RightMargin = margin;
         }
 
         public virtual void SetAutoPageBreak(bool auto, double margin)
         {
             // Set auto page break mode and triggering margin
-            this.AutoPageBreak = auto;
-            this.PageBreakMargin = margin;
-            this.PageBreakTrigger = PHP.TypeSupport.ToDouble(this.h) - margin;
+            AutoPageBreak = auto;
+            PageBreakMargin = margin;
+            PageBreakTrigger = TypeSupport.ToDouble(H) - margin;
         }
 
         /// <summary>
-        /// Set display mode in viewer
+        ///     Set display mode in viewer
         /// </summary>
         /// <param name="zoom"></param>
         /// <param name="layout"></param>
         public virtual void SetDisplayMode(string zoom, string layout)
         {
-            if (zoom == "fullpage" || zoom == "fullwidth" || zoom == "real" || zoom == "default" || !(zoom is System.String))
+            if (zoom == "fullpage" || zoom == "fullwidth" || zoom == "real" || zoom == "default")
             {
-                this.ZoomMode = zoom;
+                ZoomMode = zoom;
             }
             else
             {
-                this.Error("Incorrect zoom display mode: " + zoom);
+                Error("Incorrect zoom display mode: " + zoom);
             }
             if (layout == "single" || layout == "continuous" || layout == "two" || layout == "default")
             {
-                this.LayoutMode = layout;
+                LayoutMode = layout;
             }
             else
             {
-                this.Error("Incorrect layout display mode: " + layout);
+                Error("Incorrect layout display mode: " + layout);
             }
         }
 
         /// <summary>
-        /// Set page compression
+        ///     Set page compression
         /// </summary>
         /// <param name="compress"></param>
         public virtual void SetCompression(bool compress)
         {
-            this.Compress = compress;
+            Compress = compress;
         }
 
         /// <summary>
-        /// Title of document
+        ///     Title of document
         /// </summary>
         /// <param name="title"></param>
-        public virtual void SetTitle(string title)
+        public virtual FPdf SetTitle(string title)
         {
-            this.Title = title;
+            Title = title;
+            return this;
         }
 
         /// <summary>
-        /// Subject of document
+        ///     Subject of document
         /// </summary>
         /// <param name="subject"></param>
         public virtual void SetSubject(string subject)
         {
-            this.Subject = subject;
+            Subject = subject;
         }
 
         /// <summary>
-        /// Keywords of document
+        ///     Keywords of document
         /// </summary>
         /// <param name="author"></param>
-        public virtual void SetAuthor(string author)
+        public virtual FPdf SetAuthor(string author)
         {
             // Author of document
-            this.Author = author;
+            Author = author;
+            return this;
         }
 
         /// <summary>
-        /// Keywords of document
+        ///     Keywords of document
         /// </summary>
         /// <param name="keywords"></param>
-        public virtual void SetKeywords(string keywords)
+        public virtual FPdf SetKeywords(string keywords)
         {
-            this.Keywords = keywords;
+            Keywords = keywords;
+            return this;
         }
 
         /// <summary>
-        /// Creator of document 
+        ///     Creator of document
         /// </summary>
         /// <param name="creator"></param>
         public virtual void SetCreator(string creator)
         {
-            this.Creator = creator;
+            Creator = creator;
         }
 
         /// <summary>
-        /// Define an alias for total number of pages
+        ///     Define an alias for total number of pages
         /// </summary>
-        public virtual void AliasNbPages()
+        public FPdf AliasNbPages()
         {
-            this.AliasNbPages("{nb}");
+            AliasNbPages("{nb}");
+            return this;
         }
 
         /// <summary>
-        /// Define an alias for total number of pages
+        ///     Define an alias for total number of pages
         /// </summary>
         /// <param name="alias"></param>
         public virtual void AliasNbPages(string alias)
         {
-            this.AliasNbPages_Renamed = alias;
+            AliasNbPagesRenamed = alias;
         }
 
         /// <summary>
-        /// Fatal error
+        ///     Fatal error
         /// </summary>
         /// <param name="msg"></param>
         public virtual void Error(string msg)
@@ -452,39 +473,39 @@ namespace Ego.PDF
         }
 
         /// <summary>
-        /// Begin document
+        ///     Begin document
         /// </summary>
         public virtual void Open()
         {
-            this.State = 1;
+            State = 1;
         }
 
         /// <summary>
-        /// Terminate document
+        ///     Terminate document
         /// </summary>
         public virtual void Close()
         {
-            if (this.State == 3)
+            if (State == 3)
             {
                 return;
             }
-            if (this.Page == 0)
+            if (Page == 0)
             {
-                this.AddPage(PageOrientation.Default, null);
+                AddPage(PageOrientation.Default, null);
             }
             // Page footer
-            this.InFooter = true;
-            this.Footer();
-            this.InFooter = false;
+            InFooter = true;
+            Footer();
+            InFooter = false;
             // Close page
-            this._endpage();
+            _endpage();
             // Close document
-            this._enddoc();
+            _enddoc();
         }
 
         public virtual void AddPage()
         {
-            this.AddPage(PageOrientation.Default,this.DefPageSize);
+            AddPage(PageOrientation.Default, DefPageSize);
         }
 
         public virtual void AddPage(PageOrientation orientation)
@@ -500,97 +521,89 @@ namespace Ego.PDF
         public virtual void AddPage(PageOrientation orientation, PageSizeEnum pagesize)
         {
             Dimensions page = _getpagesize(pagesize);
-            this.AddPage(orientation, page);
+            AddPage(orientation, page);
         }
 
         public virtual void AddPage(PageOrientation orientation, Dimensions size)
         {
             // Start a new page
-            string family;
-            string style;
-            double fontsize;
-            double lw;
-            string dc;
-            string fc;
-            string tc;
-            bool cf;
-            if (this.State == 0)
+            if (State == 0)
             {
-                this.Open();
+                Open();
             }
-            family = this.FontFamily;
-            style = this.FontStyle + (this.Underline ? "U" : "");
-            fontsize = this.FontSizePt;
-            lw = this.LineWidth;
-            dc = this.DrawColor;
-            fc = this.FillColor;
-            tc = this.TextColor;
-            cf = this.ColorFlag;
-            if (this.Page > 0)
+            string family = FontFamily;
+            string style = FontStyle + (Underline ? "U" : "");
+            double fontsize = FontSizePt;
+            double lw = LineWidth;
+            string dc = DrawColor;
+            string fc = FillColor;
+            string tc = TextColor;
+            bool cf = ColorFlag;
+            if (Page > 0)
             {
                 // Page footer
-                this.InFooter = true;
-                this.Footer();
-                this.InFooter = false;
+                InFooter = true;
+                Footer();
+                InFooter = false;
                 // Close page
-                this._endpage();
+                _endpage();
             }
             // Start new page
-            this._beginpage(orientation, size);
+            _beginpage(orientation, size);
             // Set line cap style to square
-            this._out("2 J");
+            _out("2 J");
             // Set line width
-            this.LineWidth = lw;
-            this._out(sprintf("%.2F w", lw * this.k));
+            LineWidth = lw;
+            _out(sprintf("%.2F w", lw*k));
 
             // Set font
-            if (PHP.TypeSupport.ToBoolean(family))
+            if (TypeSupport.ToBoolean(family))
             {
-                this.SetFont(family, style, fontsize);
+                SetFont(family, style, fontsize);
             }
             // Set colors
-            this.DrawColor = dc;
-            if (PHP.TypeSupport.ToString(dc) != "0 G")
+            DrawColor = dc;
+            if (TypeSupport.ToString(dc) != "0 G")
             {
-                this._out(dc);
+                _out(dc);
             }
-            this.FillColor = fc;
-            if (PHP.TypeSupport.ToString(fc) != "0 g")
+            FillColor = fc;
+            if (TypeSupport.ToString(fc) != "0 g")
             {
-                this._out(fc);
+                _out(fc);
             }
-            this.TextColor = tc;
-            this.ColorFlag = cf;
+            TextColor = tc;
+            ColorFlag = cf;
             // Page header
-            this.InHeader = true;
-            this.Header();
-            this.InHeader = false;
+            InHeader = true;
+            Header();
+            InHeader = false;
             // Restore line width
-            if (this.LineWidth != lw)
+            if (LineWidth != lw)
             {
-                this.LineWidth = lw;
-                this._out(sprintf("%.2F w", lw * this.k));
+                LineWidth = lw;
+                _out(sprintf("%.2F w", lw*k));
             }
             // Restore font
-            if (PHP.TypeSupport.ToBoolean(family))
+            if (TypeSupport.ToBoolean(family))
             {
-                this.SetFont(family, style, fontsize);
+                SetFont(family, style, fontsize);
             }
             // Restore colors
             //CONVERSION_WARNING: Converted Operator might not behave as expected. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1009.htm 
-            if (this.DrawColor != dc)
+            if (DrawColor != dc)
             {
-                this.DrawColor = dc;
-                this._out(dc);
+                DrawColor = dc;
+                _out(dc);
             }
             //CONVERSION_WARNING: Converted Operator might not behave as expected. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1009.htm 
-            if (this.FillColor != fc)
+            if (FillColor != fc)
             {
-                this.FillColor = fc;
-                this._out(fc);
+                FillColor = fc;
+                _out(fc);
             }
-            this.TextColor = tc;
-            this.ColorFlag = cf;
+            TextColor = tc;
+            ColorFlag = cf;
         }
 
         public virtual void Header()
@@ -606,59 +619,59 @@ namespace Ego.PDF
         public virtual int PageNo()
         {
             // Get current page number
-            return this.Page;
+            return Page;
         }
 
         public virtual void SetDrawColor(int red, int? green, int? blue)
         {
-            double r = red;
-            double? g = green;
-            double? b = blue;
+            int r = red;
+            int? g = green;
+            int? b = blue;
 
             // Set color for all stroking operations
             if ((r == 0 && g == 0 && b == 0) || (!g.HasValue))
             {
-                this.DrawColor = sprintf("%.3F G", r / 255);
+                DrawColor = sprintf("%.3F G", r/255);
             }
             else
             {
-                this.DrawColor = sprintf("%.3F %.3F %.3F RG", r / 255, g / 255, b / 255);
+                DrawColor = sprintf("%.3F %.3F %.3F RG", r/255, g/255, b/255);
             }
-            if (this.Page > 0)
+            if (Page > 0)
             {
-                this._out(this.DrawColor);
+                _out(DrawColor);
             }
         }
 
         public virtual void SetFillColor(int grey)
         {
-            this.FillColor = sprintf("%.3F g", grey / 255);
-            this.ColorFlag = (this.FillColor != this.TextColor);
-            if (this.Page > 0)
+            FillColor = sprintf("%.3F g", grey/255);
+            ColorFlag = (FillColor != TextColor);
+            if (Page > 0)
             {
-                this._out(this.FillColor);
+                _out(FillColor);
             }
         }
 
         public virtual void SetFillColor(int red, int green, int blue)
         {
-            double r = red;
-            double g = green;
-            double b = blue;
+            int r = red;
+            int g = green;
+            int b = blue;
 
             // Set color for all filling operations
-            this.FillColor = sprintf("%.3F %.3F %.3F rg", r / 255, g / 255, b / 255);
-            this.ColorFlag = (this.FillColor != this.TextColor);
-            if (this.Page > 0)
+            FillColor = sprintf("%.3F %.3F %.3F rg", r/255, g/255, b/255);
+            ColorFlag = (FillColor != TextColor);
+            if (Page > 0)
             {
-                this._out(this.FillColor);
+                _out(FillColor);
             }
         }
 
         public void SetTextColor(int greyColor)
         {
-            this.TextColor = sprintf("%.3F g", greyColor / 255);
-            this.ColorFlag = (this.FillColor != this.TextColor);
+            TextColor = sprintf("%.3F g", greyColor/255);
+            ColorFlag = (FillColor != TextColor);
         }
 
         public virtual void SetTextColor(int red, int green, int blue)
@@ -667,8 +680,8 @@ namespace Ego.PDF
             double g = green;
             double b = blue;
 
-            this.TextColor = sprintf("%.3F %.3F %.3F rg", r / 255, g / 255, b / 255);
-            this.ColorFlag = (this.FillColor != this.TextColor);
+            TextColor = sprintf("%.3F %.3F %.3F rg", r/255, g/255, b/255);
+            ColorFlag = (FillColor != TextColor);
         }
 
         public virtual double GetStringWidth(string s)
@@ -678,32 +691,32 @@ namespace Ego.PDF
             int i;
 
             w = 0;
-            l = PHP.TypeSupport.ToString(s).Length;
+            l = TypeSupport.ToString(s).Length;
 
             for (i = 0; i < l; i++)
-                w = w + PHP.TypeSupport.ToDouble(this.CurrentFont.Widths[s[i].ToString()]);
+                w = w + TypeSupport.ToDouble(CurrentFont.Widths[s[i].ToString()]);
 
-           
-            return w * this.FontSize / 1000;
+
+            return w*FontSize/1000;
         }
 
         public virtual void SetLineWidth(double width)
         {
             // Set line width
-            this.LineWidth = width;
-            if (this.Page > 0)
+            LineWidth = width;
+            if (Page > 0)
             {
-                this._out(sprintf("%.2F w", width * this.k));
+                _out(sprintf("%.2F w", width*k));
             }
         }
 
         public virtual void Line(double x1, double y1, double x2, double y2)
         {
             // Draw a line
-            this._out(sprintf("%.2F %.2F m %.2F %.2F l S",
-                x1 * this.k,
-                (this.h - y1) * this.k, x2 * this.k,
-                (this.h - y2) * this.k));
+            _out(sprintf("%.2F %.2F m %.2F %.2F l S",
+                         x1*k,
+                         (H - y1)*k, x2*k,
+                         (H - y2)*k));
         }
 
         public virtual void Rect(double x, double y, double w, double h, string style)
@@ -722,7 +735,7 @@ namespace Ego.PDF
             {
                 op = "S";
             }
-            this._out(sprintf("%.2F %.2F %.2F %.2F re %s", x * this.k, (this.h - y) * this.k, w * this.k, (-h) * this.k, op));
+            _out(sprintf("%.2F %.2F %.2F %.2F re %s", x*k, (H - y)*k, w*k, (-h)*k, op));
         }
 
         public virtual void AddFont(string family, string style, string file)
@@ -734,7 +747,7 @@ namespace Ego.PDF
             if (file == "")
             {
                 //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
-                file = PHP.TypeSupport.ToString(PHP.StringSupport.StringReplace(family, " ", "")) + style.ToLower();
+                file = TypeSupport.ToString(StringSupport.StringReplace(family, " ", "")) + style.ToLower();
             }
             style = style.ToUpper();
             if (style == "IB")
@@ -743,22 +756,22 @@ namespace Ego.PDF
             }
 
             fontkey = family + style;
-            if (this.Fonts.ContainsKey(fontkey))
+            if (Fonts.ContainsKey(fontkey))
             {
                 return;
             }
 
-            FontDefinition fontInfo = this._loadfont(file);
-            fontInfo.i = PHP.OrderedMap.CountElements(this.Fonts) + 1;
+            FontDefinition fontInfo = _loadfont(file);
+            fontInfo.i = OrderedMap.CountElements(Fonts) + 1;
 
             if (fontInfo.diff != null)
             {
                 // Search existing encodings
-                n = Convert.ToInt32(this.diffs.Search(fontInfo.diff));
-                if (!System.Convert.ToBoolean(n))
+                n = Convert.ToInt32(Diffs.Search(fontInfo.diff));
+                if (!Convert.ToBoolean(n))
                 {
-                    n = PHP.OrderedMap.CountElements(this.diffs) + 1;
-                    this.diffs[n] = fontInfo.diff;
+                    n = OrderedMap.CountElements(Diffs) + 1;
+                    Diffs[n] = fontInfo.diff;
                 }
                 fontInfo.diffn = n;
             }
@@ -768,21 +781,21 @@ namespace Ego.PDF
                 // Embedded font
                 if (fontInfo.type == FontTypeEnum.TrueType)
                 {
-                    this.FontFiles[fontInfo.file] = new FontDefinition()
-                    {
-                        length1 = fontInfo.originalsize
-                    };
+                    FontFiles[fontInfo.file] = new FontDefinition
+                        {
+                            length1 = fontInfo.originalsize
+                        };
                 }
                 else
                 {
-                    this.FontFiles[fontInfo.file] = new FontDefinition()
-                    {
-                        length1 = fontInfo.size1,
-                        length2 = fontInfo.size2
-                    };
+                    FontFiles[fontInfo.file] = new FontDefinition
+                        {
+                            length1 = fontInfo.size1,
+                            length2 = fontInfo.size2
+                        };
                 }
             }
-            this.Fonts[fontkey] = fontInfo;
+            Fonts[fontkey] = fontInfo;
         }
 
 
@@ -802,7 +815,7 @@ namespace Ego.PDF
             string fontkey;
             if (string.IsNullOrEmpty(family))
             {
-                family = this.FontFamily;
+                family = FontFamily;
             }
             else
             {
@@ -811,13 +824,13 @@ namespace Ego.PDF
             style = (style ?? string.Empty).ToUpper();
             if (style.Contains("U"))
             {
-                this.Underline = true;
+                Underline = true;
                 //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
                 style = style.Replace("U", string.Empty);
             }
             else
             {
-                this.Underline = false;
+                Underline = false;
             }
             if (style == "IB")
             {
@@ -825,63 +838,63 @@ namespace Ego.PDF
             }
             if (size == 0)
             {
-                size = this.FontSizePt;
+                size = FontSizePt;
             }
             // Test if font is already selected
-            if (this.FontFamily == family && this.FontStyle == style && this.FontSizePt == size)
+            if (FontFamily == family && FontStyle == style && FontSizePt == size)
             {
                 return;
             }
             // Test if font is already loaded
             fontkey = family + style;
-            if (!this.Fonts.ContainsKey(fontkey))
+            if (!Fonts.ContainsKey(fontkey))
             {
                 // Test if one of the core fonts
                 if (family == "arial")
                 {
                     family = "helvetica";
                 }
-                if (this.CoreFonts.Contains(family))
+                if (CoreFonts.Contains(family))
                 {
                     if (family == "symbol" || family == "zapfdingbats")
                     {
                         style = "";
                     }
                     fontkey = family + style;
-                    if (!(this.Fonts.ContainsKey(fontkey)))
+                    if (!(Fonts.ContainsKey(fontkey)))
                     {
-                        this.AddFont(family, style, "");
+                        AddFont(family, style, "");
                     }
                 }
                 else
                 {
-                    this.Error("Undefined font: " + family + " " + style);
+                    Error("Undefined font: " + family + " " + style);
                 }
             }
             // Select it
-            this.FontFamily = family;
-            this.FontStyle = style;
-            this.FontSizePt = size;
-            this.FontSize = size / this.k;
-            this.CurrentFont = this.Fonts[fontkey];
-            if (this.Page > 0)
+            FontFamily = family;
+            FontStyle = style;
+            FontSizePt = size;
+            FontSize = size/k;
+            CurrentFont = Fonts[fontkey];
+            if (Page > 0)
             {
-                this._out(sprintf("BT /F%d %.2F Tf ET", this.CurrentFont.i, this.FontSizePt));
+                _out(sprintf("BT /F%d %.2F Tf ET", CurrentFont.i, FontSizePt));
             }
         }
 
         public virtual void SetFontSize(double size)
         {
             // Set font size in points
-            if (this.FontSizePt == size)
+            if (FontSizePt == size)
             {
                 return;
             }
-            this.FontSizePt = size;
-            this.FontSize = size / this.k;
-            if (this.Page > 0)
+            FontSizePt = size;
+            FontSize = size/k;
+            if (Page > 0)
             {
-                this._out(sprintf("BT /F%d %.2F Tf ET", this.CurrentFont.i, this.FontSizePt));
+                _out(sprintf("BT /F%d %.2F Tf ET", CurrentFont.i, FontSizePt));
             }
         }
 
@@ -889,27 +902,27 @@ namespace Ego.PDF
         {
             // Create a new internal link
             int n;
-            LinkDataInternal l = new LinkDataInternal();
-            this.links.Add(l);
+            var l = new LinkDataInternal();
+            Links.Add(l);
             return l;
         }
 
 
         public void SetLink(LinkDataInternal link)
         {
-            link.PageIndex= this.Page;
-            link.Y = this.y;
+            link.PageIndex = Page;
+            link.Y = Y;
         }
 
         public LinkDataInternal SetLink(int link)
         {
-            var l =this.SetLink(link, 0, -1);
+            LinkDataInternal l = SetLink(link, 0, -1);
             return l;
         }
 
         public virtual LinkDataInternal SetLink(int link, double y)
         {
-            var l = this.SetLink(link, y, -1);
+            LinkDataInternal l = SetLink(link, y, -1);
             return l;
         }
 
@@ -918,112 +931,112 @@ namespace Ego.PDF
             // Set destination of internal link
             if (y == -1)
             {
-                y = (int)(this.y);
+                y = (int) (Y);
             }
             if (page == -1)
             {
-                page = this.Page;
+                page = Page;
             }
-            LinkDataInternal linkInternal=new LinkDataInternal(page, y);
-            this.links[link] = linkInternal;
+            var linkInternal = new LinkDataInternal(page, y);
+            Links[link] = linkInternal;
             return linkInternal;
         }
 
         public virtual void Link(double x, double y, double w, double h, LinkData link)
         {
-            this.Pages[this.Page].PageLinks.Add(new PageLink(x * this.k, this.hPt - y * this.k, w * this.k, h * this.k, link));
+            Pages[Page].PageLinks.Add(new PageLink(x*k, HPt - y*k, w*k, h*k, link));
         }
 
         public virtual void Text(double x, double y, string txt)
         {
             // Output a string
             object s;
-            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x * this.k, (this.h - y) * this.k, this._escape(txt));
-            if (this.Underline && PHP.TypeSupport.ToString(txt) != "")
+            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x*k, (H - y)*k, _escape(txt));
+            if (Underline && TypeSupport.ToString(txt) != "")
             {
-                s = PHP.TypeSupport.ToString(s) + " " + this._dounderline(x, y, txt);
+                s = TypeSupport.ToString(s) + " " + _dounderline(x, y, txt);
             }
-            if (this.ColorFlag)
+            if (ColorFlag)
             {
-                s = "q " + PHP.TypeSupport.ToString(this.TextColor) + " " + PHP.TypeSupport.ToString(s) + " Q";
+                s = "q " + TypeSupport.ToString(TextColor) + " " + TypeSupport.ToString(s) + " Q";
             }
-            this._out(s);
+            _out(s);
         }
 
         public virtual bool AcceptPageBreak()
         {
             // Accept automatic page break or not
-            return this.AutoPageBreak;
+            return AutoPageBreak;
         }
 
         public virtual void Cell(double w)
         {
-            this.Cell(w, null, null, "0", 0, AlignEnum.Default, false, null);
+            Cell(w, null, null, "0", 0, AlignEnum.Default, false, null);
         }
 
         public virtual void Cell(double w, double? h, string txt)
         {
-            this.Cell(w, h, txt, "0", 0, AlignEnum.Default, false, null);
+            Cell(w, h, txt, "0", 0, AlignEnum.Default, false, null);
         }
 
         public virtual void Cell(double w, double? h, string txt, string border)
         {
-            this.Cell(w, h, txt, border, 0, AlignEnum.Default, false, null);
+            Cell(w, h, txt, border, 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, double ln)
+        public virtual void Cell(double w, double? h, string txt, string border, int ln)
         {
-            this.Cell(w, h, txt, border, ln , AlignEnum.Default, false, null);
+            Cell(w, h, txt, border, ln, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align)
+        public virtual void Cell(double w, double? h, string txt, string border, int ln, AlignEnum align)
         {
-            this.Cell(w, h, txt, border, ln, align, false, null);
+            Cell(w, h, txt, border, ln, align, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align, bool fill)
+        public virtual void Cell(double w, double? h, string txt, string border, int ln, AlignEnum align, bool fill)
         {
-            this.Cell(w, h, txt, border, ln, align, fill, null);
+            Cell(w, h, txt, border, ln, align, fill, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, double ln, AlignEnum align, bool fill, LinkData link)
+        public virtual void Cell(double w, double? h, string txt, string border, int ln, AlignEnum align, bool fill,
+                                 LinkData link)
         {
             // Output a cell
             string s;
-            object txt2;
 
             if (!h.HasValue) h = 0;
 
-            if (this.y + h > this.PageBreakTrigger && !this.InHeader && !this.InFooter && this.AcceptPageBreak())
+            if (Y + h > PageBreakTrigger && !InHeader && !InFooter && AcceptPageBreak())
             {
                 // Automatic page break
-                var xxx = this.x;
-                double ws = this.ws;
+                double xxx = X;
+                double ws = Ws;
                 if (ws > 0)
                 {
-                    this.ws = 0;
-                    this._out("0 Tw");
+                    Ws = 0;
+                    _out("0 Tw");
                 }
-                this.AddPage(this.CurOrientation, this.CurPageSize);
-                this.x = xxx;
+                AddPage(CurOrientation, CurPageSize);
+                X = xxx;
                 if (ws > 0)
                 {
-                    this.ws = ws;
-                    this._out(sprintf("%.3F Tw", ws * k));
+                    Ws = ws;
+                    _out(sprintf("%.3F Tw", ws*k));
                 }
             }
 
             if (w == 0)
             {
-                w = this.w - this.RightMargin - this.x;
+                w = W - RightMargin - X;
             }
 
             s = string.Empty;
 
-            int borderi=PHP.TypeSupport.ToInt32(border);
+            int borderi = TypeSupport.ToInt32(border);
             if (fill || borderi == 1)
             {
-                var op = string.Empty;
+                string op = string.Empty;
                 if (fill)
                 {
                     op = (borderi == 1) ? "B" : "f";
@@ -1032,26 +1045,28 @@ namespace Ego.PDF
                 {
                     op = "S";
                 }
-                s = sprintf("%.2F %.2F %.2F %.2F re %s ", this.x * k, (this.h - this.y) * k, w * k, -h * k, op);
+                s = sprintf("%.2F %.2F %.2F %.2F re %s ", X*k, (H - Y)*k, w*k, -h*k, op);
             }
 
             if (!string.IsNullOrEmpty(border))
             {
                 if (border.Contains("L"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, this.x * k, (this.h - (y + h)) * k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X*k, (H - Y)*k, X*k, (H - (Y + h))*k);
                 }
                 if (border.Contains("T"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - y) * k, (this.x + w) * k, (this.h - y) * k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X*k, (H - Y)*k, (X + w)*k, (H - Y)*k);
                 }
                 if (border.Contains("R"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", (this.x + w) * k, (this.h - y) * k, (this.x + w) * k, (this.h - (y + h)) * k);
+                    s = s +
+                        sprintf("%.2F %.2F m %.2F %.2F l S ", (X + w)*k, (H - Y)*k, (X + w)*k, (H - (Y + h))*k);
                 }
                 if (border.Contains("B"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", this.x * k, (this.h - (y + h)) * k, (this.x + w) * k, (this.h - (y + h)) * k);
+                    s = s +
+                        sprintf("%.2F %.2F m %.2F %.2F l S ", X*k, (H - (Y + h))*k, (X + w)*k, (H - (Y + h))*k);
                 }
             }
 
@@ -1060,57 +1075,57 @@ namespace Ego.PDF
                 double dx;
                 if (align == AlignEnum.Right)
                 {
-                    dx = w - this.cMargin - this.GetStringWidth(txt);
+                    dx = w - CMargin - GetStringWidth(txt);
                 }
                 else if (align == AlignEnum.Center)
                 {
-                    dx = (w - this.GetStringWidth(txt)) / 2;
+                    dx = (w - GetStringWidth(txt))/2;
                 }
                 else
                 {
-                    dx = this.cMargin;
+                    dx = CMargin;
                 }
-                if (this.ColorFlag)
+                if (ColorFlag)
                 {
-                    s = s + "q " + PHP.TypeSupport.ToString(this.TextColor) + " ";
+                    s = s + "q " + TypeSupport.ToString(TextColor) + " ";
                 }
 
-                txt2 = txt
+                string txt2 = txt
                     .Replace("\\", "\\\\")
                     .Replace("(", "\\(")
                     .Replace(")", "\\)");
-                
-                s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (this.x + dx) * k, (this.h - (this.y + .5 * h + .3 * this.FontSize)) * k, txt2);
-                if (this.Underline)
+
+                s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (X + dx)*k, (H - (Y + .5*h + .3*FontSize))*k, txt2);
+                if (Underline)
                 {
-                    s =s + " " + this._dounderline(this.x + dx, this.y + .5 * h.Value + .3 * this.FontSize, txt);
+                    s = s + " " + _dounderline(X + dx, Y + .5*h.Value + .3*FontSize, txt);
                 }
-                if (this.ColorFlag)
+                if (ColorFlag)
                 {
                     s = s + " Q";
                 }
-                if (PHP.TypeSupport.ToBoolean(link))
+                if (TypeSupport.ToBoolean(link))
                 {
-                    this.Link(this.x + dx, this.y + .5 * h.Value - .5 * this.FontSize, this.GetStringWidth(txt), this.FontSize, link);
+                    Link(X + dx, Y + .5*h.Value - .5*FontSize, GetStringWidth(txt), FontSize, link);
                 }
             }
             if (!string.IsNullOrEmpty(s))
             {
-                this._out(s);
+                _out(s);
             }
-            this.lasth = h.Value;
+            Lasth = h.Value;
             if (ln > 0)
             {
                 // Go to next line
-                this.y += h.Value;
+                Y += h.Value;
                 if (ln == 1)
                 {
-                    this.x = this.LeftMargin;
+                    X = LeftMargin;
                 }
             }
             else
             {
-                this.x += w;
+                X += w;
             }
         }
 
@@ -1140,23 +1155,23 @@ namespace Ego.PDF
             int nl;
             string c;
             double ls = 0;
-            FontDefinition cw = this.CurrentFont;
+            FontDefinition cw = CurrentFont;
             if (w == 0)
             {
-                w = PHP.TypeSupport.ToDouble(this.w) - this.RightMargin - this.x;
+                w = TypeSupport.ToDouble(W) - RightMargin - X;
             }
-            wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
+            wmax = (w - 2*CMargin)*1000/FontSize;
             //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
-            s = PHP.StringSupport.StringReplace(txt, "\r", "");
+            s = StringSupport.StringReplace(txt, "\r", "");
             nb = s.Length;
-            if (nb > 0 && PHP.TypeSupport.ToString(s[nb - 1]) == "\n")
+            if (nb > 0 && TypeSupport.ToString(s[nb - 1]) == "\n")
             {
                 nb--;
             }
             b = 0.ToString();
-            if (PHP.TypeSupport.ToBoolean(border))
+            if (TypeSupport.ToBoolean(border))
             {
-                if (PHP.TypeSupport.ToInt32(border) == 1)
+                if (TypeSupport.ToInt32(border) == 1)
                 {
                     border = "LTRB";
                     b = "LRT";
@@ -1166,17 +1181,22 @@ namespace Ego.PDF
                 {
                     b2 = "";
                     //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                    if (!(border.IndexOf("L") == System.Convert.ToInt32(false)) || !(border.IndexOf("L").GetType() == false.GetType()))
+                    if (border.IndexOf("L") != Convert.ToInt32(false) ||
+                        !(border.IndexOf("L").GetType() == false.GetType()))
                     {
                         b2 += "L";
                     }
                     //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                    if (!(border.IndexOf("R") == System.Convert.ToInt32(false)) || !(border.IndexOf("R").GetType() == false.GetType()))
+                    if (border.IndexOf("R") != Convert.ToInt32(false) ||
+                        !(border.IndexOf("R").GetType() == false.GetType()))
                     {
                         b2 += "R";
                     }
                     //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                    b = (!(border.IndexOf("T") == System.Convert.ToInt32(false)) || !(border.IndexOf("T").GetType() == false.GetType())) ? b2 + "T" : b2;
+                    b = (border.IndexOf("T") != Convert.ToInt32(false) ||
+                         !(border.IndexOf("T").GetType() == false.GetType()))
+                            ? b2 + "T"
+                            : b2;
                 }
             }
             sep = -1;
@@ -1189,35 +1209,35 @@ namespace Ego.PDF
             {
                 // Get next character
                 c = s[i].ToString();
-                if (PHP.TypeSupport.ToString(c) == "\n")
+                if (TypeSupport.ToString(c) == "\n")
                 {
                     // Explicit line break
-                    if (this.ws > 0)
+                    if (Ws > 0)
                     {
-                        this.ws = 0;
-                        this._out("0 Tw");
+                        Ws = 0;
+                        _out("0 Tw");
                     }
                     //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                    this.Cell(w, h, PHP.TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill,null);
+                    Cell(w, h, TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
                     i++;
                     sep = -1;
                     j = i;
                     l = 0;
                     ns = 0;
                     nl++;
-                    if (PHP.TypeSupport.ToBoolean(border) && nl == 2)
+                    if (TypeSupport.ToBoolean(border) && nl == 2)
                     {
                         b = b2;
                     }
                     continue;
                 }
-                if (PHP.TypeSupport.ToString(c) == " ")
+                if (TypeSupport.ToString(c) == " ")
                 {
                     sep = i;
                     ls = l;
                     ns++;
                 }
-                l = l + PHP.TypeSupport.ToDouble(cw.Widths[c]);
+                l = l + TypeSupport.ToDouble(cw.Widths[c]);
                 if (l > wmax)
                 {
                     // Automatic line break
@@ -1227,24 +1247,24 @@ namespace Ego.PDF
                         {
                             i++;
                         }
-                        if (this.ws > 0)
+                        if (Ws > 0)
                         {
-                            this.ws = 0;
-                            this._out("0 Tw");
+                            Ws = 0;
+                            _out("0 Tw");
                         }
                         //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        this.Cell(w, h, PHP.TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
+                        Cell(w, h, TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
                     }
                     else
                     {
                         if (align == AlignEnum.Justified)
                         {
-                            this.ws = (ns > 1) ? (wmax - ls) / 1000 * this.FontSize / (ns - 1) : 0;
+                            Ws = (ns > 1) ? (wmax - ls)/1000*FontSize/(ns - 1) : 0;
 
-                            this._out(sprintf("%.3F Tw", this.ws * this.k));
+                            _out(sprintf("%.3F Tw", Ws*k));
                         }
                         //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        this.Cell(w, h, PHP.TypeSupport.ToString(s).Substring(j, sep - j), b, 2, align, fill, null);
+                        Cell(w, h, TypeSupport.ToString(s).Substring(j, sep - j), b, 2, align, fill, null);
                         i = sep + 1;
                     }
                     sep = -1;
@@ -1252,7 +1272,7 @@ namespace Ego.PDF
                     l = 0;
                     ns = 0;
                     nl++;
-                    if (PHP.TypeSupport.ToBoolean(border) && nl == 2)
+                    if (TypeSupport.ToBoolean(border) && nl == 2)
                     {
                         b = b2;
                     }
@@ -1263,82 +1283,73 @@ namespace Ego.PDF
                 }
             }
             // Last chunk
-            if (this.ws > 0)
+            if (Ws > 0)
             {
-                this.ws = 0;
-                this._out("0 Tw");
+                Ws = 0;
+                _out("0 Tw");
             }
             //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-            if (PHP.TypeSupport.ToBoolean(border) && (!(border.IndexOf("B") == System.Convert.ToInt32(false)) || !(border.IndexOf("B").GetType() == false.GetType())))
+            if (TypeSupport.ToBoolean(border) &&
+                (border.IndexOf("B") != Convert.ToInt32(false) || !(border.IndexOf("B").GetType() == false.GetType())))
             {
                 b += "B";
             }
-            this.Cell(w, h, PHP.TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
-            this.x = this.LeftMargin;
+            Cell(w, h, TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
+            X = LeftMargin;
         }
 
         public virtual void Write(int h, string txt)
         {
-            this.Write(h, txt, (LinkData)null);
+            Write(h, txt, (LinkData) null);
         }
 
         public virtual void Write(int h, string txt, int internalLink)
         {
-            var link = this.links[internalLink];
-            this.Write(h, txt, internalLink);
+            LinkDataInternal link = Links[internalLink];
+            Write(h, txt, internalLink);
         }
 
         public virtual void Write(int h, string txt, string uri)
         {
-            LinkDataUri data = new LinkDataUri( uri);
-            this.Write(h, txt, data);
+            var data = new LinkDataUri(uri);
+            Write(h, txt, data);
         }
 
         protected virtual void Write(int h, string txt, LinkData link)
         {
             // Output text in flowing mode
-            double w;
-            double wmax;
-            string s;
-            double nb;
-            int sep;
-            int i;
-            int j;
-            int l;
-            int nl;
-            string c;
-            FontDefinition cw = this.CurrentFont;
-            w = this.w - this.RightMargin - this.x;
-            wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
-            s = PHP.StringSupport.StringReplace(txt, "\r", "");
-            nb = PHP.TypeSupport.ToString(s).Length;
-            sep = -1;
-            i = 0;
-            j = 0;
-            l = 0;
-            nl = 1;
+            FontDefinition cw = CurrentFont;
+            double localWidth = W - RightMargin - X;
+            double wmax = (localWidth - 2*CMargin)*1000/FontSize;
+            string s = StringSupport.StringReplace(txt, "\r", "");
+            int nb = TypeSupport.ToString(s).Length;
+            int sep = -1;
+            int i = 0;
+            int j = 0;
+            int l = 0;
+            int nl = 1;
             while (i < nb)
             {
                 // Get next character
-                c = s[i].ToString();
-                if (PHP.TypeSupport.ToString(c) == "\n")
+                string c = s[i].ToString();
+                if (TypeSupport.ToString(c) == "\n")
                 {
                     // Explicit line break
-                    this.Cell(w, h, s.Substring(j, i - j), 0.ToString(), 2, AlignEnum.Default, false, link);
+                    Cell(localWidth, h, s.Substring(j, i - j), 0.ToString(), 2, AlignEnum.Default, false, link);
                     i++;
                     sep = -1;
                     j = i;
                     l = 0;
                     if (nl == 1)
                     {
-                        this.x = this.LeftMargin;
-                        w = this.w - this.RightMargin - this.x;
-                        wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
+                        X = LeftMargin;
+                        localWidth = W - RightMargin - X;
+                        wmax = (localWidth - 2*CMargin)*1000/FontSize;
                     }
                     nl++;
                     continue;
                 }
-                if (PHP.TypeSupport.ToString(c) == " ")
+                if (TypeSupport.ToString(c) == " ")
                 {
                     sep = i;
                 }
@@ -1348,13 +1359,13 @@ namespace Ego.PDF
                     // Automatic line break
                     if (sep == -1)
                     {
-                        if (this.x > this.LeftMargin)
+                        if (X > LeftMargin)
                         {
                             // Move to next line
-                            this.x = this.LeftMargin;
-                            this.y += h;
-                            w = this.w - this.RightMargin - this.x;
-                            wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
+                            X = LeftMargin;
+                            Y += h;
+                            localWidth = W - RightMargin - X;
+                            wmax = (localWidth - 2*CMargin)*1000/FontSize;
                             i++;
                             nl++;
                             continue;
@@ -1363,11 +1374,11 @@ namespace Ego.PDF
                         {
                             i++;
                         }
-                        this.Cell(w, h, s.Substring(j, i - j), 0.ToString(), 2, AlignEnum.Default, false, link);
+                        Cell(localWidth, h, s.Substring(j, i - j), 0.ToString(), 2, AlignEnum.Default, false, link);
                     }
                     else
                     {
-                        this.Cell(w, h, s.Substring(j, sep - j), 0.ToString(), 2, AlignEnum.Default, false, link);
+                        Cell(localWidth, h, s.Substring(j, sep - j), 0.ToString(), 2, AlignEnum.Default, false, link);
                         i = sep + 1;
                     }
                     sep = -1;
@@ -1375,9 +1386,9 @@ namespace Ego.PDF
                     l = 0;
                     if (nl == 1)
                     {
-                        this.x = this.LeftMargin;
-                        w = this.w - this.RightMargin - this.x;
-                        wmax = (w - 2 * this.cMargin) * 1000 / this.FontSize;
+                        X = LeftMargin;
+                        localWidth = W - RightMargin - X;
+                        wmax = (localWidth - 2*CMargin)*1000/FontSize;
                     }
                     nl++;
                 }
@@ -1387,33 +1398,31 @@ namespace Ego.PDF
                 }
             }
             // Last chunk
-            if (i != j)
-            {
-                //this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
-                double w2 = (double)l / 1000 * this.FontSize;
-                this.Cell(w2, h, s.Substring(j), 0.ToString(), 0, AlignEnum.Default, false, link);
-                //string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
-                //this._out(tail);
-            }
+            if (i == j) return;
+            //this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
+            double w2 = (double) l/1000*FontSize;
+            Cell(w2, h, s.Substring(j), 0.ToString(), 0, AlignEnum.Default, false, link);
+            //string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
+            //this._out(tail);
         }
 
         public virtual void Ln()
         {
             // Line feed; default value is last cell height
-            this.x = this.LeftMargin;
-            this.y += this.lasth;
+            X = LeftMargin;
+            Y += Lasth;
         }
 
         public virtual void Ln(int h)
         {
             // Line feed; 
-            this.x = this.LeftMargin;
-            this.y += h;
+            X = LeftMargin;
+            Y += h;
         }
 
         public virtual void Image(string file, double? x, double? y, double w, double h)
         {
-            Image(file, x, y, w, h, ImageTypeEnum.Default, (LinkData)null);
+            Image(file, x, y, w, h, ImageTypeEnum.Default, (LinkData) null);
         }
 
         public virtual void Image(string file, double w, double h, ImageTypeEnum type, LinkData link)
@@ -1428,23 +1437,23 @@ namespace Ego.PDF
 
         public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type, string link)
         {
-            this.Image(file, x, y, w, h, type, new LinkDataUri(link));
+            Image(file, x, y, w, h, type, new LinkDataUri(link));
         }
 
-        public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type, LinkData link)
+        public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type,
+                                  LinkData link)
         {
             // Put an image on the page
-            ImageInfo imageInfo = new ImageInfo();
-            double x2;
+            ImageInfo imageInfo;
 
-            if (!this.images.ContainsKey(file))
+            if (!Images.ContainsKey(file))
             {
                 // First use of this image, get info
                 if (type == ImageTypeEnum.Default)
                 {
-                    if (!Enum.TryParse<ImageTypeEnum>(Path.GetExtension(file).Replace(".", string.Empty), true, out type))
+                    if (!Enum.TryParse(Path.GetExtension(file).Replace(".", string.Empty), true, out type))
                     {
-                        this.Error("Image file has no extension and no type was specified: " + file);
+                        Error("Image file has no extension and no type was specified: " + file);
                     }
                 }
 
@@ -1462,18 +1471,18 @@ namespace Ego.PDF
                         break;
                     case ImageTypeEnum.Default:
                     default:
-                        this.Error("Image file has no extension and no type was specified or unsupported type (" + file + ")");
+                        Error("Image file has no extension and no type was specified or unsupported type (" + file + ")");
                         break;
                 }
                 String typeName = type.ToString().ToLower();
                 //CONVERSION_ISSUE: Variable function '$mtd' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
                 imageInfo = imageData;
-                imageInfo.i = PHP.OrderedMap.CountElements(this.images) + 1;
-                this.images[file] = imageInfo;
+                imageInfo.i = OrderedMap.CountElements(Images) + 1;
+                Images[file] = imageInfo;
             }
             else
             {
-                imageInfo = this.images[file];
+                imageInfo = Images[file];
             }
 
             // Automatic width and height calculation if needed
@@ -1485,50 +1494,50 @@ namespace Ego.PDF
             }
             if (w < 0)
             {
-                w = PHP.TypeSupport.ToDouble(-PHP.TypeSupport.ToDouble(imageInfo.w)) * 72 / w / this.k;
+                w = TypeSupport.ToDouble(-TypeSupport.ToDouble(imageInfo.w))*72/w/k;
             }
             if (h < 0)
             {
-                h = PHP.TypeSupport.ToDouble(-PHP.TypeSupport.ToDouble(imageInfo.h)) * 72 / h / this.k;
+                h = TypeSupport.ToDouble(-TypeSupport.ToDouble(imageInfo.h))*72/h/k;
             }
             if (w == 0)
             {
-                w = h * PHP.TypeSupport.ToDouble(imageInfo.w) / PHP.TypeSupport.ToDouble(imageInfo.h);
+                w = h*TypeSupport.ToDouble(imageInfo.w)/TypeSupport.ToDouble(imageInfo.h);
             }
             if (h == 0)
             {
-                h = w * PHP.TypeSupport.ToDouble(imageInfo.h) / PHP.TypeSupport.ToDouble(imageInfo.w);
+                h = w*TypeSupport.ToDouble(imageInfo.h)/TypeSupport.ToDouble(imageInfo.w);
             }
 
             // Flowing mode
             if (!y.HasValue)
             {
-                if (this.y + h > this.PageBreakTrigger && !this.InHeader && !this.InFooter && this.AcceptPageBreak())
+                if (Y + h > PageBreakTrigger && !InHeader && !InFooter && AcceptPageBreak())
                 {
                     // Automatic page break
-                    x2 = this.x;
-                    this.AddPage(this.CurOrientation, this.CurPageSize);
-                    this.x = x2;
+                    double x2 = X;
+                    AddPage(CurOrientation, CurPageSize);
+                    X = x2;
                 }
-                y = this.y;
-                this.y += h;
+                y = Y;
+                Y += h;
             }
 
             if (!x.HasValue)
             {
-                x = this.x;
+                x = X;
             }
-            this._out(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q", w * this.k, h * this.k, x * this.k, ((this.h - (y + h)) * this.k), imageInfo.i));
-            if (link!=null)
+            _out(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q", w*k, h*k, x*k, ((H - (y + h))*k), imageInfo.i));
+            if (link != null)
             {
-                this.Link(x.Value, y.Value, w, h, link);
+                Link(x.Value, y.Value, w, h, link);
             }
         }
 
         public virtual double GetX()
         {
             // Get x position
-            return this.x;
+            return X;
         }
 
         public virtual void SetX(double x)
@@ -1536,52 +1545,61 @@ namespace Ego.PDF
             // Set x position
             if (x >= 0)
             {
-                this.x = x;
+                X = x;
             }
             else
             {
-                this.x = PHP.TypeSupport.ToDouble(this.w) + x;
+                X = TypeSupport.ToDouble(W) + x;
             }
         }
 
+        /// <summary>
+        ///     Get y position
+        /// </summary>
+        /// <returns></returns>
         public virtual double GetY()
         {
-            // Get y position
-            return this.y;
+            return Y;
         }
 
+        /// <summary>
+        ///     Set y position and reset x
+        /// </summary>
+        /// <param name="y"></param>
         public virtual void SetY(double y)
         {
-            // Set y position and reset x
-            this.x = this.LeftMargin;
+            X = LeftMargin;
             if (y >= 0)
             {
-                this.y = y;
+                Y = y;
             }
             else
             {
-                this.y = PHP.TypeSupport.ToDouble(this.h) + y;
+                Y = TypeSupport.ToDouble(H) + y;
             }
         }
 
+        /// <summary>
+        ///     Set x and y positions
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
         public virtual void SetXY(double x, double y)
         {
-            // Set x and y positions
-            this.SetY(y);
-            this.SetX(x);
+            SetY(y);
+            SetX(x);
         }
 
         public virtual string Output(string name, OutputDevice dest)
         {
             // Output PDF to some destination
-            System.IO.FileStream f;
-            if (this.State < 3)
+            if (State < 3)
             {
-                this.Close();
+                Close();
             }
             if (dest == OutputDevice.Default)
             {
-                if (name == "" || name == null)
+                if (string.IsNullOrEmpty(name))
                 {
                     name = "doc.pdf";
                     dest = OutputDevice.StandardOutput;
@@ -1594,34 +1612,36 @@ namespace Ego.PDF
             switch (dest)
             {
                 case OutputDevice.StandardOutput:
-                    this._checkoutput();
+                    _checkoutput();
                     HttpContext.Current.Response.AppendHeader("Content-Type: application/pdf", "");
-                    HttpContext.Current.Response.AppendHeader("Content-Disposition: inline; filename=\"" + name + "\"", "");
+                    HttpContext.Current.Response.AppendHeader("Content-Disposition: inline; filename=\"" + name + "\"",
+                                                              "");
                     HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
                     HttpContext.Current.Response.AppendHeader("Pragma: public", "");
-                    HttpContext.Current.Response.Write(this.Buffer);
+                    HttpContext.Current.Response.Write(Buffer);
                     break;
 
                 case OutputDevice.Download:
                     // Download file
-                    this._checkoutput();
+                    _checkoutput();
                     HttpContext.Current.Response.AppendHeader("Content-Type: application/x-download", "");
-                    HttpContext.Current.Response.AppendHeader("Content-Disposition: attachment; filename=\"" + name + "\"", "");
+                    HttpContext.Current.Response.AppendHeader(
+                        "Content-Disposition: attachment; filename=\"" + name + "\"", "");
                     HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
                     HttpContext.Current.Response.AppendHeader("Pragma: public", "");
-                    HttpContext.Current.Response.Write(this.Buffer);
+                    HttpContext.Current.Response.Write(Buffer);
                     break;
 
                 case OutputDevice.SaveToFile:
                     // Save to local file
-                    f = PHP.FileSystemSupport.FileOpen(name, "wb");
-                    if (!PHP.TypeSupport.ToBoolean(f))
+                    FileStream f = FileSystemSupport.FileOpen(name, "wb");
+                    if (!TypeSupport.ToBoolean(f))
                     {
-                        this.Error("Unable to create output file: " + name);
+                        Error("Unable to create output file: " + name);
                     }
-                    StreamWriter w=new StreamWriter(f,PrivateEnconding);
-                    w.Write(this.Buffer);
-                    w.Close();
+                    var writer = new StreamWriter(f, PrivateEnconding);
+                    writer.Write(Buffer);
+                    writer.Close();
                     //PHP.FileSystemSupport.Write(f, this.Buffer, this.Buffer.Length);
                     //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
                     //PHP.FileSystemSupport.Close(f);
@@ -1629,15 +1649,14 @@ namespace Ego.PDF
 
                 case OutputDevice.ReturnAsString:
                     // Return as a string
-                    return this.Buffer;
+                    return Buffer;
 
                 default:
                     //CONVERSION_ISSUE: Void functions cannot be used as part of an expression. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1019.htm 
-                    this.Error("Incorrect output destination: " + dest);
+                    Error("Incorrect output destination: " + dest);
                     break;
-
             }
-            return "";
+            return string.Empty;
         }
 
         /*******************************************************************************
@@ -1645,6 +1664,7 @@ namespace Ego.PDF
         *                              Protected methods                               *
         *                                                                              *
         *******************************************************************************/
+
         internal virtual void _dochecks()
         {
             // Check mbstring overloading --> mbstring overloading must be disabled
@@ -1653,84 +1673,82 @@ namespace Ego.PDF
 
         internal virtual void _checkoutput()
         {
-
             //TODO COMPROBAR ESTO
-            var HeadersOrDataSent = false;
+            bool HeadersOrDataSent = false;
 
             if (HeadersOrDataSent)
             {
                 {
-                    this.Error("Some data has already been output, can't send PDF file");
+                    Error("Some data has already been output, can't send PDF file");
                 }
             }
         }
 
         internal virtual Dimensions _getpagesize(PageSizeEnum index)
         {
-            PageSize size = this.StdPageSizes.FirstOrDefault(x => x.Name.ToLower() == index.ToString().ToLower());
-            return size.GetDimensions(this.k);
+            PageSize size = StdPageSizes.FirstOrDefault(x => x.Name.ToLower() == index.ToString().ToLower());
+            Debug.Assert(size != null, "size != null");
+            return size.GetDimensions(k);
         }
 
         internal virtual Dimensions _getpagesize(Dimensions dimensions)
         {
-            if (dimensions.Width > dimensions.Heigth)
-            {
-                return new Dimensions() { Width = dimensions.Heigth, Heigth = dimensions.Width };
-            }
-            else return dimensions;
+            return dimensions.Width > dimensions.Heigth
+                       ? new Dimensions {Width = dimensions.Heigth, Heigth = dimensions.Width}
+                       : dimensions;
         }
 
         internal virtual void _beginpage(PageOrientation orientation, Dimensions size)
         {
-            this.Page++;
-            this.Pages[this.Page] = new Page();
-            this.State = 2;
-            this.x = this.LeftMargin;
-            this.y = this.TopMargin;
-            this.FontFamily = "";
+            Page++;
+            Pages[Page] = new Page();
+            State = 2;
+            X = LeftMargin;
+            Y = TopMargin;
+            FontFamily = "";
             // Check page size and orientation
             if (orientation == PageOrientation.Default)
             {
-                orientation = this.DefOrientation;
+                orientation = DefOrientation;
             }
             if (size == null)
             {
-                size = this.DefPageSize;
+                size = DefPageSize;
             }
             else
             {
-                size = this._getpagesize(size);
+                size = _getpagesize(size);
             }
 
-            if (orientation != this.CurOrientation || size.Width != this.CurPageSize.Width || size.Heigth != this.CurPageSize.Heigth)
+            if (orientation != CurOrientation || size.Width != CurPageSize.Width || size.Heigth != CurPageSize.Heigth)
             {
                 // New size or orientation
                 if (orientation == PageOrientation.Portrait)
                 {
-                    this.w = size.Width;
-                    this.h = size.Heigth;
+                    W = size.Width;
+                    H = size.Heigth;
                 }
                 else
                 {
-                    this.w = size.Heigth;
-                    this.h = size.Width;
+                    W = size.Heigth;
+                    H = size.Width;
                 }
 
-                this.wPt = PHP.TypeSupport.ToDouble(this.w) * this.k;
-                this.hPt = PHP.TypeSupport.ToDouble(this.h) * this.k;
-                this.PageBreakTrigger = PHP.TypeSupport.ToDouble(this.h) - this.PageBreakMargin;
-                this.CurOrientation = orientation;
-                this.CurPageSize = size;
+                WPt = TypeSupport.ToDouble(W)*k;
+                HPt = TypeSupport.ToDouble(H)*k;
+                PageBreakTrigger = TypeSupport.ToDouble(H) - PageBreakMargin;
+                CurOrientation = orientation;
+                CurPageSize = size;
             }
-            if (orientation != this.DefOrientation || size.Width != this.DefPageSize.Width || size.Heigth != this.DefPageSize.Heigth)
+            if (orientation != DefOrientation || size.Width != DefPageSize.Width || size.Heigth != DefPageSize.Heigth)
             {
-                this.PageSizes[this.Page] = new Dimensions() { Width = this.wPt, Heigth = this.hPt };
+                PageSizes[Page] = new Dimensions {Width = WPt, Heigth = HPt};
             }
         }
 
         internal virtual void _endpage()
         {
-            this.State = 1;
+            State = 1;
         }
 
         internal virtual FontDefinition _loadfont(string font)
@@ -1740,19 +1758,19 @@ namespace Ego.PDF
             FontBuilder.Fonts.TryGetValue(font, out fontData);
             if (fontData == null || string.IsNullOrEmpty(fontData.name))
             {
-                this.Error("Could not include font definition file");
+                Error("Could not include font definition file");
             }
             return fontData;
         }
 
         internal virtual object _escape(string s)
         {
-            s =s
+            s = s
                 .Replace("\\", "\\\\")
                 .Replace("(", "\\(")
                 .Replace(")", "\\)")
                 .Replace("\r", "\\r");
-            
+
             /*
             s = PHP.StringSupport.StringReplace(s, "\\", "\\\\");
             s = PHP.StringSupport.StringReplace(s, "(", "\\(");
@@ -1765,31 +1783,26 @@ namespace Ego.PDF
         internal virtual string _textstring(string s)
         {
             // Format a text string
-            return "(" + PHP.TypeSupport.ToString(this._escape(s)) + ")";
+            return "(" + TypeSupport.ToString(_escape(s)) + ")";
         }
 
         internal virtual string _dounderline(double x, double y, string txt)
         {
             // Underline text
-            double up;
-            double ut;
-            double w;
-            up = this.CurrentFont.up;
-            ut = this.CurrentFont.ut;
-            w = this.GetStringWidth(txt) + this.ws * PHP.StringSupport.SubstringCount(txt, " ");
-            return sprintf("%.2F %.2F %.2F %.2F re f", x * this.k, (this.h - (y - up / 1000 * this.FontSize)) * this.k, w * this.k, (-ut) / 1000 * this.FontSizePt);
+            var up = CurrentFont.up;
+            var ut = CurrentFont.ut;
+            var w = GetStringWidth(txt) + Ws*StringSupport.SubstringCount(txt, " ");
+            return sprintf("%.2F %.2F %.2F %.2F re f", x*k, (H - (y - up/1000*FontSize))*k, w*k, (-ut)/1000*FontSizePt);
         }
 
         internal virtual ImageInfo _parsejpg(string file)
         {
             // Extract info from a JPEG file
-            string colspace;
-            int bpc;
-            List<byte[]> data;
 
-            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            Debug.Assert(path != null, "path != null");
             path = Path.Combine(path, file);
-            BitmapImage bi=new BitmapImage(new System.Uri(path));
+            var bi = new BitmapImage(new Uri(path));
 
             /*           
                         if (!PHP.TypeSupport.ToBoolean(a))
@@ -1802,9 +1815,9 @@ namespace Ego.PDF
                             this.Error("Not a JPEG file: " + file);
                         }
                         */
-            int channels = 3;
-     
-            colspace ="DeviceRGB";
+            var channels = 3;
+            const string colspace = "DeviceRGB";
+            
             /*
             if (b.PixelFormat== System.Drawing.Imaging.PixelFormat.)
             {
@@ -1819,37 +1832,37 @@ namespace Ego.PDF
                     colspace = "DeviceGray";
             }
              * */
-            bpc = bi.Format.BitsPerPixel;// (a["bits"] != null) ? PHP.TypeSupport.ToInt32(a["bits"]) : 8;
-            data = new List<byte[]> { PHP.FileSystemSupport.ReadContentBytes(file)};
-            return new ImageInfo()
-            {
-                w = bi.PixelWidth,
-                h = bi.PixelHeight,
-                cs = colspace,
-                bpc = bpc,
-                f = "DCTDecode",
-                data = data
-            };
+            var bpc = bi.Format.BitsPerPixel;
+            var data = new List<byte[]> {FileSystemSupport.ReadContentBytes(file)};
+            return new ImageInfo
+                {
+                    w = bi.PixelWidth,
+                    h = bi.PixelHeight,
+                    cs = colspace,
+                    bpc = bpc,
+                    f = "DCTDecode",
+                    data = data
+                };
             //return new PHP.OrderedMap(new object[] { "w", b.Width }, new object[] { "h", a[1] }, new object[] { "cs", colspace },
             //    new object[] { "bpc", bpc }, new object[] { "f", "DCTDecode" }, new object[] { "data", data });
         }
 
+        /// <summary>
+        /// Extract info from a PNG file
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
         internal virtual ImageInfo _parsepng(string file)
         {
-            // Extract info from a PNG file
-            System.IO.FileStream f;
-            ImageInfo info;
-            f = PHP.FileSystemSupport.FileOpen(file, "rb");
-            if (!PHP.TypeSupport.ToBoolean(f))
+            var f = FileSystemSupport.FileOpen(file, "rb");
+            if (!TypeSupport.ToBoolean(f))
             {
-                this.Error("Can\'t open image file: " + file);
+                Error("Can\'t open image file: " + file);
             }
 
             EndianBitConverter converter = new BigEndianBitConverter();
-
-            EndianBinaryReader reader = new EndianBinaryReader(converter ,   f, System.Text.Encoding.ASCII);
-
-            info = this._parsepngstream(f, reader, file);
+            var reader = new EndianBinaryReader(converter, f, Encoding.ASCII);
+            var info = _parsepngstream(f, reader, file);
             reader.Close();
             return info;
         }
@@ -1864,23 +1877,23 @@ namespace Ego.PDF
             string dp;
             byte[] pal;
             int[] trns;
-            byte[] data = new byte[] { };
+            var data = new byte[] {};
             int n;
             string type;
             string t;
             int pos;
-            ImageInfo info = new ImageInfo();
+            var info = new ImageInfo();
             StringBuilder color;
             StringBuilder alpha;
             int len;
             int i;
             string line;
-            var signature =this._readstream(reader, 8);
+            string signature = _readstream(reader, 8);
             if (!signature.Contains("PNG"))
             {
-                this.Error("Not a PNG file: " + file);
+                Error("Not a PNG file: " + file);
             }
-            
+
             /*
             if ( signature != System.Convert.ToString((char)137) + "PNG" + System.Convert.ToString((char)13) + System.Convert.ToString((char)10) + System.Convert.ToString((char)26) + System.Convert.ToString((char)10))
             {
@@ -1889,19 +1902,19 @@ namespace Ego.PDF
             */
 
             // Read header chunk
-            this._readstream(reader, 4);
-            if (this._readstream(reader, 4) != "IHDR")
+            _readstream(reader, 4);
+            if (_readstream(reader, 4) != "IHDR")
             {
-                this.Error("Incorrect PNG file: " + file);
+                Error("Incorrect PNG file: " + file);
             }
             w = reader.ReadInt32();
             height = reader.ReadInt32();
-            bpc = (int)this._readstream(reader, 1)[0];
+            bpc = _readstream(reader, 1)[0];
             if (bpc > 8)
             {
-                this.Error("16-bit depth not supported: " + file);
+                Error("16-bit depth not supported: " + file);
             }
-            ct = (int)this._readstream(reader, 1)[0];
+            ct = _readstream(reader, 1)[0];
 
             colspace = "DeviceRGB";
 
@@ -1919,65 +1932,66 @@ namespace Ego.PDF
             }
             else
             {
-                this.Error("Unknown color type: " + file);
+                Error("Unknown color type: " + file);
             }
-            if ((int)this._readstream(reader, 1)[0] != 0)
+            if (_readstream(reader, 1)[0] != 0)
             {
-                this.Error("Unknown compression method: " + file);
+                Error("Unknown compression method: " + file);
             }
-            if ((int)this._readstream(reader, 1)[0] != 0)
+            if (_readstream(reader, 1)[0] != 0)
             {
-                this.Error("Unknown filter method: " + file);
+                Error("Unknown filter method: " + file);
             }
-            if ((int)this._readstream(reader, 1)[0] != 0)
+            if (_readstream(reader, 1)[0] != 0)
             {
-                this.Error("Interlacing not supported: " + file);
+                Error("Interlacing not supported: " + file);
             }
-            this._readstream(reader, 4);
-            dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1).ToString() + " /BitsPerComponent " + bpc.ToString() + " /Columns " + w.ToString();
+            _readstream(reader, 4);
+            dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1).ToString() + " /BitsPerComponent " +
+                 bpc.ToString() + " /Columns " + w.ToString();
 
             // Scan chunks looking for palette, transparency and image data
             pal = new byte[] {};
-            trns = new int[] { };
-            data = new byte[] { };
+            trns = new int[] {};
+            data = new byte[] {};
             do
             {
                 n = reader.ReadInt32();
-                type = this._readstream(reader, 4);
+                type = _readstream(reader, 4);
                 if (type == "PLTE")
                 {
                     // Read palette
-                    pal = this._readStreamBytes(reader, n);
-                    this._readstream(reader, 4);
+                    pal = _readStreamBytes(reader, n);
+                    _readstream(reader, 4);
                 }
                 else if (type == "tRNS")
                 {
                     // Read transparency info
-                    t = this._readstream(reader, n);
+                    t = _readstream(reader, n);
                     if (ct == 0)
                     {
-                        trns = new int[] { Convert.ToInt32(t[1]) }; // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
+                        trns = new[] {Convert.ToInt32(t[1])}; // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
                     }
                     else if (ct == 2)
                     {
                         //trns = new PHP.OrderedMap((int)t.Substring(1, 1)[0], (int)t.Substring(3, 1)[0], (int)t.Substring(5, 1)[0]);
-                        trns = new int[] { Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5]) };
+                        trns = new[] {Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5])};
                     }
                     else
                     {
-                        pos = t.IndexOf(System.Convert.ToString((char)0));
+                        pos = t.IndexOf(Convert.ToString((char) 0));
                         if (pos > 0)
                         {
-                            trns = new int[] { pos };
+                            trns = new[] {pos};
                         }
                     }
-                    this._readstream(reader, 4);
+                    _readstream(reader, 4);
                 }
                 else if (type == "IDAT")
                 {
                     // Read image data block
                     data = _readStreamBytes(reader, n);
-                    this._readstream(reader, 4);
+                    _readstream(reader, 4);
                 }
 
                 else if (type == "IEND")
@@ -1986,27 +2000,26 @@ namespace Ego.PDF
                 }
                 else
                 {
-                    this._readstream(reader, n + 4);
+                    _readstream(reader, n + 4);
                 }
-            }
-            while (System.Convert.ToBoolean(n));
+            } while (Convert.ToBoolean(n));
 
-            if (colspace == "Indexed" && PHP.VariableSupport.Empty(pal))
+            if (colspace == "Indexed" && VariableSupport.Empty(pal))
             {
-                this.Error("Missing palette in " + file);
+                Error("Missing palette in " + file);
             }
             info =
-                new ImageInfo()
-                {
-                    w = w,
-                    h = height,
-                    cs = colspace,
-                    bpc = bpc,
-                    f = "FlateDecode",
-                    dp = dp,
-                    pal = pal,
-                    trns = trns
-                };
+                new ImageInfo
+                    {
+                        w = w,
+                        h = height,
+                        cs = colspace,
+                        bpc = bpc,
+                        f = "FlateDecode",
+                        dp = dp,
+                        pal = pal,
+                        trns = trns
+                    };
             //new PHP.OrderedMap(new object[] { "w", w }, new object[] { "h", h }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "FlateDecode" }, new object[] { "dp", dp }, new object[] { "pal", pal }, new object[] { "trns", trns });
 
 
@@ -2019,10 +2032,10 @@ namespace Ego.PDF
                 if (ct == 4)
                 {
                     // Gray image
-                    len = 2 * w;
+                    len = 2*w;
                     for (i = 0; i < height; i++)
                     {
-                        pos = (1 + len) * i;
+                        pos = (1 + len)*i;
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
@@ -2038,14 +2051,14 @@ namespace Ego.PDF
                 else
                 {
                     // RGB image
-                    len = 4 * w;
+                    len = 4*w;
                     for (i = 0; i < height; i++)
                     {
-                        pos = (1 + len) * i;
+                        pos = (1 + len)*i;
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
-                        for (int posLinea = 0; posLinea < line.Length; posLinea += 4 )
+                        for (int posLinea = 0; posLinea < line.Length; posLinea += 4)
                         {
                             color.Append(line.Substring(posLinea, 3));
                             alpha.Append(line[posLinea + 3]);
@@ -2057,19 +2070,20 @@ namespace Ego.PDF
                 data = GzCompressString(color.ToString());
                 info.data.Add(data);
                 info.smask = GzCompressString(alpha.ToString());
-                if (this.PDFVersion.CompareTo("1.4") < 0)
+                if (PdfVersion.CompareTo("1.4") < 0)
                 {
-                    this.PDFVersion = "1.4";
+                    PdfVersion = "1.4";
                 }
             }
             else
             {
-                info.data = new List<byte[]>() { data };
-            } return info;
+                info.data = new List<byte[]> {data};
+            }
+            return info;
         }
 
 
-        static string CapText(Match m)
+        private static string CapText(Match m)
         {
             // Get the matched string.
             string x = m.ToString();
@@ -2098,22 +2112,22 @@ namespace Ego.PDF
 
             while (n > 0 && !(br.BaseStream.Position >= br.BaseStream.Length))
             {
-                s = PHP.FileSystemSupport.Read(br, n);
+                s = FileSystemSupport.Read(br, n);
                 if (s == null)
                 {
-                    this.Error("Error while reading stream");
+                    Error("Error while reading stream");
                 }
                 n -= s.Length;
                 res += s;
             }
             if (n > 0)
             {
-                this.Error("Unexpected end of stream");
+                Error("Unexpected end of stream");
             }
             return res;
         }
 
-        internal virtual Int32 _readint(System.IO.FileStream f, BinaryReader br)
+        internal virtual Int32 _readint(FileStream f, BinaryReader br)
         {
             // Read a 4-byte integer from stream
             //PHP.OrderedMap a;
@@ -2197,41 +2211,41 @@ namespace Ego.PDF
         internal virtual void _newobj()
         {
             // Begin a new object
-            this.n++;
-            this.Offsets[this.n] = this.Buffer.Length;
-            this._out(this.n.ToString() + " 0 obj");
+            n++;
+            Offsets[n] = Buffer.Length;
+            _out(n.ToString() + " 0 obj");
         }
 
         internal virtual void _putstream(string s)
         {
-            this._out("stream");
-            this._out(s);
-            this._out("endstream");
+            _out("stream");
+            _out(s);
+            _out("endstream");
         }
 
         internal virtual void _putstream(byte[] bytes)
         {
-            this._out("stream");
-            this._out(bytes);
-            this._out("endstream");
+            _out("stream");
+            _out(bytes);
+            _out("endstream");
         }
 
         internal virtual void _putstream(List<byte[]> bytes)
         {
-            this._out("stream");
-            this._out(bytes);
-            this._out("endstream");
+            _out("stream");
+            _out(bytes);
+            _out("endstream");
         }
 
         internal virtual void _out(object s)
         {
             // Add a line to the document
-            if (this.State == 2)
+            if (State == 2)
             {
                 //TODO: APPENDLN ?
-                this.Pages[this.Page]
-                    .Append(PHP.TypeSupport.ToString(s));
-                this.Pages[this.Page]
+                Pages[Page]
+                    .Append(TypeSupport.ToString(s));
+                Pages[Page]
                     .Append("\n");
             }
             else
@@ -2240,18 +2254,18 @@ namespace Ego.PDF
                 {
                     foreach (var v in (s as List<byte[]>))
                     {
-                        this.Buffer += PrivateEnconding.GetString((byte[])v);
+                        Buffer += PrivateEnconding.GetString(v);
                     }
-                    this.Buffer += "\n";
+                    Buffer += "\n";
                 }
                 else if (s is byte[])
                 {
-                    this.Buffer += PrivateEnconding.GetString((byte[])s);
-                    this.Buffer += "\n";
+                    Buffer += PrivateEnconding.GetString((byte[]) s);
+                    Buffer += "\n";
                 }
                 else
                 {
-                    this.Buffer += PHP.TypeSupport.ToString(s) + "\n";
+                    Buffer += TypeSupport.ToString(s) + "\n";
                 }
             }
         }
@@ -2269,44 +2283,44 @@ namespace Ego.PDF
             byte[] p;
             string kids;
             int i;
-            nb = this.Page;
-            if (!PHP.VariableSupport.Empty(this.AliasNbPages_Renamed))
+            nb = Page;
+            if (!VariableSupport.Empty(AliasNbPagesRenamed))
             {
                 // Replace number of pages
                 for (n = 1; n <= nb; n++)
                 {
                     //string page = Convert.ToString(this.pages[n]);
-                    this.Pages[n].Replace(this.AliasNbPages_Renamed, nb.ToString());
+                    Pages[n].Replace(AliasNbPagesRenamed, nb.ToString());
                 }
             }
-            if (this.DefOrientation == PageOrientation.Portrait)
+            if (DefOrientation == PageOrientation.Portrait)
             {
-                wPt = PHP.TypeSupport.ToDouble(this.DefPageSize.Width) * this.k;
-                hPt = PHP.TypeSupport.ToDouble(this.DefPageSize.Heigth) * this.k;
+                wPt = TypeSupport.ToDouble(DefPageSize.Width)*k;
+                hPt = TypeSupport.ToDouble(DefPageSize.Heigth)*k;
             }
             else
             {
-                wPt = PHP.TypeSupport.ToDouble(this.DefPageSize.Heigth) * this.k;
-                hPt = PHP.TypeSupport.ToDouble(this.DefPageSize.Width) * this.k;
+                wPt = TypeSupport.ToDouble(DefPageSize.Heigth)*k;
+                hPt = TypeSupport.ToDouble(DefPageSize.Width)*k;
             }
-            filter = (this.Compress) ? "/Filter /FlateDecode " : "";
+            filter = (Compress) ? "/Filter /FlateDecode " : "";
             for (n = 1; n <= nb; n++)
             {
                 // Page
-                this._newobj();
-                this._out("<</Type /Page");
-                this._out("/Parent 1 0 R");
-                if (this.PageSizes.ContainsKey(n))
+                _newobj();
+                _out("<</Type /Page");
+                _out("/Parent 1 0 R");
+                if (PageSizes.ContainsKey(n))
                 {
-                    this._out(sprintf("/MediaBox [0 0 %.2F %.2F]", this.PageSizes[n].Width, this.PageSizes[n].Heigth));
+                    _out(sprintf("/MediaBox [0 0 %.2F %.2F]", PageSizes[n].Width, PageSizes[n].Heigth));
                     //this._out(sprintf("/MediaBox [0 0 %.2F %.2F]", this.PageSizes[n].Widht, this.PageSizes[n].Height));
                 }
-                this._out("/Resources 2 0 R");
-                if (this.Pages[n].PageLinks.Count > 0)
+                _out("/Resources 2 0 R");
+                if (Pages[n].PageLinks.Count > 0)
                 {
                     // Links
-                     annots = "/Annots [";
-                    foreach (var pl in this.Pages[n].PageLinks)
+                    annots = "/Annots [";
+                    foreach (PageLink pl in Pages[n].PageLinks)
                     {
                         rect = sprintf("%.2F %.2F %.2F %.2F", pl.P0, pl.P1, pl.P0 + pl.P2, pl.P1 - pl.P3);
                         annots += "<</Type /Annot /Subtype /Link /Rect [" + rect + "] /Border [0 0 0] ";
@@ -2314,11 +2328,10 @@ namespace Ego.PDF
 
                         if (pl.Link is LinkDataInternal)
                         {
-                            var link = this.links[(pl.Link as LinkDataInternal).InternalLink];
+                            LinkDataInternal link = Links[(pl.Link as LinkDataInternal).InternalLink];
                             int l0 = link.PageIndex;
-                            h = (this.PageSizes.ContainsKey(l0)) ? PHP.TypeSupport.ToDouble(this.PageSizes[l0].Heigth) : hPt;
-                            annots += sprintf("/Dest [%d 0 R /XYZ 0 %.2F null]>>", 1 + 2 * link.PageIndex, h - link.Y * this.k);
-
+                            h = (PageSizes.ContainsKey(l0)) ? TypeSupport.ToDouble(PageSizes[l0].Heigth) : hPt;
+                            annots += sprintf("/Dest [%d 0 R /XYZ 0 %.2F null]>>", 1 + 2*link.PageIndex, h - link.Y*k);
                         }
                         else if (pl.Link is LinkDataUri)
                         {
@@ -2327,44 +2340,44 @@ namespace Ego.PDF
                         else
                             throw new NotImplementedException();
                     }
-                    this._out(annots + "]");
+                    _out(annots + "]");
                 }
-                if (this.PDFVersion.CompareTo("1.3") > 0)
+                if (PdfVersion.CompareTo("1.3") > 0)
                 {
-                    this._out("/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>");
+                    _out("/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>");
                 }
-                this._out("/Contents " + (this.n + 1).ToString() + " 0 R>>");
-                this._out("endobj");
+                _out("/Contents " + (this.n + 1).ToString() + " 0 R>>");
+                _out("endobj");
                 // Page content
-                if (this.Compress)
+                if (Compress)
                 {
-                    p = GzCompressString(this.Pages[n].ToString());
-                    this._newobj();
-                    this._out("<<" + filter + "/Length " + p.Length.ToString() + ">>");
-                    this._putstream(p);
-                    this._out("endobj");
+                    p = GzCompressString(Pages[n].ToString());
+                    _newobj();
+                    _out("<<" + filter + "/Length " + p.Length.ToString() + ">>");
+                    _putstream(p);
+                    _out("endobj");
                 }
                 else
                 {
-                    string p1 = this.Pages[n].ToString();
-                    this._newobj();
-                    this._out("<<" + filter + "/Length " + p1.Length.ToString() + ">>");
-                    this._putstream(p1);
-                    this._out("endobj");
+                    string p1 = Pages[n].ToString();
+                    _newobj();
+                    _out("<<" + filter + "/Length " + p1.Length.ToString() + ">>");
+                    _putstream(p1);
+                    _out("endobj");
                 }
             }
             // Pages root
-            this.Offsets[1] = this.Buffer.Length;
-            this._out("1 0 obj");
-            this._out("<</Type /Pages");
+            Offsets[1] = Buffer.Length;
+            _out("1 0 obj");
+            _out("<</Type /Pages");
             kids = "/Kids [";
             for (i = 0; i < nb; i++)
-                kids += (3 + 2 * i).ToString() + " 0 R ";
-            this._out(kids + "]");
-            this._out("/Count " + nb.ToString());
-            this._out(sprintf("/MediaBox [0 0 %.2F %.2F]", wPt, hPt));
-            this._out(">>");
-            this._out("endobj");
+                kids += (3 + 2*i).ToString() + " 0 R ";
+            _out(kids + "]");
+            _out("/Count " + nb.ToString());
+            _out(sprintf("/MediaBox [0 0 %.2F %.2F]", wPt, hPt));
+            _out(">>");
+            _out("endobj");
         }
 
         internal virtual void _putfonts()
@@ -2373,131 +2386,133 @@ namespace Ego.PDF
             bool compressed;
             FontTypeEnum type;
             string name;
-            PHP.OrderedMap cw;
+            OrderedMap cw;
             string s;
             int i;
             string mtd;
             string font;
-            nf = this.n;
-            foreach (object diff in this.diffs.Values)
+            nf = n;
+            foreach (object diff in Diffs.Values)
             {
                 // Encodings
-                this._newobj();
-                this._out("<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [" + PHP.TypeSupport.ToString(diff) + "]>>");
-                this._out("endobj");
+                _newobj();
+                _out("<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [" + TypeSupport.ToString(diff) +
+                     "]>>");
+                _out("endobj");
             }
 
-            foreach (string file in this.FontFiles.Keys)
+            foreach (string file in FontFiles.Keys)
             {
-                FontDefinition info = this.Fonts[file];
+                FontDefinition info = Fonts[file];
                 // Font file embedding
-                this._newobj();
-                info.n = this.n;
+                _newobj();
+                info.n = n;
                 //file_get_contents' returns a string 
-                font = PHP.FileSystemSupport.ReadContents(this.fontpath + file);
+                font = FileSystemSupport.ReadContents(Fontpath + file);
                 if (string.IsNullOrWhiteSpace(font))
                 {
-                    this.Error("Font file not found: " + file);
+                    Error("Font file not found: " + file);
                 }
                 string extension = Path.GetExtension(file);
                 compressed = (extension == ".z");
                 if (!compressed && info.length2 > 0)
                 {
-                    font = PHP.TypeSupport.ToString(font).Substring(6, info.length1)
-                        + PHP.TypeSupport.ToString(font).Substring(6 + info.length1 + 6, info.length2);
+                    font = TypeSupport.ToString(font).Substring(6, info.length1)
+                           + TypeSupport.ToString(font).Substring(6 + info.length1 + 6, info.length2);
                 }
-                this._out("<</Length " + font.Length.ToString());
+                _out("<</Length " + font.Length.ToString());
                 if (compressed)
                 {
-                    this._out("/Filter /FlateDecode");
+                    _out("/Filter /FlateDecode");
                 }
-                this._out("/Length1 " + PHP.TypeSupport.ToString(info.length1));
+                _out("/Length1 " + TypeSupport.ToString(info.length1));
                 if (info.length2 != 0)
                 {
-                    this._out("/Length2 " + PHP.TypeSupport.ToString(info.length2) + " /Length3 0");
+                    _out("/Length2 " + TypeSupport.ToString(info.length2) + " /Length3 0");
                 }
-                this._out(">>");
-                this._putstream(font);
-                this._out("endobj");
+                _out(">>");
+                _putstream(font);
+                _out("endobj");
             }
 
-            foreach (string k in this.Fonts.Keys)
+            foreach (string k in Fonts.Keys)
             {
-                FontDefinition font1 = this.Fonts[k];
+                FontDefinition font1 = Fonts[k];
                 // Font objects
-                font1.n = this.n + 1;
+                font1.n = n + 1;
                 type = font1.type;
                 name = font1.name;
                 if (type == FontTypeEnum.Core)
                 {
                     // Core font
-                    this._newobj();
-                    this._out("<</Type /Font");
-                    this._out("/BaseFont /" + PHP.TypeSupport.ToString(name));
-                    this._out("/Subtype /Type1");
-                    if (PHP.TypeSupport.ToString(name) != "Symbol" && PHP.TypeSupport.ToString(name) != "ZapfDingbats")
+                    _newobj();
+                    _out("<</Type /Font");
+                    _out("/BaseFont /" + TypeSupport.ToString(name));
+                    _out("/Subtype /Type1");
+                    if (TypeSupport.ToString(name) != "Symbol" && TypeSupport.ToString(name) != "ZapfDingbats")
                     {
-                        this._out("/Encoding /WinAnsiEncoding");
+                        _out("/Encoding /WinAnsiEncoding");
                     }
-                    this._out(">>");
-                    this._out("endobj");
+                    _out(">>");
+                    _out("endobj");
                 }
                 else if (type == FontTypeEnum.Type1 || type == FontTypeEnum.TrueType)
                 {
                     // Additional Type1 or TrueType/OpenType font
-                    this._newobj();
-                    this._out("<</Type /Font");
-                    this._out("/BaseFont /" + PHP.TypeSupport.ToString(name));
-                    this._out("/Subtype /" + PHP.TypeSupport.ToString(type));
-                    this._out("/FirstChar 32 /LastChar 255");
-                    this._out("/Widths " + (this.n + 1).ToString() + " 0 R");
-                    this._out("/FontDescriptor " + (this.n + 2).ToString() + " 0 R");
+                    _newobj();
+                    _out("<</Type /Font");
+                    _out("/BaseFont /" + TypeSupport.ToString(name));
+                    _out("/Subtype /" + TypeSupport.ToString(type));
+                    _out("/FirstChar 32 /LastChar 255");
+                    _out("/Widths " + (n + 1).ToString() + " 0 R");
+                    _out("/FontDescriptor " + (n + 2).ToString() + " 0 R");
                     if (font1.diffn.HasValue)
                     {
-                        this._out("/Encoding " + (nf + font1.diffn).ToString() + " 0 R");
+                        _out("/Encoding " + (nf + font1.diffn).ToString() + " 0 R");
                     }
                     else
                     {
-                        this._out("/Encoding /WinAnsiEncoding");
+                        _out("/Encoding /WinAnsiEncoding");
                     }
-                    this._out(">>");
-                    this._out("endobj");
+                    _out(">>");
+                    _out("endobj");
                     // Widths
-                    this._newobj();
-                    cw = PHP.TypeSupport.ToArray(font1.cw);
+                    _newobj();
+                    cw = TypeSupport.ToArray(font1.cw);
                     s = "[";
                     for (i = 32; i <= 255; i++)
-                        s += PHP.TypeSupport.ToString(cw[System.Convert.ToString((char)i)]) + " ";
-                    this._out(s + "]");
-                    this._out("endobj");
+                        s += TypeSupport.ToString(cw[Convert.ToString((char) i)]) + " ";
+                    _out(s + "]");
+                    _out("endobj");
                     // Descriptor
-                    this._newobj();
-                    s = "<</Type /FontDescriptor /FontName /" + PHP.TypeSupport.ToString(name);
+                    _newobj();
+                    s = "<</Type /FontDescriptor /FontName /" + TypeSupport.ToString(name);
                     foreach (string k1 in font1.desc.Keys)
                     {
                         object v = font1.desc[k1];
-                        s += " /" + k1 + " " + PHP.TypeSupport.ToString(v);
+                        s += " /" + k1 + " " + TypeSupport.ToString(v);
                     }
 
                     if (!string.IsNullOrEmpty(font1.file))
                     {
-                        s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " + PHP.TypeSupport.ToString(this.Fonts[font1.file].n) + " 0 R";
+                        s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " +
+                             TypeSupport.ToString(Fonts[font1.file].n) + " 0 R";
                     }
-                    this._out(s + ">>");
-                    this._out("endobj");
+                    _out(s + ">>");
+                    _out("endobj");
                 }
                 else
                 {
-                    this.Error("Unsupported font type: " + PHP.TypeSupport.ToString(type));
+                    Error("Unsupported font type: " + TypeSupport.ToString(type));
                 }
             }
         }
 
         internal virtual void _putimages()
         {
-            foreach (var file in this.images)
+            foreach (var file in Images)
             {
-                this._putimage(file.Value);
+                _putimage(file.Value);
                 file.Value.data = null; //unset, probably not needed
                 file.Value.smask = null; //unset, probably not needed
             }
@@ -2510,67 +2525,68 @@ namespace Ego.PDF
             ImageInfo smask;
             string filter;
             byte[] pal;
-            this._newobj();
-            info.n = this.n;
-            this._out("<</Type /XObject");
-            this._out("/Subtype /Image");
-            this._out("/Width " + info.w.ToString());
-            this._out("/Height " + info.h.ToString());
+            _newobj();
+            info.n = n;
+            _out("<</Type /XObject");
+            _out("/Subtype /Image");
+            _out("/Width " + info.w.ToString());
+            _out("/Height " + info.h.ToString());
             if (info.cs == "Indexed")
             {
-                this._out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length / 3 - 1).ToString() + " " + (this.n + 1).ToString() + " 0 R]");
+                _out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length/3 - 1).ToString() + " " + (n + 1).ToString() +
+                     " 0 R]");
             }
             else
             {
-                this._out("/ColorSpace /" + PHP.TypeSupport.ToString(info.cs));
-                if (PHP.TypeSupport.ToString(info.cs) == "DeviceCMYK")
+                _out("/ColorSpace /" + TypeSupport.ToString(info.cs));
+                if (TypeSupport.ToString(info.cs) == "DeviceCMYK")
                 {
-                    this._out("/Decode [1 0 1 0 1 0 1 0]");
+                    _out("/Decode [1 0 1 0 1 0 1 0]");
                 }
             }
-            this._out("/BitsPerComponent " + PHP.TypeSupport.ToString(info.bpc));
+            _out("/BitsPerComponent " + TypeSupport.ToString(info.bpc));
             if (info.f != null)
             {
-                this._out("/Filter /" + PHP.TypeSupport.ToString(info.f));
+                _out("/Filter /" + TypeSupport.ToString(info.f));
             }
             if (info.dp != null)
             {
-                this._out("/DecodeParms <<" + PHP.TypeSupport.ToString(info.dp) + ">>");
+                _out("/DecodeParms <<" + TypeSupport.ToString(info.dp) + ">>");
             }
             if (info.trns != null && info.trns.Count() > 0)
             {
                 trns = "";
-                foreach (var trn in info.trns)
+                foreach (int trn in info.trns)
                 {
                     trns += trn + " " + trn + " ";
                 }
-                this._out("/Mask [" + trns + "]");
+                _out("/Mask [" + trns + "]");
             }
             if (info.smask != null)
             {
-                this._out("/SMask " + (this.n + 1).ToString() + " 0 R");
+                _out("/SMask " + (n + 1).ToString() + " 0 R");
             }
 
             int largo = info.data.Select(x => x.Length).Sum();
 
-            this._out("/Length " + largo.ToString() + ">>");
-            this._putstream(info.data);
-            this._out("endobj");
+            _out("/Length " + largo.ToString() + ">>");
+            _putstream(info.data);
+            _out("endobj");
             // Soft mask
             //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
             if (info.smask != null)
             {
-                dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + PHP.TypeSupport.ToString(info.w);
-                smask = new ImageInfo()
-                {
-                    w = info.w,
-                    h = info.h,
-                    cs = "DeviceGray",
-                    bpc = 8,
-                    f = info.f,
-                    dp = dp,
-                    data = new List<byte[]> { info.smask }
-                };
+                dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + TypeSupport.ToString(info.w);
+                smask = new ImageInfo
+                    {
+                        w = info.w,
+                        h = info.h,
+                        cs = "DeviceGray",
+                        bpc = 8,
+                        f = info.f,
+                        dp = dp,
+                        data = new List<byte[]> {info.smask}
+                    };
                 /*
                 smask = new PHP.OrderedMap(
                         new object[] { "w", info.w }, 
@@ -2581,13 +2597,13 @@ namespace Ego.PDF
                         new object[] { "dp", dp },
                         new object[] { "data", info.smask });
                 */
-                this._putimage(smask);
+                _putimage(smask);
             }
             // Palette
-            if (PHP.TypeSupport.ToString(info.cs) == "Indexed")
+            if (TypeSupport.ToString(info.cs) == "Indexed")
             {
-                filter = (this.Compress) ? "/Filter /FlateDecode " : "";
-                if (this.Compress)
+                filter = (Compress) ? "/Filter /FlateDecode " : "";
+                if (Compress)
                 {
                     pal = gzcompress(info.pal);
                 }
@@ -2595,150 +2611,150 @@ namespace Ego.PDF
                 {
                     pal = info.pal;
                 }
-                this._newobj();
-                this._out("<<" + filter + "/Length " + pal.Length.ToString() + ">>");
-                this._putstream(pal);
-                this._out("endobj");
+                _newobj();
+                _out("<<" + filter + "/Length " + pal.Length.ToString() + ">>");
+                _putstream(pal);
+                _out("endobj");
             }
         }
 
         internal virtual void _putxobjectdict()
         {
-            foreach (ImageInfo image in this.images.Values)
+            foreach (ImageInfo image in Images.Values)
             {
-                this._out("/I" + PHP.TypeSupport.ToString(image.i) + " " + PHP.TypeSupport.ToString(image.n) + " 0 R");
+                _out("/I" + TypeSupport.ToString(image.i) + " " + TypeSupport.ToString(image.n) + " 0 R");
             }
         }
 
         internal virtual void _putresourcedict()
         {
-            this._out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]");
-            this._out("/Font <<");
-            foreach (FontDefinition font in this.Fonts.Values)
+            _out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]");
+            _out("/Font <<");
+            foreach (FontDefinition font in Fonts.Values)
             {
-                this._out("/F" + PHP.TypeSupport.ToString(font.i) + " " + PHP.TypeSupport.ToString(font.n) + " 0 R");
+                _out("/F" + TypeSupport.ToString(font.i) + " " + TypeSupport.ToString(font.n) + " 0 R");
             }
-            this._out(">>");
-            this._out("/XObject <<");
-            this._putxobjectdict();
-            this._out(">>");
+            _out(">>");
+            _out("/XObject <<");
+            _putxobjectdict();
+            _out(">>");
         }
 
         internal virtual void _putresources()
         {
-            this._putfonts();
-            this._putimages();
+            _putfonts();
+            _putimages();
             // Resource dictionary
-            this.Offsets[2] = this.Buffer.Length;
-            this._out("2 0 obj");
-            this._out("<<");
-            this._putresourcedict();
-            this._out(">>");
-            this._out("endobj");
+            Offsets[2] = Buffer.Length;
+            _out("2 0 obj");
+            _out("<<");
+            _putresourcedict();
+            _out(">>");
+            _out("endobj");
         }
 
         //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
         internal virtual void _putinfo()
         {
-            this._out("/Producer " + this._textstring("FPDF " + FPDF_VERSION));
-            if (!PHP.VariableSupport.Empty(this.Title))
+            _out("/Producer " + _textstring("FPDF " + FpdfVersion));
+            if (!VariableSupport.Empty(Title))
             {
-                this._out("/Title " + this._textstring(this.Title));
+                _out("/Title " + _textstring(Title));
             }
-            if (!PHP.VariableSupport.Empty(this.Subject))
+            if (!VariableSupport.Empty(Subject))
             {
-                this._out("/Subject " + this._textstring(this.Subject));
+                _out("/Subject " + _textstring(Subject));
             }
-            if (!PHP.VariableSupport.Empty(this.Author))
+            if (!VariableSupport.Empty(Author))
             {
-                this._out("/Author " + this._textstring(this.Author));
+                _out("/Author " + _textstring(Author));
             }
-            if (!PHP.VariableSupport.Empty(this.Keywords))
+            if (!VariableSupport.Empty(Keywords))
             {
-                this._out("/Keywords " + this._textstring(this.Keywords));
+                _out("/Keywords " + _textstring(Keywords));
             }
-            if (!PHP.VariableSupport.Empty(this.Creator))
+            if (!VariableSupport.Empty(Creator))
             {
-                this._out("/Creator " + this._textstring(this.Creator));
+                _out("/Creator " + _textstring(Creator));
             }
             //CONVERSION_WARNING: Method 'date' was converted to 'System.DateTime.ToString' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/date.htm 
             //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
-            this._out("/CreationDate " + this._textstring("D:" + @System.DateTime.Now.ToString("YmdHis")));
+            _out("/CreationDate " + _textstring("D:" + DateTime.Now.ToString("YmdHis")));
         }
 
         internal virtual void _putcatalog()
         {
-            this._out("/Type /Catalog");
-            this._out("/Pages 1 0 R");
-            if (this.ZoomMode == "fullpage")
+            _out("/Type /Catalog");
+            _out("/Pages 1 0 R");
+            if (ZoomMode == "fullpage")
             {
-                this._out("/OpenAction [3 0 R /Fit]");
+                _out("/OpenAction [3 0 R /Fit]");
             }
-            else if (this.ZoomMode == "fullwidth")
+            else if (ZoomMode == "fullwidth")
             {
-                this._out("/OpenAction [3 0 R /FitH null]");
+                _out("/OpenAction [3 0 R /FitH null]");
             }
-            else if (this.ZoomMode == "real")
+            else if (ZoomMode == "real")
             {
-                this._out("/OpenAction [3 0 R /XYZ null null 1]");
+                _out("/OpenAction [3 0 R /XYZ null null 1]");
             }
-            else if (!(string.IsNullOrEmpty(this.ZoomMode)))
+            else if (!(string.IsNullOrEmpty(ZoomMode)))
             {
-                this._out("/OpenAction [3 0 R /XYZ null null " + sprintf("%.2F", PHP.TypeSupport.ToDouble(this.ZoomMode) / 100) + "]");
+                _out("/OpenAction [3 0 R /XYZ null null " + sprintf("%.2F", TypeSupport.ToDouble(ZoomMode)/100) + "]");
             }
-            if (this.LayoutMode == "single")
+            if (LayoutMode == "single")
             {
-                this._out("/PageLayout /SinglePage");
+                _out("/PageLayout /SinglePage");
             }
-            else if (this.LayoutMode == "continuous")
+            else if (LayoutMode == "continuous")
             {
-                this._out("/PageLayout /OneColumn");
+                _out("/PageLayout /OneColumn");
             }
-            else if (this.LayoutMode == "two")
+            else if (LayoutMode == "two")
             {
-                this._out("/PageLayout /TwoColumnLeft");
+                _out("/PageLayout /TwoColumnLeft");
             }
         }
 
         internal virtual void _putheader()
         {
-            this._out("%PDF-" + this.PDFVersion);
+            _out("%PDF-" + PdfVersion);
         }
 
         internal virtual void _puttrailer()
         {
-            this._out("/Size " + (this.n + 1).ToString());
-            this._out("/Root " + this.n.ToString() + " 0 R");
-            this._out("/Info " + (this.n - 1).ToString() + " 0 R");
+            _out("/Size " + (n + 1).ToString());
+            _out("/Root " + n.ToString() + " 0 R");
+            _out("/Info " + (n - 1).ToString() + " 0 R");
         }
 
         internal virtual void _enddoc()
         {
             object o;
             int i;
-            this._putheader();
-            this._putpages();
-            this._putresources();
+            _putheader();
+            _putpages();
+            _putresources();
             // Info
-            this._newobj();
-            this._out("<<");
-            this._putinfo();
-            this._out(">>");
-            this._out("endobj");
+            _newobj();
+            _out("<<");
+            _putinfo();
+            _out(">>");
+            _out("endobj");
             // Catalog
-            this._newobj();
-            this._out("<<");
-            this._putcatalog();
-            this._out(">>");
-            this._out("endobj");
+            _newobj();
+            _out("<<");
+            _putcatalog();
+            _out(">>");
+            _out("endobj");
             // Cross-ref
-            o = this.Buffer.Length;
-            this._out("xref");
-            this._out("0 " + (this.n + 1).ToString());
-            this._out("0000000000 65535 f ");
-            for (i = 1; i <= this.n; i++)
+            o = Buffer.Length;
+            _out("xref");
+            _out("0 " + (n + 1).ToString());
+            _out("0000000000 65535 f ");
+            for (i = 1; i <= n; i++)
             {
-                this._out(sprintf("%010d 00000 n ", this.Offsets[i]));
+                _out(sprintf("%010d 00000 n ", Offsets[i]));
                 /*
                  * Warning: string.format has a different behaviour for negative numbers
                 if (this.offsets[i] < 0)
@@ -2751,37 +2767,37 @@ namespace Ego.PDF
                 }*/
             }
             // Trailer
-            this._out("trailer");
-            this._out("<<");
-            this._puttrailer();
-            this._out(">>");
-            this._out("startxref");
-            this._out(o);
-            this._out("%%EOF");
-            this.State = 3;
+            _out("trailer");
+            _out("<<");
+            _puttrailer();
+            _out(">>");
+            _out("startxref");
+            _out(o);
+            _out("%%EOF");
+            State = 3;
         }
 
-         public static string sprintf(string Format, params object[] Parameters)
+        public static string sprintf(string Format, params object[] Parameters)
         {
-            string result = PDF.SprintfTools.sprintf(Format, Parameters);
+            string result = SprintfTools.sprintf(Format, Parameters);
             return result;
         }
 
         public byte[] gzcompress(byte[] value)
         {
-            MemoryStream outstream = new MemoryStream();
-            Ionic.Zlib.ZlibStream g = new Ionic.Zlib.ZlibStream(outstream, Ionic.Zlib.CompressionMode.Compress);
+            var outstream = new MemoryStream();
+            var g = new ZlibStream(outstream, CompressionMode.Compress);
             g.Write(value, 0, value.Length);
             g.Close();
-            var result = outstream.ToArray();
+            byte[] result = outstream.ToArray();
             return result;
         }
-        
+
         public byte[] gzuncompress(byte[] value)
         {
-            MemoryStream instream = new MemoryStream(value, false);
-            Ionic.Zlib.ZlibStream g = new Ionic.Zlib.ZlibStream(instream, Ionic.Zlib.CompressionMode.Decompress);
-            BinaryReader reader = new BinaryReader(g);
+            var instream = new MemoryStream(value, false);
+            var g = new ZlibStream(instream, CompressionMode.Decompress);
+            var reader = new BinaryReader(g);
             byte[] bytes = reader.ReadBytes(Int16.MaxValue*100);
             g.Close();
             return bytes;

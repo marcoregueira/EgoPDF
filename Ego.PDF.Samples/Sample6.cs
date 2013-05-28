@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-
 using HtmlAgilityPack;
-
 using Ego.PDF;
 using Ego.PDF.Data;
 
@@ -13,9 +11,9 @@ namespace Ego.PDF.Samples
 {
     public class Sample6 : FPdf
     {
-        string Path { get; set; }
+        private Dictionary<string, int> TagCount = new Dictionary<string, int>();
         public string href;
-        Dictionary<string, int>TagCount=new Dictionary<string,int>();
+        private string Path { get; set; }
 
         public static FPdf GetSample(string path)
         {
@@ -35,7 +33,8 @@ namespace Ego.PDF.Samples
             // Second page
             pdf.AddPage();
             pdf.SetLink(link);
-            pdf.Image( System.IO.Path.Combine( path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
+            pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default,
+                      "http://www.fpdf.org");
             pdf.SetLeftMargin(45);
             pdf.SetFontSize(14);
             pdf.WriteHtml(html);
@@ -51,46 +50,45 @@ namespace Ego.PDF.Samples
             {
                 l = html.Length;
                 html = html.Replace("  ", " ");
-            }
-            while (l > html.Length);
+            } while (l > html.Length);
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
             WriteChildNode(doc.DocumentNode.ChildNodes);
         }
 
-        public void WriteChildNode(HtmlAgilityPack.HtmlNodeCollection nodes)
+        public void WriteChildNode(HtmlNodeCollection nodes)
         {
             foreach (var node in (nodes))
             {
                 if (node.Name == "#text")
                 {
-                    this.Write(5, node.InnerText);
+                    Write(5, node.InnerText);
                 }
                 else if (node.Name == "u")
                 {
-                    string style = this.FontStyle;
-                    this.SetFont("", style + "U");
+                    string style = FontStyle;
+                    SetFont("", style + "U");
                     WriteChildNode(node.ChildNodes);
-                    this.SetFont("", style);
+                    SetFont("", style);
                 }
                 else if (node.Name == "i")
                 {
-                    string style = this.FontStyle;
-                    this.SetFont("", style + "I");
+                    string style = FontStyle;
+                    SetFont("", style + "I");
                     WriteChildNode(node.ChildNodes);
-                    this.SetFont("", style);
+                    SetFont("", style);
                 }
                 else if (node.Name == "b")
                 {
-                    string style = this.FontStyle;
-                    this.SetFont("", style + "B");
+                    string style = FontStyle;
+                    SetFont("", style + "B");
                     WriteChildNode(node.ChildNodes);
-                    this.SetFont("", style);
+                    SetFont("", style);
                 }
                 else if (node.Name == "a")
                 {
-                    var url=node.GetAttributeValue("href", string.Empty);
+                    var url = node.GetAttributeValue("href", string.Empty);
                     PutLink(url, node.InnerText);
                 }
                 else if (node.Name == "br")
@@ -111,32 +109,32 @@ namespace Ego.PDF.Samples
         public void SetStyle(string tag, bool enable)
         {
             tag = tag.ToUpper();
-            if (!this.TagCount.ContainsKey(tag))
+            if (!TagCount.ContainsKey(tag))
             {
-                this.TagCount[tag] = 0;
+                TagCount[tag] = 0;
             }
 
-            this.TagCount[tag] = this.TagCount[tag] + (enable ? 1 : -1);
+            TagCount[tag] = TagCount[tag] + (enable ? 1 : -1);
             string style = string.Empty;
 
-            foreach (var token in new string[] { "B", "I", "U" })
+            foreach (var token in new[] {"B", "I", "U"})
             {
-                if (this.TagCount.ContainsKey(token) && this.TagCount[token] > 0)
+                if (TagCount.ContainsKey(token) && TagCount[token] > 0)
                 {
                     style += token;
                 }
             }
-            this.SetFont(string.Empty, style);
+            SetFont(string.Empty, style);
         }
 
         public void PutLink(string href, string text)
         {
-            this.SetTextColor(220, 50, 50);
-            this.SetTextColor(0, 0, 255);
-            this.SetStyle("U", true);
-            this.Write(5, text, href);
-            this.SetStyle("U", false);
-            this.SetTextColor(0);
+            SetTextColor(220, 50, 50);
+            SetTextColor(0, 0, 255);
+            SetStyle("U", true);
+            Write(5, text, href);
+            SetStyle("U", false);
+            SetTextColor(0);
         }
     }
 }

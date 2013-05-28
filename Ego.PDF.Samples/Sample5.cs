@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
 using Ego.PDF;
 using Ego.PDF.Data;
 
@@ -11,10 +10,10 @@ namespace Ego.PDF.Samples
 {
     public class Sample5 : FPdf
     {
-        double y0;
-        int col = 0;
+        private int col = 0;
+        private double y0;
         public string LocalPath { get; set; }
-        List<string[]> Data { get; set; }
+        private List<string[]> Data { get; set; }
 
 
         public static FPdf GetSample(string path)
@@ -36,16 +35,16 @@ namespace Ego.PDF.Samples
 
         public void LoadData(string file)
         {
-            file = System.IO.Path.Combine(this.LocalPath, file);
+            file = Path.Combine(LocalPath, file);
 
-            this.Data = new List<string[]>();
+            Data = new List<string[]>();
             FileStream stream = File.OpenRead(file);
             StreamReader reader = new StreamReader(stream);
 
             while (!reader.EndOfStream)
             {
                 string line = reader.ReadLine();
-                Data.Add(line.Split(new char[] { ';' }));
+                Data.Add(line.Split(new[] {';'}));
             }
             reader.Close();
         }
@@ -54,37 +53,37 @@ namespace Ego.PDF.Samples
         {
             foreach (var header in headers)
             {
-                this.Cell(40, 7, header, "1");
+                Cell(40, 7, header, "1");
             }
-            this.Ln();
+            Ln();
 
-            foreach (var row in this.Data)
+            foreach (var row in Data)
             {
                 foreach (var col in row)
                 {
-                    this.Cell(40, 6, col, "1");
+                    Cell(40, 6, col, "1");
                 }
-                this.Ln();
+                Ln();
             }
         }
 
         public void ImprovedTable(IList<string> headers)
         {
-            int[] w = { 40, 35, 40, 45 };
-            for (int i=0; i < headers.Count(); i++)
+            int[] w = {40, 35, 40, 45};
+            for (int i = 0; i < headers.Count(); i++)
             {
-                this.Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center);
+                Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center);
             }
-            this.Ln();
-            foreach (var row in this.Data)
+            Ln();
+            foreach (var row in Data)
             {
-                this.Cell(w[0], 6, row[0], "LR");
-                this.Cell(w[1], 6, row[1], "LR");
-                this.Cell(w[2], 6, string.Format("{0:N0}", Convert.ToInt32(row[2])), "LR", 0, AlignEnum.Right);
-                this.Cell(w[3], 6, string.Format("{0:N0}", Convert.ToInt32(row[3])), "LR", 0, AlignEnum.Right);
-                this.Ln();
+                Cell(w[0], 6, row[0], "LR");
+                Cell(w[1], 6, row[1], "LR");
+                Cell(w[2], 6, string.Format("{0:N0}", Convert.ToInt32(row[2])), "LR", 0, AlignEnum.Right);
+                Cell(w[3], 6, string.Format("{0:N0}", Convert.ToInt32(row[3])), "LR", 0, AlignEnum.Right);
+                Ln();
             }
-            this.Cell(w.Sum(), 0, "", "T");
+            Cell(w.Sum(), 0, "", "T");
         }
 
         public void FancyTable(IList<string> headers)
@@ -95,27 +94,27 @@ namespace Ego.PDF.Samples
             SetLineWidth(0.3);
             SetFont("", "B");
 
-            int[] w = { 40, 35, 40, 45 };
+            int[] w = {40, 35, 40, 45};
             for (int i = 0; i < headers.Count(); i++)
             {
-                this.Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center, true);
+                Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center, true);
             }
-            this.Ln();
-            SetFillColor(224,235,255);
+            Ln();
+            SetFillColor(224, 235, 255);
             SetTextColor(0);
             SetFont("");
-            
+
             bool fill = false;
-            foreach (var row in this.Data)
+            foreach (var row in Data)
             {
-                this.Cell(w[0], 6, row[0], "LR", 0, AlignEnum.Left, fill);
-                this.Cell(w[1], 6, row[1], "LR", 0, AlignEnum.Left, fill);
-                this.Cell(w[2], 6, string.Format("{0:N0}", Convert.ToInt32( row[2])), "LR", 0, AlignEnum.Right, fill);
-                this.Cell(w[3], 6, string.Format("{0:N0}", Convert.ToInt32( row[3])), "LR", 0, AlignEnum.Right, fill);
-                this.Ln();
+                Cell(w[0], 6, row[0], "LR", 0, AlignEnum.Left, fill);
+                Cell(w[1], 6, row[1], "LR", 0, AlignEnum.Left, fill);
+                Cell(w[2], 6, string.Format("{0:N0}", Convert.ToInt32(row[2])), "LR", 0, AlignEnum.Right, fill);
+                Cell(w[3], 6, string.Format("{0:N0}", Convert.ToInt32(row[3])), "LR", 0, AlignEnum.Right, fill);
+                Ln();
                 fill = !fill;
             }
-            this.Cell(w.Sum(), 0, "", "T");
+            Cell(w.Sum(), 0, "", "T");
         }
     }
 }
