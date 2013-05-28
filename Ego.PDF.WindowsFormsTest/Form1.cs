@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
-using Ego.PDF;
 using Ego.PDF.Data;
 using Ego.PDF.Samples;
 
@@ -22,13 +15,7 @@ namespace Ego.PDF.WindowsFormsTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            DoSample1();
-            DoSample2();
-            DoSample3();
-            DoSample4();
-            DoSample5();
-            DoSample6();
-            Close();
+           
         }
 
         public void DoSample1()
@@ -76,6 +63,16 @@ namespace Ego.PDF.WindowsFormsTest
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             var pdf = Sample6.GetSample(path);
             pdf.Output("sample6.pdf", OutputDevice.SaveToFile);
+        }
+
+        private void BtnRunSamples_Click(object sender, EventArgs e)
+        {
+            DoSample1();
+            DoSample2();
+            DoSample3();
+            DoSample4();
+            DoSample5();
+            DoSample6();
         }
     }
 }
