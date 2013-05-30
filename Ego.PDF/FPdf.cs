@@ -2252,18 +2252,11 @@ namespace Ego.PDF
 
         internal virtual void _putpages()
         {
-            int nb;
             int n;
             double wPt;
             double hPt;
-            string filter;
-            string annots;
-            string rect;
-            double h;
-            byte[] p;
-            string kids;
             int i;
-            nb = Page;
+            var nb = Page;
             if (!VariableSupport.Empty(AliasNbPagesRenamed))
             {
                 // Replace number of pages
@@ -2283,7 +2276,7 @@ namespace Ego.PDF
                 wPt = TypeSupport.ToDouble(DefPageSize.Heigth)*k;
                 hPt = TypeSupport.ToDouble(DefPageSize.Width)*k;
             }
-            filter = (Compress) ? "/Filter /FlateDecode " : "";
+            var filter = (Compress) ? "/Filter /FlateDecode " : "";
             for (n = 1; n <= nb; n++)
             {
                 // Page
@@ -2299,18 +2292,18 @@ namespace Ego.PDF
                 if (Pages[n].PageLinks.Count > 0)
                 {
                     // Links
-                    annots = "/Annots [";
+                    var annots = "/Annots [";
                     foreach (PageLink pl in Pages[n].PageLinks)
                     {
-                        rect = sprintf("%.2F %.2F %.2F %.2F", pl.P0, pl.P1, pl.P0 + pl.P2, pl.P1 - pl.P3);
+                        string rect = sprintf("%.2F %.2F %.2F %.2F", pl.P0, pl.P1, pl.P0 + pl.P2, pl.P1 - pl.P3);
                         annots += "<</Type /Annot /Subtype /Link /Rect [" + rect + "] /Border [0 0 0] ";
 
 
                         if (pl.Link is LinkDataInternal)
                         {
-                            LinkDataInternal link = Links[(pl.Link as LinkDataInternal).InternalLink];
-                            int l0 = link.PageIndex;
-                            h = (PageSizes.ContainsKey(l0)) ? TypeSupport.ToDouble(PageSizes[l0].Heigth) : hPt;
+                            var link = Links[(pl.Link as LinkDataInternal).InternalLink];
+                            var l0 = link.PageIndex;
+                            double h = (PageSizes.ContainsKey(l0)) ? TypeSupport.ToDouble(PageSizes[l0].Heigth) : hPt;
                             annots += sprintf("/Dest [%d 0 R /XYZ 0 %.2F null]>>", 1 + 2*link.PageIndex, h - link.Y*k);
                         }
                         else if (pl.Link is LinkDataUri)
@@ -2331,7 +2324,7 @@ namespace Ego.PDF
                 // Page content
                 if (Compress)
                 {
-                    p = GzCompressString(Pages[n].ToString());
+                    var p = GzCompressString(Pages[n].ToString());
                     _newobj();
                     _out("<<" + filter + "/Length " + p.Length.ToString() + ">>");
                     _putstream(p);
@@ -2339,7 +2332,7 @@ namespace Ego.PDF
                 }
                 else
                 {
-                    string p1 = Pages[n].ToString();
+                    var p1 = Pages[n].ToString();
                     _newobj();
                     _out("<<" + filter + "/Length " + p1.Length.ToString() + ">>");
                     _putstream(p1);
@@ -2350,7 +2343,7 @@ namespace Ego.PDF
             Offsets[1] = Buffer.Length;
             _out("1 0 obj");
             _out("<</Type /Pages");
-            kids = "/Kids [";
+            var kids = "/Kids [";
             for (i = 0; i < nb; i++)
                 kids += (3 + 2*i).ToString() + " 0 R ";
             _out(kids + "]");
@@ -2362,8 +2355,6 @@ namespace Ego.PDF
 
         internal virtual void _putfonts()
         {
-            int nf;
-            bool compressed;
             FontTypeEnum type;
             string name;
             OrderedMap cw;
@@ -2371,7 +2362,7 @@ namespace Ego.PDF
             int i;
             string mtd;
             string font;
-            nf = n;
+            int nf = n;
             foreach (object diff in Diffs.Values)
             {
                 // Encodings
@@ -2393,8 +2384,8 @@ namespace Ego.PDF
                 {
                     Error("Font file not found: " + file);
                 }
-                string extension = Path.GetExtension(file);
-                compressed = (extension == ".z");
+                var extension = Path.GetExtension(file);
+                var compressed = (extension == ".z");
                 if (!compressed && info.length2 > 0)
                 {
                     font = TypeSupport.ToString(font).Substring(6, info.length1)
