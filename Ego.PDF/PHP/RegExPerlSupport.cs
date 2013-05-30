@@ -1,4 +1,4 @@
-namespace PHP
+namespace Ego.PDF.PHP
 {
     /// <summary>
     /// Provides static methods related to Perl Regular Expressions functions.

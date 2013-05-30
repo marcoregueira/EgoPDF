@@ -56,6 +56,7 @@
     <Compile Include="Data\Link.cs" />
     <Compile Include="Data\Page.cs" />
     <Compile Include="Data\PageLink.cs" />
+    <Compile Include="FPdfExtensions.cs" />
     <Compile Include="Miscellaneous Utility Library\BigEndianBitConverter.cs" />
     <Compile Include="Miscellaneous Utility Library\DoubleConverter.cs" />
     <Compile Include="Miscellaneous Utility Library\EndianBinaryReader.cs" />
@@ -66,9 +67,16 @@
     <Compile Include="Data\PageSize.cs" />
     <Compile Include="Miscellaneous Utility Library\Endianness.cs" />
     <Compile Include="Miscellaneous Utility Library\LittleEndianBitConverter.cs" />
-    <Compile Include="PHP.cs" />
+    <Compile Include="PHP\DateTimeSupport.cs" />
+    <Compile Include="PHP\FileSystemSupport.cs" />
+    <Compile Include="PHP\MathSupport.cs" />
+    <Compile Include="PHP\MiscSupport.cs" />
+    <Compile Include="PHP\OrderedMap.cs" />
+    <Compile Include="PHP\RegExPerlSupport.cs" />
+    <Compile Include="PHP\StringSupport.cs" />
+    <Compile Include="PHP\TypeSupport.cs" />
+    <Compile Include="PHP\VariableSupport.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RegExPerlSupport.cs" />
     <Compile Include="Sprintf\PrintfTools.cs" />
   </ItemGroup>
   <ItemGroup>

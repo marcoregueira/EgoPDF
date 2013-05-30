@@ -43,7 +43,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample1.GetSample();
             string s = pdf.Output("a.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -52,7 +52,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample2.GetSample(Server.MapPath("../bin/logo.png"));
             string s = pdf.Output("sample1.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -61,7 +61,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample2.GetSample(Server.MapPath("../bin/3d_down.png"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -70,7 +70,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample2.GetSample(Server.MapPath("../bin/gift.jpg"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -79,7 +79,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample3.GetSample(Server.MapPath("../bin"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -88,7 +88,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample4.GetSample(Server.MapPath("../bin"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -97,7 +97,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample5.GetSample(Server.MapPath("../bin"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -106,7 +106,7 @@ namespace Ego.PDF.WebTest.Controllers
         {
             var pdf = Sample6.GetSample(Server.MapPath("../bin"));
             string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEnconding.GetBytes(s));
+            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }

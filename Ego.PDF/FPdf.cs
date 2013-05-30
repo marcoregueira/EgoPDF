@@ -10,10 +10,10 @@ using System.Web;
 using System.Windows.Media.Imaging;
 using Ego.PDF.Data;
 using Ego.PDF.Font;
+using Ego.PDF.PHP;
 using Ionic.Zlib;
 using MiscUtil.Conversion;
 using MiscUtil.IO;
-using PHP;
 
 /*******************************************************************************
 * FPDF                                                                         *
@@ -35,7 +35,7 @@ namespace Ego.PDF
 {
     public class FPdf
     {
-        public static readonly Encoding PrivateEnconding = Encoding.GetEncoding(1252);
+        public static readonly Encoding PrivateEncoding = Encoding.GetEncoding(1252);
         public readonly string FpdfVersion = "1.7";
         public bool ColorFlag;
         public string LayoutMode;
@@ -48,12 +48,10 @@ namespace Ego.PDF
             unit = unit == UnitEnum.Default ? UnitEnum.Milimeter : unit;
             pageSize = pageSize == PageSizeEnum.Default ? PageSizeEnum.A4 : pageSize;
 
-            // Some checks
-            _dochecks();
             // Initialization of properties
             Page = 0;
             n = 2;
-            Buffer = PrivateEnconding.GetString(new byte[] {});
+            Buffer = PrivateEncoding.GetString(new byte[] {});
             Offsets = new OrderedMap();
             Pages = new Dictionary<int, Page>();
             PageSizes = new Dictionary<int, Dimensions>();
@@ -116,7 +114,7 @@ namespace Ego.PDF
                 Error("Incorrect unit: " + unit);
             }
 
-            Dimensions size = _getpagesize(pageSize);
+            Dimensions size = GetPageSize(pageSize);
             DefPageSize = size;
             CurPageSize = size;
 
@@ -498,7 +496,7 @@ namespace Ego.PDF
             Footer();
             InFooter = false;
             // Close page
-            _endpage();
+            EndPage();
             // Close document
             _enddoc();
         }
@@ -520,7 +518,7 @@ namespace Ego.PDF
 
         public virtual void AddPage(PageOrientation orientation, PageSizeEnum pagesize)
         {
-            Dimensions page = _getpagesize(pagesize);
+            Dimensions page = GetPageSize(pagesize);
             AddPage(orientation, page);
         }
 
@@ -546,10 +544,10 @@ namespace Ego.PDF
                 Footer();
                 InFooter = false;
                 // Close page
-                _endpage();
+                EndPage();
             }
             // Start new page
-            _beginpage(orientation, size);
+            BeginPage(orientation, size);
             // Set line cap style to square
             _out("2 J");
             // Set line width
@@ -679,24 +677,17 @@ namespace Ego.PDF
             double r = red;
             double g = green;
             double b = blue;
-
             TextColor = sprintf("%.3F %.3F %.3F rg", r/255, g/255, b/255);
             ColorFlag = (FillColor != TextColor);
         }
 
         public virtual double GetStringWidth(string s)
         {
-            double w;
-            int l;
             int i;
-
-            w = 0;
-            l = TypeSupport.ToString(s).Length;
-
+            double w = 0;
+            var l = TypeSupport.ToString(s).Length;
             for (i = 0; i < l; i++)
                 w = w + TypeSupport.ToDouble(CurrentFont.Widths[s[i].ToString()]);
-
-
             return w*FontSize/1000;
         }
 
@@ -741,7 +732,6 @@ namespace Ego.PDF
         public virtual void AddFont(string family, string style, string file)
         {
             // Add a TrueType, OpenType or Type1 font
-            string fontkey;
             int n;
             family = family.ToLower();
             if (file == "")
@@ -755,13 +745,13 @@ namespace Ego.PDF
                 style = "BI";
             }
 
-            fontkey = family + style;
+            string fontkey = family + style;
             if (Fonts.ContainsKey(fontkey))
             {
                 return;
             }
 
-            FontDefinition fontInfo = _loadfont(file);
+            FontDefinition fontInfo = LoadFont(file);
             fontInfo.i = OrderedMap.CountElements(Fonts) + 1;
 
             if (fontInfo.diff != null)
@@ -812,7 +802,6 @@ namespace Ego.PDF
         public virtual void SetFont(string family, string style, double size)
         {
             // Select a font; size given in points
-            string fontkey;
             if (string.IsNullOrEmpty(family))
             {
                 family = FontFamily;
@@ -846,7 +835,7 @@ namespace Ego.PDF
                 return;
             }
             // Test if font is already loaded
-            fontkey = family + style;
+            var fontkey = family + style;
             if (!Fonts.ContainsKey(fontkey))
             {
                 // Test if one of the core fonts
@@ -901,7 +890,6 @@ namespace Ego.PDF
         public LinkDataInternal AddLink()
         {
             // Create a new internal link
-            int n;
             var l = new LinkDataInternal();
             Links.Add(l);
             return l;
@@ -951,10 +939,10 @@ namespace Ego.PDF
         {
             // Output a string
             object s;
-            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x*k, (H - y)*k, _escape(txt));
+            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x*k, (H - y)*k, Escape(txt));
             if (Underline && TypeSupport.ToString(txt) != "")
             {
-                s = TypeSupport.ToString(s) + " " + _dounderline(x, y, txt);
+                s = TypeSupport.ToString(s) + " " + DoUnderline(x, y, txt);
             }
             if (ColorFlag)
             {
@@ -1098,7 +1086,7 @@ namespace Ego.PDF
                 s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (X + dx)*k, (H - (Y + .5*h + .3*FontSize))*k, txt2);
                 if (Underline)
                 {
-                    s = s + " " + _dounderline(X + dx, Y + .5*h.Value + .3*FontSize, txt);
+                    s = s + " " + DoUnderline(X + dx, Y + .5*h.Value + .3*FontSize, txt);
                 }
                 if (ColorFlag)
                 {
@@ -1464,7 +1452,7 @@ namespace Ego.PDF
                         imageData = _parsejpg(file);
                         break;
                     case ImageTypeEnum.Png:
-                        imageData = _parsepng(file);
+                        imageData = ParsePng(file);
                         break;
                     case ImageTypeEnum.Gif:
                         imageData = _parsegif(file);
@@ -1590,110 +1578,28 @@ namespace Ego.PDF
             SetX(x);
         }
 
-        public virtual string Output(string name, OutputDevice dest)
-        {
-            // Output PDF to some destination
-            if (State < 3)
-            {
-                Close();
-            }
-            if (dest == OutputDevice.Default)
-            {
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = "doc.pdf";
-                    dest = OutputDevice.StandardOutput;
-                }
-                else
-                {
-                    dest = OutputDevice.SaveToFile;
-                }
-            }
-            switch (dest)
-            {
-                case OutputDevice.StandardOutput:
-                    _checkoutput();
-                    HttpContext.Current.Response.AppendHeader("Content-Type: application/pdf", "");
-                    HttpContext.Current.Response.AppendHeader("Content-Disposition: inline; filename=\"" + name + "\"",
-                                                              "");
-                    HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
-                    HttpContext.Current.Response.AppendHeader("Pragma: public", "");
-                    HttpContext.Current.Response.Write(Buffer);
-                    break;
-
-                case OutputDevice.Download:
-                    // Download file
-                    _checkoutput();
-                    HttpContext.Current.Response.AppendHeader("Content-Type: application/x-download", "");
-                    HttpContext.Current.Response.AppendHeader(
-                        "Content-Disposition: attachment; filename=\"" + name + "\"", "");
-                    HttpContext.Current.Response.AppendHeader("Cache-Control: private, max-age=0, must-revalidate", "");
-                    HttpContext.Current.Response.AppendHeader("Pragma: public", "");
-                    HttpContext.Current.Response.Write(Buffer);
-                    break;
-
-                case OutputDevice.SaveToFile:
-                    // Save to local file
-                    FileStream f = FileSystemSupport.FileOpen(name, "wb");
-                    if (!TypeSupport.ToBoolean(f))
-                    {
-                        Error("Unable to create output file: " + name);
-                    }
-                    var writer = new StreamWriter(f, PrivateEnconding);
-                    writer.Write(Buffer);
-                    writer.Close();
-                    break;
-
-                case OutputDevice.ReturnAsString:
-                    return Buffer;
-
-                default:
-                    Error("Incorrect output destination: " + dest);
-                    break;
-            }
-            return string.Empty;
-        }
-
+      
         /*******************************************************************************
         *                                                                              *
         *                              Protected methods                               *
         *                                                                              *
         *******************************************************************************/
 
-        internal virtual void _dochecks()
-        {
-            // Check mbstring overloading --> mbstring overloading must be disabled
-            // Ensure runtime magic quotes are disabled set_magic_quotes_runtime(0);
-        }
-
-        internal virtual void _checkoutput()
-        {
-            //TODO COMPROBAR ESTO
-            bool HeadersOrDataSent = false;
-
-            if (HeadersOrDataSent)
-            {
-                {
-                    Error("Some data has already been output, can't send PDF file");
-                }
-            }
-        }
-
-        internal virtual Dimensions _getpagesize(PageSizeEnum index)
+        internal virtual Dimensions GetPageSize(PageSizeEnum index)
         {
             PageSize size = StdPageSizes.FirstOrDefault(x => x.Name.ToLower() == index.ToString().ToLower());
             Debug.Assert(size != null, "size != null");
             return size.GetDimensions(k);
         }
 
-        internal virtual Dimensions _getpagesize(Dimensions dimensions)
+        internal virtual Dimensions GetPageSize(Dimensions dimensions)
         {
             return dimensions.Width > dimensions.Heigth
                        ? new Dimensions {Width = dimensions.Heigth, Heigth = dimensions.Width}
                        : dimensions;
         }
 
-        internal virtual void _beginpage(PageOrientation orientation, Dimensions size)
+        internal virtual void BeginPage(PageOrientation orientation, Dimensions size)
         {
             Page++;
             Pages[Page] = new Page();
@@ -1712,7 +1618,7 @@ namespace Ego.PDF
             }
             else
             {
-                size = _getpagesize(size);
+                size = GetPageSize(size);
             }
 
             if (orientation != CurOrientation || size.Width != CurPageSize.Width || size.Heigth != CurPageSize.Heigth)
@@ -1741,12 +1647,12 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void _endpage()
+        internal virtual void EndPage()
         {
             State = 1;
         }
 
-        internal virtual FontDefinition _loadfont(string font)
+        internal virtual FontDefinition LoadFont(string font)
         {
             // Load a font definition file from the font directory
             FontDefinition fontData;
@@ -1758,30 +1664,23 @@ namespace Ego.PDF
             return fontData;
         }
 
-        internal virtual object _escape(string s)
+        internal virtual object Escape(string s)
         {
             s = s
                 .Replace("\\", "\\\\")
                 .Replace("(", "\\(")
                 .Replace(")", "\\)")
                 .Replace("\r", "\\r");
-
-            /*
-            s = PHP.StringSupport.StringReplace(s, "\\", "\\\\");
-            s = PHP.StringSupport.StringReplace(s, "(", "\\(");
-            s = PHP.StringSupport.StringReplace(s, ")", "\\)");
-            s = PHP.StringSupport.StringReplace(s, "\r", "\\r");
-            */
             return s;
         }
 
-        internal virtual string _textstring(string s)
+        internal virtual string TextString(string s)
         {
             // Format a text string
-            return "(" + TypeSupport.ToString(_escape(s)) + ")";
+            return "(" + TypeSupport.ToString(Escape(s)) + ")";
         }
 
-        internal virtual string _dounderline(double x, double y, string txt)
+        internal virtual string DoUnderline(double x, double y, string txt)
         {
             // Underline text
             var up = CurrentFont.up;
@@ -1848,7 +1747,7 @@ namespace Ego.PDF
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        internal virtual ImageInfo _parsepng(string file)
+        internal virtual ImageInfo ParsePng(string file)
         {
             var f = FileSystemSupport.FileOpen(file, "rb");
             if (!TypeSupport.ToBoolean(f))
@@ -2234,13 +2133,13 @@ namespace Ego.PDF
                 {
                     foreach (var v in (s as List<byte[]>))
                     {
-                        Buffer += PrivateEnconding.GetString(v);
+                        Buffer += PrivateEncoding.GetString(v);
                     }
                     Buffer += "\n";
                 }
                 else if (s is byte[])
                 {
-                    Buffer += PrivateEnconding.GetString((byte[]) s);
+                    Buffer += PrivateEncoding.GetString((byte[]) s);
                     Buffer += "\n";
                 }
                 else
@@ -2372,7 +2271,7 @@ namespace Ego.PDF
                 _out("endobj");
             }
 
-            foreach (string file in FontFiles.Keys)
+            foreach (var file in FontFiles.Keys)
             {
                 FontDefinition info = Fonts[file];
                 // Font file embedding
@@ -2627,30 +2526,30 @@ namespace Ego.PDF
         //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
         internal virtual void _putinfo()
         {
-            _out("/Producer " + _textstring("FPDF " + FpdfVersion));
+            _out("/Producer " + TextString("FPDF " + FpdfVersion));
             if (!VariableSupport.Empty(Title))
             {
-                _out("/Title " + _textstring(Title));
+                _out("/Title " + TextString(Title));
             }
             if (!VariableSupport.Empty(Subject))
             {
-                _out("/Subject " + _textstring(Subject));
+                _out("/Subject " + TextString(Subject));
             }
             if (!VariableSupport.Empty(Author))
             {
-                _out("/Author " + _textstring(Author));
+                _out("/Author " + TextString(Author));
             }
             if (!VariableSupport.Empty(Keywords))
             {
-                _out("/Keywords " + _textstring(Keywords));
+                _out("/Keywords " + TextString(Keywords));
             }
             if (!VariableSupport.Empty(Creator))
             {
-                _out("/Creator " + _textstring(Creator));
+                _out("/Creator " + TextString(Creator));
             }
             //CONVERSION_WARNING: Method 'date' was converted to 'System.DateTime.ToString' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/date.htm 
             //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
-            _out("/CreationDate " + _textstring("D:" + DateTime.Now.ToString("YmdHis")));
+            _out("/CreationDate " + TextString("D:" + DateTime.Now.ToString("YmdHis")));
         }
 
         internal virtual void _putcatalog()
@@ -2777,13 +2676,13 @@ namespace Ego.PDF
         public string GzUncompressString(byte[] value)
         {
             byte[] uncompressedArray = gzuncompress(value);
-            string result = PrivateEnconding.GetString(uncompressedArray);
+            string result = PrivateEncoding.GetString(uncompressedArray);
             return result;
         }
 
         public byte[] GzCompressString(string value)
         {
-            byte[] bytes = PrivateEnconding.GetBytes(value);
+            byte[] bytes = PrivateEncoding.GetBytes(value);
             byte[] result = gzcompress(bytes);
             return result;
         }
