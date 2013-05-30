@@ -1321,7 +1321,7 @@ namespace Ego.PDF
             FontDefinition cw = CurrentFont;
             double localWidth = W - RightMargin - X;
             double wmax = (localWidth - 2*CMargin)*1000/FontSize;
-            string s = StringSupport.StringReplace(txt, "\r", "");
+            var s = StringSupport.StringReplace(txt, "\r", "");
             int nb = TypeSupport.ToString(s).Length;
             int sep = -1;
             int i = 0;
@@ -1474,7 +1474,7 @@ namespace Ego.PDF
                         Error("Image file has no extension and no type was specified or unsupported type (" + file + ")");
                         break;
                 }
-                String typeName = type.ToString().ToLower();
+                var typeName = type.ToString().ToLower();
                 //CONVERSION_ISSUE: Variable function '$mtd' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
                 imageInfo = imageData;
                 imageInfo.i = OrderedMap.CountElements(Images) + 1;
@@ -1642,17 +1642,12 @@ namespace Ego.PDF
                     var writer = new StreamWriter(f, PrivateEnconding);
                     writer.Write(Buffer);
                     writer.Close();
-                    //PHP.FileSystemSupport.Write(f, this.Buffer, this.Buffer.Length);
-                    //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
-                    //PHP.FileSystemSupport.Close(f);
                     break;
 
                 case OutputDevice.ReturnAsString:
-                    // Return as a string
                     return Buffer;
 
                 default:
-                    //CONVERSION_ISSUE: Void functions cannot be used as part of an expression. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1019.htm 
                     Error("Incorrect output destination: " + dest);
                     break;
             }
@@ -1792,7 +1787,8 @@ namespace Ego.PDF
             var up = CurrentFont.up;
             var ut = CurrentFont.ut;
             var w = GetStringWidth(txt) + Ws*StringSupport.SubstringCount(txt, " ");
-            return sprintf("%.2F %.2F %.2F %.2F re f", x*k, (H - (y - up/1000*FontSize))*k, w*k, (-ut)/1000*FontSizePt);
+            return sprintf("%.2F %.2F %.2F %.2F re f", x*k, (H - (y - up/(double) 1000*FontSize))*k, w*k,
+                           (-ut)/(double) 1000*FontSizePt);
         }
 
         internal virtual ImageInfo _parsejpg(string file)
@@ -1869,24 +1865,8 @@ namespace Ego.PDF
 
         internal virtual ImageInfo _parsepngstream(FileStream f, EndianBinaryReader reader, string file)
         {
-            int w;
-            int height;
-            int bpc;
-            int ct;
-            string colspace;
-            string dp;
-            byte[] pal;
-            int[] trns;
-            var data = new byte[] {};
             int n;
-            string type;
-            string t;
             int pos;
-            var info = new ImageInfo();
-            StringBuilder color;
-            StringBuilder alpha;
-            int len;
-            int i;
             string line;
             string signature = _readstream(reader, 8);
             if (!signature.Contains("PNG"))
@@ -1907,16 +1887,16 @@ namespace Ego.PDF
             {
                 Error("Incorrect PNG file: " + file);
             }
-            w = reader.ReadInt32();
-            height = reader.ReadInt32();
-            bpc = _readstream(reader, 1)[0];
+            int w = reader.ReadInt32();
+            int height = reader.ReadInt32();
+            int bpc = _readstream(reader, 1)[0];
             if (bpc > 8)
             {
                 Error("16-bit depth not supported: " + file);
             }
-            ct = _readstream(reader, 1)[0];
+            int ct = _readstream(reader, 1)[0];
 
-            colspace = "DeviceRGB";
+            string colspace = "DeviceRGB";
 
             if (ct == 0 || ct == 4)
             {
@@ -1947,17 +1927,17 @@ namespace Ego.PDF
                 Error("Interlacing not supported: " + file);
             }
             _readstream(reader, 4);
-            dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1).ToString() + " /BitsPerComponent " +
-                 bpc.ToString() + " /Columns " + w.ToString();
+            string dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1).ToString() + " /BitsPerComponent " +
+                        bpc.ToString() + " /Columns " + w.ToString();
 
             // Scan chunks looking for palette, transparency and image data
-            pal = new byte[] {};
-            trns = new int[] {};
-            data = new byte[] {};
+            var pal = new byte[] {};
+            var trns = new int[] {};
+            byte[] data = new byte[] {};
             do
             {
                 n = reader.ReadInt32();
-                type = _readstream(reader, 4);
+                string type = _readstream(reader, 4);
                 if (type == "PLTE")
                 {
                     // Read palette
@@ -1967,7 +1947,7 @@ namespace Ego.PDF
                 else if (type == "tRNS")
                 {
                     // Read transparency info
-                    t = _readstream(reader, n);
+                    string t = _readstream(reader, n);
                     if (ct == 0)
                     {
                         trns = new[] {Convert.ToInt32(t[1])}; // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
@@ -2008,32 +1988,32 @@ namespace Ego.PDF
             {
                 Error("Missing palette in " + file);
             }
-            info =
-                new ImageInfo
-                    {
-                        w = w,
-                        h = height,
-                        cs = colspace,
-                        bpc = bpc,
-                        f = "FlateDecode",
-                        dp = dp,
-                        pal = pal,
-                        trns = trns
-                    };
+            var info = new ImageInfo
+                {
+                    w = w,
+                    h = height,
+                    cs = colspace,
+                    bpc = bpc,
+                    f = "FlateDecode",
+                    dp = dp,
+                    pal = pal,
+                    trns = trns
+                };
             //new PHP.OrderedMap(new object[] { "w", w }, new object[] { "h", h }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "FlateDecode" }, new object[] { "dp", dp }, new object[] { "pal", pal }, new object[] { "trns", trns });
 
 
             if (ct >= 4)
             {
                 // Extract alpha channel
-                string newData = GzUncompressString(data);
-                color = new StringBuilder();
-                alpha = new StringBuilder();
+                var newData = GzUncompressString(data);
+                var color = new StringBuilder();
+                var alpha = new StringBuilder();
+                int len;
                 if (ct == 4)
                 {
                     // Gray image
                     len = 2*w;
-                    for (i = 0; i < height; i++)
+                    for (var i = 0; i < height; i++)
                     {
                         pos = (1 + len)*i;
                         color.Append(newData[pos]);
@@ -2052,13 +2032,13 @@ namespace Ego.PDF
                 {
                     // RGB image
                     len = 4*w;
-                    for (i = 0; i < height; i++)
+                    for (var i = 0; i < height; i++)
                     {
                         pos = (1 + len)*i;
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
-                        for (int posLinea = 0; posLinea < line.Length; posLinea += 4)
+                        for (var posLinea = 0; posLinea < line.Length; posLinea += 4)
                         {
                             color.Append(line.Substring(posLinea, 3));
                             alpha.Append(line[posLinea + 3]);
@@ -2070,7 +2050,7 @@ namespace Ego.PDF
                 data = GzCompressString(color.ToString());
                 info.data.Add(data);
                 info.smask = GzCompressString(alpha.ToString());
-                if (PdfVersion.CompareTo("1.4") < 0)
+                if (String.Compare(PdfVersion, "1.4", StringComparison.Ordinal) < 0)
                 {
                     PdfVersion = "1.4";
                 }
@@ -2086,7 +2066,7 @@ namespace Ego.PDF
         private static string CapText(Match m)
         {
             // Get the matched string.
-            string x = m.ToString();
+            var x = m.ToString();
             // If the first char is lower case...
             if (char.IsLower(x[0]))
             {
