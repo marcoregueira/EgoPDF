@@ -12,6 +12,8 @@ using Ego.PDF.Data;
 using Ego.PDF.Font;
 using Ego.PDF.PHP;
 using Ionic.Zlib;
+using Ego.PDF.Support;
+
 using MiscUtil.Conversion;
 using MiscUtil.IO;
 
@@ -52,7 +54,7 @@ namespace Ego.PDF
             Page = 0;
             n = 2;
             Buffer = PrivateEncoding.GetString(new byte[] {});
-            Offsets = new OrderedMap();
+            Offsets = new Dictionary<int, int>();
             Pages = new Dictionary<int, Page>();
             PageSizes = new Dictionary<int, Dimensions>();
             State = 0;
@@ -177,7 +179,7 @@ namespace Ego.PDF
         /// <summary>
         ///     array of object offsets
         /// </summary>
-        public OrderedMap Offsets { get; set; }
+        public Dictionary<int, int> Offsets { get; set; }
 
         /// <summary>
         ///     buffer holding in-memory PDF
@@ -737,7 +739,7 @@ namespace Ego.PDF
             if (file == "")
             {
                 //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
-                file = TypeSupport.ToString(StringSupport.StringReplace(family, " ", "")) + style.ToLower();
+                file = TypeSupport.ToString(family.Replace(" ", "")) + style.ToLower();
             }
             style = style.ToUpper();
             if (style == "IB")
@@ -1149,8 +1151,7 @@ namespace Ego.PDF
                 w = TypeSupport.ToDouble(W) - RightMargin - X;
             }
             wmax = (w - 2*CMargin)*1000/FontSize;
-            //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
-            s = StringSupport.StringReplace(txt, "\r", "");
+            s = txt.Replace("\r", "");
             nb = s.Length;
             if (nb > 0 && TypeSupport.ToString(s[nb - 1]) == "\n")
             {
@@ -1306,10 +1307,10 @@ namespace Ego.PDF
         protected virtual void Write(int h, string txt, LinkData link)
         {
             // Output text in flowing mode
-            FontDefinition cw = CurrentFont;
+            var cw = CurrentFont;
             double localWidth = W - RightMargin - X;
             double wmax = (localWidth - 2*CMargin)*1000/FontSize;
-            var s = StringSupport.StringReplace(txt, "\r", "");
+            var s = txt.Replace("\r", "");
             int nb = TypeSupport.ToString(s).Length;
             int sep = -1;
             int i = 0;
