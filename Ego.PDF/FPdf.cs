@@ -52,7 +52,7 @@ namespace Ego.PDF
 
             // Initialization of properties
             Page = 0;
-            n = 2;
+            ObjectCount = 2;
             Buffer = PrivateEncoding.GetString(new byte[] {});
             Offsets = new Dictionary<int, int>();
             Pages = new Dictionary<int, Page>();
@@ -173,8 +173,9 @@ namespace Ego.PDF
 
         /// <summary>
         ///     current object number
+        /// <remarks>Previously named "n"</remarks>
         /// </summary>
-        public int n { get; set; }
+        public int ObjectCount { get; set; }
 
         /// <summary>
         ///     array of object offsets
@@ -2091,9 +2092,9 @@ namespace Ego.PDF
         internal virtual void _newobj()
         {
             // Begin a new object
-            n++;
-            Offsets[n] = Buffer.Length;
-            _out(n.ToString() + " 0 obj");
+            ObjectCount++;
+            Offsets[ObjectCount] = Buffer.Length;
+            _out(ObjectCount.ToString() + " 0 obj");
         }
 
         internal virtual void _putstream(string s)
@@ -2219,7 +2220,7 @@ namespace Ego.PDF
                 {
                     _out("/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>");
                 }
-                _out("/Contents " + (this.n + 1).ToString() + " 0 R>>");
+                _out("/Contents " + (this.ObjectCount + 1).ToString() + " 0 R>>");
                 _out("endobj");
                 // Page content
                 if (Compress)
@@ -2262,7 +2263,7 @@ namespace Ego.PDF
             int i;
             string mtd;
             string font;
-            int nf = n;
+            int nf = ObjectCount;
             foreach (object diff in Diffs.Values)
             {
                 // Encodings
@@ -2277,7 +2278,7 @@ namespace Ego.PDF
                 FontDefinition info = Fonts[file];
                 // Font file embedding
                 _newobj();
-                info.n = n;
+                info.n = ObjectCount;
                 //file_get_contents' returns a string 
                 font = FileSystemSupport.ReadContents(Fontpath + file);
                 if (string.IsNullOrWhiteSpace(font))
@@ -2310,7 +2311,7 @@ namespace Ego.PDF
             {
                 FontDefinition font1 = Fonts[k];
                 // Font objects
-                font1.n = n + 1;
+                font1.n = ObjectCount + 1;
                 type = font1.type;
                 name = font1.name;
                 if (type == FontTypeEnum.Core)
@@ -2335,8 +2336,8 @@ namespace Ego.PDF
                     _out("/BaseFont /" + TypeSupport.ToString(name));
                     _out("/Subtype /" + TypeSupport.ToString(type));
                     _out("/FirstChar 32 /LastChar 255");
-                    _out("/Widths " + (n + 1).ToString() + " 0 R");
-                    _out("/FontDescriptor " + (n + 2).ToString() + " 0 R");
+                    _out("/Widths " + (ObjectCount + 1).ToString() + " 0 R");
+                    _out("/FontDescriptor " + (ObjectCount + 2).ToString() + " 0 R");
                     if (font1.diffn.HasValue)
                     {
                         _out("/Encoding " + (nf + font1.diffn).ToString() + " 0 R");
@@ -2397,14 +2398,14 @@ namespace Ego.PDF
             string filter;
             byte[] pal;
             _newobj();
-            info.n = n;
+            info.n = ObjectCount;
             _out("<</Type /XObject");
             _out("/Subtype /Image");
             _out("/Width " + info.w.ToString());
             _out("/Height " + info.h.ToString());
             if (info.cs == "Indexed")
             {
-                _out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length/3 - 1).ToString() + " " + (n + 1).ToString() +
+                _out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length/3 - 1).ToString() + " " + (ObjectCount + 1).ToString() +
                      " 0 R]");
             }
             else
@@ -2435,7 +2436,7 @@ namespace Ego.PDF
             }
             if (info.smask != null)
             {
-                _out("/SMask " + (n + 1).ToString() + " 0 R");
+                _out("/SMask " + (ObjectCount + 1).ToString() + " 0 R");
             }
 
             int largo = info.data.Select(x => x.Length).Sum();
@@ -2594,9 +2595,9 @@ namespace Ego.PDF
 
         internal virtual void _puttrailer()
         {
-            _out("/Size " + (n + 1).ToString());
-            _out("/Root " + n.ToString() + " 0 R");
-            _out("/Info " + (n - 1).ToString() + " 0 R");
+            _out("/Size " + (ObjectCount + 1).ToString());
+            _out("/Root " + ObjectCount.ToString() + " 0 R");
+            _out("/Info " + (ObjectCount - 1).ToString() + " 0 R");
         }
 
         internal virtual void _enddoc()
@@ -2621,9 +2622,9 @@ namespace Ego.PDF
             // Cross-ref
             o = Buffer.Length;
             _out("xref");
-            _out("0 " + (n + 1).ToString());
+            _out("0 " + (ObjectCount + 1).ToString());
             _out("0000000000 65535 f ");
-            for (i = 1; i <= n; i++)
+            for (i = 1; i <= ObjectCount; i++)
             {
                 _out(sprintf("%010d 00000 n ", Offsets[i]));
                 /*
