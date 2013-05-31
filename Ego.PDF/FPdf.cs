@@ -2489,7 +2489,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void _putxobjectdict()
+        internal virtual void PutXObjectDictionary()
         {
             foreach (ImageInfo image in Images.Values)
             {
@@ -2497,7 +2497,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void _putresourcedict()
+        internal virtual void PutResourceDictionary()
         {
             _out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]");
             _out("/Font <<");
@@ -2507,11 +2507,11 @@ namespace Ego.PDF
             }
             _out(">>");
             _out("/XObject <<");
-            _putxobjectdict();
+            PutXObjectDictionary();
             _out(">>");
         }
 
-        internal virtual void _putresources()
+        internal virtual void PutResources()
         {
             _putfonts();
             _putimages();
@@ -2519,13 +2519,13 @@ namespace Ego.PDF
             Offsets[2] = Buffer.Length;
             _out("2 0 obj");
             _out("<<");
-            _putresourcedict();
+            PutResourceDictionary();
             _out(">>");
             _out("endobj");
         }
 
         //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
-        internal virtual void _putinfo()
+        internal virtual void PutInfo()
         {
             _out("/Producer " + TextString("FPDF " + FpdfVersion));
             if (!VariableSupport.Empty(Title))
@@ -2553,7 +2553,7 @@ namespace Ego.PDF
             _out("/CreationDate " + TextString("D:" + DateTime.Now.ToString("YmdHis")));
         }
 
-        internal virtual void _putcatalog()
+        internal virtual void PutCatalog()
         {
             _out("/Type /Catalog");
             _out("/Pages 1 0 R");
@@ -2605,17 +2605,17 @@ namespace Ego.PDF
             int i;
             _putheader();
             _putpages();
-            _putresources();
+            PutResources();
             // Info
             _newobj();
             _out("<<");
-            _putinfo();
+            PutInfo();
             _out(">>");
             _out("endobj");
             // Catalog
             _newobj();
             _out("<<");
-            _putcatalog();
+            PutCatalog();
             _out(">>");
             _out("endobj");
             // Cross-ref
