@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 // http://www.codeproject.com/Articles/19274/A-printf-implementation-in-C
 
-namespace Ego.PDF
+namespace Ego.PDF.Printf
 {
     public static class SprintfTools
     {

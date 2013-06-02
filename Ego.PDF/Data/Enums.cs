@@ -65,4 +65,20 @@ namespace Ego.PDF.Data
         TrueType
     }
 
+    public enum LayoutEnum
+    {
+        Default,
+        Single,
+        Continuous,
+        Two
+    }
+
+    public enum ZoomEnum
+    {
+        Default = 0,
+        FullPage,
+        FullWidth,
+        Custom,
+        Real
+    }
 }
