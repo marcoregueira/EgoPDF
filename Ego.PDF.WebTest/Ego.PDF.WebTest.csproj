@@ -124,10 +124,16 @@
     <Content Include="Content\images\glyphicons-halflings-white.png" />
     <Content Include="Content\images\glyphicons-halflings.png" />
     <Content Include="Content\images\i_linkout.jpg" />
+    <Content Include="Content\Prettify\prettify.css" />
+    <Content Include="Content\Prettify\Themes\desert.css" />
+    <Content Include="Content\Prettify\Themes\doxy.css" />
+    <Content Include="Content\Prettify\Themes\sons-of-obsidian.css" />
+    <Content Include="Content\Prettify\Themes\sunburst.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="Scripts\ego.js" />
     <Content Include="Scripts\jquery-2.0.1-vsdoc.js" />
     <Content Include="Scripts\jquery-2.0.1.js" />
     <Content Include="Scripts\jquery-2.0.1.min.js" />
@@ -139,6 +145,36 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Scripts\Prettify\lang-apollo.js" />
+    <Content Include="Scripts\Prettify\lang-basic.js" />
+    <Content Include="Scripts\Prettify\lang-clj.js" />
+    <Content Include="Scripts\Prettify\lang-css.js" />
+    <Content Include="Scripts\Prettify\lang-dart.js" />
+    <Content Include="Scripts\Prettify\lang-erlang.js" />
+    <Content Include="Scripts\Prettify\lang-go.js" />
+    <Content Include="Scripts\Prettify\lang-hs.js" />
+    <Content Include="Scripts\Prettify\lang-lisp.js" />
+    <Content Include="Scripts\Prettify\lang-llvm.js" />
+    <Content Include="Scripts\Prettify\lang-lua.js" />
+    <Content Include="Scripts\Prettify\lang-matlab.js" />
+    <Content Include="Scripts\Prettify\lang-ml.js" />
+    <Content Include="Scripts\Prettify\lang-mumps.js" />
+    <Content Include="Scripts\Prettify\lang-n.js" />
+    <Content Include="Scripts\Prettify\lang-pascal.js" />
+    <Content Include="Scripts\Prettify\lang-proto.js" />
+    <Content Include="Scripts\Prettify\lang-r.js" />
+    <Content Include="Scripts\Prettify\lang-rd.js" />
+    <Content Include="Scripts\Prettify\lang-scala.js" />
+    <Content Include="Scripts\Prettify\lang-sql.js" />
+    <Content Include="Scripts\Prettify\lang-tcl.js" />
+    <Content Include="Scripts\Prettify\lang-tex.js" />
+    <Content Include="Scripts\Prettify\lang-vb.js" />
+    <Content Include="Scripts\Prettify\lang-vhdl.js" />
+    <Content Include="Scripts\Prettify\lang-wiki.js" />
+    <Content Include="Scripts\Prettify\lang-xq.js" />
+    <Content Include="Scripts\Prettify\lang-yaml.js" />
+    <Content Include="Scripts\Prettify\prettify.js" />
+    <Content Include="Scripts\Prettify\run_prettify.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -176,7 +212,8 @@
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Web.config" />
-    <None Include="Scripts\jquery-2.0.1.min.map" />
+    <None Include="Scripts\_jquery-2.0.1.min.map" />
+    <Content Include="Views\Home\ViewSample.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

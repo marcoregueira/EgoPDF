@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Ego.PDF;
-using Ego.PDF.Data;
+﻿using Ego.PDF.Data;
 
 namespace Ego.PDF.Samples
 {

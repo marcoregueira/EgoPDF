@@ -96,8 +96,8 @@ namespace Ego.PDF.WebTest.Controllers
         public FileStreamResult GetSample5()
         {
             var pdf = Sample5.GetSample(Server.MapPath("../bin"));
-            string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
+            var s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
+            var m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
@@ -105,10 +105,16 @@ namespace Ego.PDF.WebTest.Controllers
         public FileStreamResult GetSample6()
         {
             var pdf = Sample6.GetSample(Server.MapPath("../bin"));
-            string s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
-            MemoryStream m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
+            var s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
+            var m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
             var result = new FileStreamResult(m, "application/pdf");
             return result;
+        }
+
+        public ActionResult ViewSample(string id)
+        {
+            ViewBag.Title = "Sample 1";
+            return PartialView();
         }
     }
 }

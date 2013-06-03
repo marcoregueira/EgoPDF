@@ -30,7 +30,8 @@
 				Tutorial 1
 			</td>
 			<td>
-				@Html.ActionLink("Tutorial 1", "GetSample1", null, new { @class = "link_out" })
+			    @Html.ActionLink("Tutorial 1", "GetSample1", null, new { @class = "link_out" }) - 
+                @Html.ActionLink("Tutorial 1", "ViewSample", new  {@id=1}, new { @class = "link_out sampleSource", @data_sample="1" })
 			</td>
 		</tr>
 		<tr>

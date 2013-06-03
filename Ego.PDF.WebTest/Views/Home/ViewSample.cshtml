@@ -1,0 +1,33 @@
+﻿<div class="modal" id="myModal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3>
+            @ViewBag.Title
+        </h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            One fine body…</p>
+        <pre class="prettyprint linenums">
+using Ego.PDF.Data;
+
+namespace Ego.PDF.Samples
+{
+    public class Sample1
+    {
+        public static FPdf GetSample()
+        {
+            var pdf = new FPdf();
+            pdf.AddPage(PageSizeEnum.A4);
+            pdf.SetFont("Arial", "", 16);
+            pdf.Cell(40, 10, "Hello World!");
+            return pdf;
+        }
+    }
+}
+        </pre>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn">Close</a> <a href="#" class="btn btn-primary">Save changes</a>
+    </div>
+</div>
