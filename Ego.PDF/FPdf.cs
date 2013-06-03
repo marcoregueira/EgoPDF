@@ -2489,7 +2489,7 @@ namespace Ego.PDF
                 filter = (Compress) ? "/Filter /FlateDecode " : "";
                 if (Compress)
                 {
-                    pal = gzcompress(info.pal);
+                    pal = GzCompress(info.pal);
                 }
                 else
                 {
@@ -2614,7 +2614,6 @@ namespace Ego.PDF
 
         internal virtual void _enddoc()
         {
-            object o;
             int i;
             _putheader();
             _putpages();
@@ -2632,7 +2631,7 @@ namespace Ego.PDF
             Out(">>");
             Out("endobj");
             // Cross-ref
-            o = Buffer.Length;
+            var o = Buffer.Length;
             Out("xref");
             Out("0 " + (ObjectCount + 1).ToString());
             Out("0000000000 65535 f ");
@@ -2663,11 +2662,11 @@ namespace Ego.PDF
 
         public static string sprintf(string Format, params object[] Parameters)
         {
-            string result = SprintfTools.sprintf(Format, Parameters);
+            var result = SprintfTools.sprintf(Format, Parameters);
             return result;
         }
 
-        public byte[] gzcompress(byte[] value)
+        public byte[] GzCompress(byte[] value)
         {
             var outstream = new MemoryStream();
             var g = new ZlibStream(outstream, CompressionMode.Compress);
@@ -2677,7 +2676,7 @@ namespace Ego.PDF
             return result;
         }
 
-        public byte[] gzuncompress(byte[] value)
+        public byte[] GzUncompress(byte[] value)
         {
             var instream = new MemoryStream(value, false);
             var g = new ZlibStream(instream, CompressionMode.Decompress);
@@ -2689,7 +2688,7 @@ namespace Ego.PDF
 
         public string GzUncompressString(byte[] value)
         {
-            byte[] uncompressedArray = gzuncompress(value);
+            byte[] uncompressedArray = GzUncompress(value);
             string result = PrivateEncoding.GetString(uncompressedArray);
             return result;
         }
@@ -2697,7 +2696,7 @@ namespace Ego.PDF
         public byte[] GzCompressString(string value)
         {
             byte[] bytes = PrivateEncoding.GetBytes(value);
-            byte[] result = gzcompress(bytes);
+            byte[] result = GzCompress(bytes);
             return result;
         }
     }
