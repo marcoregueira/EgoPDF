@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
+using System.Web.Hosting;
 using System.Web.Mvc;
 
 using Ego.PDF;
@@ -92,7 +93,7 @@ namespace Ego.PDF.WebTest.Controllers
             var result = new FileStreamResult(m, "application/pdf");
             return result;
         }
-        
+
         public FileStreamResult GetSample5()
         {
             var pdf = Sample5.GetSample(Server.MapPath("../bin"));
@@ -113,7 +114,9 @@ namespace Ego.PDF.WebTest.Controllers
 
         public ActionResult ViewSample(string id)
         {
-            ViewBag.Title = "Sample 1";
+            ViewBag.Title = "Sample " + id;
+            var path = HostingEnvironment.MapPath(string.Format("~/Samples/Sample{0}.cs", id));
+            ViewBag.File = System.IO.File.ReadAllText(path);
             return PartialView();
         }
     }
