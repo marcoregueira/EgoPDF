@@ -536,7 +536,7 @@ namespace Ego.PDF.PHP
             OrderedMap each = null;
             if ((this._index < this.Count) && (this._index >= 0))
             {
-                System.Collections.DictionaryEntry entry = this.GetEntryAt(this._index);
+                DictionaryEntry entry = this.GetEntryAt(this._index);
                 each = new OrderedMap(
                     new object[] {1, entry.Value},
                     new object[] {"value", entry.Value},

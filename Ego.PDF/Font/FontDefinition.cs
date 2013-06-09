@@ -31,13 +31,13 @@ namespace Ego.PDF.Font
 
         public PHP.OrderedMap cw { get; set; }
         public Dictionary<string, int> Widths { get; set; }
-        public Dictionary<string, object> desc { get; set; }
+        public Dictionary<string, string> desc { get; set; }
 
         public FontDefinition()
         {
             this.cw = new PHP.OrderedMap();
             this.Widths = new Dictionary<string, int>();
-            this.desc = new Dictionary<string, object>();
+            this.desc = new Dictionary<string, string>();
         }
 
         public void RegisterWidths()

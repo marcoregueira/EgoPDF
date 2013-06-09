@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -163,6 +164,9 @@ namespace Ego.PDF
             SetCompression(false);
             // Set default PDF version number
             PdfVersion = "1.3";
+
+            DefaultCulture = CultureInfo.InvariantCulture;
+            PageNumberFormat = "d";
         }
 
         public FPdf() : this(PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4)
@@ -311,6 +315,10 @@ namespace Ego.PDF
         public string PdfVersion { get; set; }
 
         public string FpdfFontpath { get; set; }
+
+        public CultureInfo DefaultCulture { get; set; }
+        public string PageNumberFormat { get; set; }
+
         private string Fontpath { get; set; }
 
 
@@ -513,7 +521,7 @@ namespace Ego.PDF
             // Close page
             EndPage();
             // Close document
-            _enddoc();
+            EndDoc();
         }
 
         public virtual void AddPage()
@@ -1308,7 +1316,7 @@ namespace Ego.PDF
         public virtual void Write(int h, string txt, int internalLink)
         {
             LinkDataInternal link = Links[internalLink];
-            Write(h, txt, internalLink);
+            Write(h, txt, link);
         }
 
         public virtual void Write(int h, string txt, string uri)
@@ -1324,12 +1332,12 @@ namespace Ego.PDF
             double localWidth = W - RightMargin - X;
             double wmax = (localWidth - 2*CMargin)*1000/FontSize;
             var s = txt.Replace("\r", "");
-            int nb = TypeSupport.ToString(s).Length;
-            int sep = -1;
-            int i = 0;
-            int j = 0;
-            int l = 0;
-            int nl = 1;
+            var nb = s.Length;
+            var sep = -1;
+            var i = 0;
+            var j = 0;
+            var l = 0;
+            var nl = 1;
             while (i < nb)
             {
                 // Get next character
@@ -1351,7 +1359,7 @@ namespace Ego.PDF
                     nl++;
                     continue;
                 }
-                if (TypeSupport.ToString(c) == " ")
+                if (c == " ")
                 {
                     sep = i;
                 }
@@ -1376,11 +1384,11 @@ namespace Ego.PDF
                         {
                             i++;
                         }
-                        Cell(localWidth, h, s.Substring(j, i - j), 0.ToString(), 2, AlignEnum.Default, false, link);
+                        Cell(localWidth, h, s.Substring(j, i - j), 0.ToString(CultureInfo.InvariantCulture), 2, AlignEnum.Default, false, link);
                     }
                     else
                     {
-                        Cell(localWidth, h, s.Substring(j, sep - j), 0.ToString(), 2, AlignEnum.Default, false, link);
+                        Cell(localWidth, h, s.Substring(j, sep - j), 0.ToString(CultureInfo.InvariantCulture), 2, AlignEnum.Default, false, link);
                         i = sep + 1;
                     }
                     sep = -1;
@@ -1403,7 +1411,7 @@ namespace Ego.PDF
             if (i == j) return;
             //this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
             double w2 = (double) l/1000*FontSize;
-            Cell(w2, h, s.Substring(j), 0.ToString(), 0, AlignEnum.Default, false, link);
+            Cell(w2, h, s.Substring(j), 0.ToString(CultureInfo.InvariantCulture), 0, AlignEnum.Default, false, link);
             //string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
             //this._out(tail);
         }
@@ -1447,7 +1455,6 @@ namespace Ego.PDF
         {
             // Put an image on the page
             ImageInfo imageInfo;
-
             if (!Images.ContainsKey(file))
             {
                 // First use of this image, get info
@@ -1463,23 +1470,21 @@ namespace Ego.PDF
                 switch (type)
                 {
                     case ImageTypeEnum.Jpg:
-                        imageData = _parsejpg(file);
+                        imageData = ParseJpg(file);
                         break;
                     case ImageTypeEnum.Png:
                         imageData = ParsePng(file);
                         break;
                     case ImageTypeEnum.Gif:
-                        imageData = _parsegif(file);
+                        imageData = ParseGif(file);
                         break;
                     case ImageTypeEnum.Default:
                     default:
                         Error("Image file has no extension and no type was specified or unsupported type (" + file + ")");
                         break;
                 }
-                var typeName = type.ToString().ToLower();
-                //CONVERSION_ISSUE: Variable function '$mtd' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
                 imageInfo = imageData;
-                imageInfo.i = OrderedMap.CountElements(Images) + 1;
+                imageInfo.i = Images.Count + 1;
                 Images[file] = imageInfo;
             }
             else
@@ -1517,7 +1522,7 @@ namespace Ego.PDF
                 if (Y + h > PageBreakTrigger && !InHeader && !InFooter && AcceptPageBreak())
                 {
                     // Automatic page break
-                    double x2 = X;
+                    var x2 = X;
                     AddPage(CurOrientation, CurPageSize);
                     X = x2;
                 }
@@ -1626,14 +1631,7 @@ namespace Ego.PDF
             {
                 orientation = DefOrientation;
             }
-            if (size == null)
-            {
-                size = DefPageSize;
-            }
-            else
-            {
-                size = GetPageSize(size);
-            }
+            size = size == null ? DefPageSize : GetPageSize(size);
 
             if (orientation != CurOrientation || size.Width != CurPageSize.Width || size.Heigth != CurPageSize.Heigth)
             {
@@ -1649,8 +1647,8 @@ namespace Ego.PDF
                     H = size.Width;
                 }
 
-                WPt = TypeSupport.ToDouble(W)*k;
-                HPt = TypeSupport.ToDouble(H)*k;
+                WPt = W*k;
+                HPt = H*k;
                 PageBreakTrigger = TypeSupport.ToDouble(H) - PageBreakMargin;
                 CurOrientation = orientation;
                 CurPageSize = size;
@@ -1704,7 +1702,7 @@ namespace Ego.PDF
                            (-ut)/(double) 1000*FontSizePt);
         }
 
-        internal virtual ImageInfo _parsejpg(string file)
+        internal virtual ImageInfo ParseJpg(string file)
         {
             // Extract info from a JPEG file
 
@@ -1712,35 +1710,7 @@ namespace Ego.PDF
             Debug.Assert(path != null, "path != null");
             path = Path.Combine(path, file);
             var bi = new BitmapImage(new Uri(path));
-
-            /*           
-                        if (!PHP.TypeSupport.ToBoolean(a))
-                        {
-                            this.Error("Missing or incorrect image file: " + file);
-                        }
-
-                        if (PHP.TypeSupport.ToInt32(a[2]) != 2)
-                        {
-                            this.Error("Not a JPEG file: " + file);
-                        }
-                        */
-            var channels = 3;
             const string colspace = "DeviceRGB";
-            
-            /*
-            if (b.PixelFormat== System.Drawing.Imaging.PixelFormat.)
-            {
-                colspace = "DeviceRGB";
-            }
-            else if (channels == 4)
-                {
-                    colspace = "DeviceCMYK";
-                }
-                else
-                {
-                    colspace = "DeviceGray";
-            }
-             * */
             var bpc = bi.Format.BitsPerPixel;
             var data = new List<byte[]> {FileSystemSupport.ReadContentBytes(file)};
             return new ImageInfo
@@ -1752,8 +1722,6 @@ namespace Ego.PDF
                     f = "DCTDecode",
                     data = data
                 };
-            //return new PHP.OrderedMap(new object[] { "w", b.Width }, new object[] { "h", a[1] }, new object[] { "cs", colspace },
-            //    new object[] { "bpc", bpc }, new object[] { "f", "DCTDecode" }, new object[] { "data", data });
         }
 
         /// <summary>
@@ -1771,129 +1739,118 @@ namespace Ego.PDF
 
             EndianBitConverter converter = new BigEndianBitConverter();
             var reader = new EndianBinaryReader(converter, f, Encoding.ASCII);
-            var info = _parsepngstream(f, reader, file);
+            var info = ParsePngStream(f, reader, file);
             reader.Close();
             return info;
         }
 
-        internal virtual ImageInfo _parsepngstream(FileStream f, EndianBinaryReader reader, string file)
+        internal virtual ImageInfo ParsePngStream(FileStream f, EndianBinaryReader reader, string file)
         {
             int n;
             int pos;
-            string line;
-            string signature = _readstream(reader, 8);
+            var signature = ReadStream(reader, 8);
             if (!signature.Contains("PNG"))
             {
                 Error("Not a PNG file: " + file);
             }
 
-            /*
-            if ( signature != System.Convert.ToString((char)137) + "PNG" + System.Convert.ToString((char)13) + System.Convert.ToString((char)10) + System.Convert.ToString((char)26) + System.Convert.ToString((char)10))
-            {
-                this.Error("Not a PNG file: " + file);
-            }
-            */
-
             // Read header chunk
-            _readstream(reader, 4);
-            if (_readstream(reader, 4) != "IHDR")
+            ReadStream(reader, 4);
+            if (ReadStream(reader, 4) != "IHDR")
             {
                 Error("Incorrect PNG file: " + file);
             }
-            int w = reader.ReadInt32();
-            int height = reader.ReadInt32();
-            int bpc = _readstream(reader, 1)[0];
+            var w = reader.ReadInt32();
+            var height = reader.ReadInt32();
+            var bpc = ReadStream(reader, 1)[0];
             if (bpc > 8)
             {
                 Error("16-bit depth not supported: " + file);
             }
-            int ct = _readstream(reader, 1)[0];
+            int ct = ReadStream(reader, 1)[0];
 
-            string colspace = "DeviceRGB";
+            var colspace = "DeviceRGB";
 
-            if (ct == 0 || ct == 4)
+            switch (ct)
             {
-                colspace = "DeviceGray";
+                case 4:
+                case 0:
+                    colspace = "DeviceGray";
+                    break;
+                case 6:
+                case 2:
+                    colspace = "DeviceRGB";
+                    break;
+                case 3:
+                    colspace = "Indexed";
+                    break;
+                default:
+                    Error("Unknown color type: " + file);
+                    break;
             }
-            else if (ct == 2 || ct == 6)
-            {
-                colspace = "DeviceRGB";
-            }
-            else if (ct == 3)
-            {
-                colspace = "Indexed";
-            }
-            else
-            {
-                Error("Unknown color type: " + file);
-            }
-            if (_readstream(reader, 1)[0] != 0)
+            if (ReadStream(reader, 1)[0] != 0)
             {
                 Error("Unknown compression method: " + file);
             }
-            if (_readstream(reader, 1)[0] != 0)
+            if (ReadStream(reader, 1)[0] != 0)
             {
                 Error("Unknown filter method: " + file);
             }
-            if (_readstream(reader, 1)[0] != 0)
+            if (ReadStream(reader, 1)[0] != 0)
             {
                 Error("Interlacing not supported: " + file);
             }
-            _readstream(reader, 4);
-            string dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1).ToString() + " /BitsPerComponent " +
-                        bpc.ToString() + " /Columns " + w.ToString();
+            ReadStream(reader, 4);
+            var dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1) + " /BitsPerComponent " +
+                     bpc + " /Columns " + w;
 
             // Scan chunks looking for palette, transparency and image data
             var pal = new byte[] {};
             var trns = new int[] {};
-            byte[] data = new byte[] {};
+            var data = new byte[] {};
             do
             {
                 n = reader.ReadInt32();
-                string type = _readstream(reader, 4);
-                if (type == "PLTE")
+                var type = ReadStream(reader, 4);
+                switch (type)
                 {
-                    // Read palette
-                    pal = _readStreamBytes(reader, n);
-                    _readstream(reader, 4);
-                }
-                else if (type == "tRNS")
-                {
-                    // Read transparency info
-                    string t = _readstream(reader, n);
-                    if (ct == 0)
-                    {
-                        trns = new[] {Convert.ToInt32(t[1])}; // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
-                    }
-                    else if (ct == 2)
-                    {
-                        //trns = new PHP.OrderedMap((int)t.Substring(1, 1)[0], (int)t.Substring(3, 1)[0], (int)t.Substring(5, 1)[0]);
-                        trns = new[] {Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5])};
-                    }
-                    else
-                    {
-                        pos = t.IndexOf(Convert.ToString((char) 0));
-                        if (pos > 0)
+                    case "PLTE":
+                        pal = ReadStreamBytes(reader, n);
+                        ReadStream(reader, 4);
+                        break;
+                    case "tRNS":
                         {
-                            trns = new[] {pos};
+                            // Read transparency info
+                            var t = ReadStream(reader, n);
+                            switch (ct)
+                            {
+                                case 0:
+                                    trns = new[] {Convert.ToInt32(t[1])};
+                                        // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
+                                    break;
+                                case 2:
+                                    trns = new[] {Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5])};
+                                    break;
+                                default:
+                                    pos = t.IndexOf(Convert.ToString((char) 0));
+                                    if (pos > 0)
+                                    {
+                                        trns = new[] {pos};
+                                    }
+                                    break;
+                            }
+                            ReadStream(reader, 4);
                         }
-                    }
-                    _readstream(reader, 4);
-                }
-                else if (type == "IDAT")
-                {
-                    // Read image data block
-                    data = _readStreamBytes(reader, n);
-                    _readstream(reader, 4);
-                }
-
-                else if (type == "IEND")
-                {
-                    break;
-                }
-                else
-                {
-                    _readstream(reader, n + 4);
+                        break;
+                    case "IDAT":
+                        data = ReadStreamBytes(reader, n);
+                        ReadStream(reader, 4);
+                        break;
+                    case "IEND":
+                        break;
+                    default:
+                        ReadStream(reader, n + 4);
+                        break;
                 }
             } while (Convert.ToBoolean(n));
 
@@ -1912,8 +1869,6 @@ namespace Ego.PDF
                     pal = pal,
                     trns = trns
                 };
-            //new PHP.OrderedMap(new object[] { "w", w }, new object[] { "h", h }, new object[] { "cs", colspace }, new object[] { "bpc", bpc }, new object[] { "f", "FlateDecode" }, new object[] { "dp", dp }, new object[] { "pal", pal }, new object[] { "trns", trns });
-
 
             if (ct >= 4)
             {
@@ -1922,6 +1877,7 @@ namespace Ego.PDF
                 var color = new StringBuilder();
                 var alpha = new StringBuilder();
                 int len;
+                string line;
                 if (ct == 4)
                 {
                     // Gray image
@@ -1932,9 +1888,7 @@ namespace Ego.PDF
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
-                        //color.Append(new System.Text.RegularExpressions.Regex("/(.)./s").Replace(line, "$1"));
-                        //alpha.Append(new System.Text.RegularExpressions.Regex("/.(.)/s").Replace(line, "$1"));
-                        for (int posLinea = 0; posLinea < line.Length; posLinea += 2)
+                        for (var posLinea = 0; posLinea < line.Length; posLinea += 2)
                         {
                             color.Append(line[posLinea]);
                             alpha.Append(line[posLinea + 1]);
@@ -1956,8 +1910,6 @@ namespace Ego.PDF
                             color.Append(line.Substring(posLinea, 3));
                             alpha.Append(line[posLinea + 3]);
                         }
-                        //color.Append(new Regex("/(.{3})./s").Replace(line, new MatchEvaluator(FPdf.CapText)));
-                        //alpha.Append(new Regex("/.{3}(.)/s").Replace(line, "$1"));
                     }
                 }
                 data = GzCompressString(color.ToString());
@@ -1975,33 +1927,17 @@ namespace Ego.PDF
             return info;
         }
 
-
-        private static string CapText(Match m)
-        {
-            // Get the matched string.
-            var x = m.ToString();
-            // If the first char is lower case...
-            if (char.IsLower(x[0]))
-            {
-                // Capitalize it.
-                return char.ToUpper(x[0]) + x.Substring(1, x.Length - 1);
-            }
-            return x;
-        }
-
-
-        internal virtual byte[] _readStreamBytes(EndianBinaryReader br, int n)
+        internal virtual byte[] ReadStreamBytes(EndianBinaryReader br, int n)
         {
             byte[] result = br.ReadBytes(n);
             return result;
         }
 
-        internal virtual string _readstream(EndianBinaryReader br, int n)
+        internal virtual string ReadStream(EndianBinaryReader br, int n)
         {
             // Read n bytes from stream
-            string res;
             string s;
-            res = "";
+            string res = "";
 
             while (n > 0 && !(br.BaseStream.Position >= br.BaseStream.Length))
             {
@@ -2020,18 +1956,13 @@ namespace Ego.PDF
             return res;
         }
 
-        internal virtual Int32 _readint(FileStream f, BinaryReader br)
+        internal virtual Int32 ReadInt(FileStream f, BinaryReader br)
         {
-            // Read a 4-byte integer from stream
-            //PHP.OrderedMap a;
-            //CONVERSION_ISSUE: Method 'unpack' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
-            //a = unpack("Ni", this._readstream(f, 4));
-            //return PHP.TypeSupport.ToInt32(a["i"]);
             Int32 a = br.ReadInt32();
             return a;
         }
 
-        internal virtual ImageInfo _parsegif(string file)
+        internal virtual ImageInfo ParseGif(string file)
         {
             throw new NotImplementedException();
             /*
@@ -2101,7 +2032,7 @@ namespace Ego.PDF
              */
         }
 
-        internal virtual void _newobj()
+        internal virtual void NewObject()
         {
             // Begin a new object
             ObjectCount++;
@@ -2163,60 +2094,55 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void _putpages()
+        internal virtual void PutPages()
         {
-            int n;
             double wPt;
             double hPt;
             int i;
-            var nb = Page;
-            if (!VariableSupport.Empty(AliasNbPagesRenamed))
+            if (!string.IsNullOrWhiteSpace(AliasNbPagesRenamed))
             {
                 // Replace number of pages
-                for (n = 1; n <= nb; n++)
+                foreach (var page in Pages.Values)
                 {
-                    //string page = Convert.ToString(this.pages[n]);
-                    Pages[n].Replace(AliasNbPagesRenamed, nb.ToString());
+                    page.Replace(AliasNbPagesRenamed, Page.ToString(PageNumberFormat, DefaultCulture));
                 }
             }
             if (DefOrientation == PageOrientation.Portrait)
             {
-                wPt = TypeSupport.ToDouble(DefPageSize.Width)*k;
-                hPt = TypeSupport.ToDouble(DefPageSize.Heigth)*k;
+                wPt = DefPageSize.Width*k;
+                hPt = DefPageSize.Heigth*k;
             }
             else
             {
-                wPt = TypeSupport.ToDouble(DefPageSize.Heigth)*k;
-                hPt = TypeSupport.ToDouble(DefPageSize.Width)*k;
+                wPt = DefPageSize.Heigth*k;
+                hPt = DefPageSize.Width*k;
             }
             var filter = (Compress) ? "/Filter /FlateDecode " : "";
-            for (n = 1; n <= nb; n++)
+            foreach (var currentPage in Pages)
             {
                 // Page
-                _newobj();
+                NewObject();
                 Out("<</Type /Page");
                 Out("/Parent 1 0 R");
-                if (PageSizes.ContainsKey(n))
+                if (PageSizes.ContainsKey(currentPage.Key))
                 {
-                    Out(sprintf("/MediaBox [0 0 %.2F %.2F]", PageSizes[n].Width, PageSizes[n].Heigth));
-                    //this._out(sprintf("/MediaBox [0 0 %.2F %.2F]", this.PageSizes[n].Widht, this.PageSizes[n].Height));
+                    Out(sprintf("/MediaBox [0 0 %.2F %.2F]", PageSizes[currentPage.Key].Width, PageSizes[currentPage.Key].Heigth));
                 }
                 Out("/Resources 2 0 R");
-                if (Pages[n].PageLinks.Count > 0)
+                if (currentPage.Value.PageLinks.Count > 0)
                 {
                     // Links
                     var annots = "/Annots [";
-                    foreach (PageLink pl in Pages[n].PageLinks)
+                    foreach (var pl in currentPage.Value.PageLinks)
                     {
-                        string rect = sprintf("%.2F %.2F %.2F %.2F", pl.P0, pl.P1, pl.P0 + pl.P2, pl.P1 - pl.P3);
+                        var rect = sprintf("%.2F %.2F %.2F %.2F", pl.P0, pl.P1, pl.P0 + pl.P2, pl.P1 - pl.P3);
                         annots += "<</Type /Annot /Subtype /Link /Rect [" + rect + "] /Border [0 0 0] ";
-
 
                         if (pl.Link is LinkDataInternal)
                         {
                             var link = Links[(pl.Link as LinkDataInternal).InternalLink];
-                            var l0 = link.PageIndex;
-                            double h = (PageSizes.ContainsKey(l0)) ? TypeSupport.ToDouble(PageSizes[l0].Heigth) : hPt;
+                            var pageIndex = link.PageIndex;
+                            var h = (PageSizes.ContainsKey(pageIndex)) ? PageSizes[pageIndex].Heigth : hPt;
                             annots += sprintf("/Dest [%d 0 R /XYZ 0 %.2F null]>>", 1 + 2*link.PageIndex, h - link.Y*k);
                         }
                         else if (pl.Link is LinkDataUri)
@@ -2228,26 +2154,26 @@ namespace Ego.PDF
                     }
                     Out(annots + "]");
                 }
-                if (PdfVersion.CompareTo("1.3") > 0)
+                if (String.Compare(PdfVersion, "1.3", StringComparison.Ordinal) > 0)
                 {
                     Out("/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>");
                 }
-                Out("/Contents " + (this.ObjectCount + 1).ToString() + " 0 R>>");
+                Out("/Contents " + (this.ObjectCount + 1).ToString(CultureInfo.InvariantCulture) + " 0 R>>");
                 Out("endobj");
                 // Page content
                 if (Compress)
                 {
-                    var p = GzCompressString(Pages[n].ToString());
-                    _newobj();
+                    var p = GzCompressString(currentPage.Value.ToString());
+                    NewObject();
                     Out("<<" + filter + "/Length " + p.Length.ToString() + ">>");
                     PutStream(p);
                     Out("endobj");
                 }
                 else
                 {
-                    var p1 = Pages[n].ToString();
-                    _newobj();
-                    Out("<<" + filter + "/Length " + p1.Length.ToString() + ">>");
+                    var p1 = currentPage.Value.ToString();
+                    NewObject();
+                    Out("<<" + filter + "/Length " + p1.Length.ToString(CultureInfo.InvariantCulture) + ">>");
                     PutStream(p1);
                     Out("endobj");
                 }
@@ -2257,29 +2183,22 @@ namespace Ego.PDF
             Out("1 0 obj");
             Out("<</Type /Pages");
             var kids = "/Kids [";
-            for (i = 0; i < nb; i++)
-                kids += (3 + 2*i).ToString() + " 0 R ";
+            for (i = 0; i < Page; i++)
+                kids += (3 + 2*i).ToString(CultureInfo.InvariantCulture) + " 0 R ";
             Out(kids + "]");
-            Out("/Count " + nb.ToString());
+            Out("/Count " + Page.ToString(CultureInfo.InvariantCulture));
             Out(sprintf("/MediaBox [0 0 %.2F %.2F]", wPt, hPt));
             Out(">>");
             Out("endobj");
         }
 
-        internal virtual void _putfonts()
+        internal virtual void PutFonts()
         {
-            FontTypeEnum type;
-            string name;
-            OrderedMap cw;
-            string s;
-            int i;
-            string mtd;
-            string font;
-            int nf = ObjectCount;
-            foreach (object diff in Diffs.Values)
+            var nf = ObjectCount;
+            foreach (var diff in Diffs.Values)
             {
                 // Encodings
-                _newobj();
+                NewObject();
                 Out("<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [" + TypeSupport.ToString(diff) +
                      "]>>");
                 Out("endobj");
@@ -2289,10 +2208,10 @@ namespace Ego.PDF
             {
                 FontDefinition info = Fonts[file];
                 // Font file embedding
-                _newobj();
+                NewObject();
                 info.n = ObjectCount;
                 //file_get_contents' returns a string 
-                font = FileSystemSupport.ReadContents(Fontpath + file);
+                var font = FileSystemSupport.ReadContents(Fontpath + file);
                 if (string.IsNullOrWhiteSpace(font))
                 {
                     Error("Font file not found: " + file);
@@ -2304,7 +2223,7 @@ namespace Ego.PDF
                     font = TypeSupport.ToString(font).Substring(6, info.length1)
                            + TypeSupport.ToString(font).Substring(6 + info.length1 + 6, info.length2);
                 }
-                Out("<</Length " + font.Length.ToString());
+                Out("<</Length " + font.Length);
                 if (compressed)
                 {
                     Out("/Filter /FlateDecode");
@@ -2319,97 +2238,95 @@ namespace Ego.PDF
                 Out("endobj");
             }
 
-            foreach (string k in Fonts.Keys)
+            foreach (var fontKey in Fonts.Keys)
             {
-                FontDefinition font1 = Fonts[k];
+                var font1 = Fonts[fontKey];
                 // Font objects
                 font1.n = ObjectCount + 1;
-                type = font1.type;
-                name = font1.name;
-                if (type == FontTypeEnum.Core)
+                var type = font1.type;
+                var name = font1.name;
+                switch (type)
                 {
-                    // Core font
-                    _newobj();
-                    Out("<</Type /Font");
-                    Out("/BaseFont /" + TypeSupport.ToString(name));
-                    Out("/Subtype /Type1");
-                    if (TypeSupport.ToString(name) != "Symbol" && TypeSupport.ToString(name) != "ZapfDingbats")
-                    {
-                        Out("/Encoding /WinAnsiEncoding");
-                    }
-                    Out(">>");
-                    Out("endobj");
-                }
-                else if (type == FontTypeEnum.Type1 || type == FontTypeEnum.TrueType)
-                {
-                    // Additional Type1 or TrueType/OpenType font
-                    _newobj();
-                    Out("<</Type /Font");
-                    Out("/BaseFont /" + TypeSupport.ToString(name));
-                    Out("/Subtype /" + TypeSupport.ToString(type));
-                    Out("/FirstChar 32 /LastChar 255");
-                    Out("/Widths " + (ObjectCount + 1).ToString() + " 0 R");
-                    Out("/FontDescriptor " + (ObjectCount + 2).ToString() + " 0 R");
-                    if (font1.diffn.HasValue)
-                    {
-                        Out("/Encoding " + (nf + font1.diffn).ToString() + " 0 R");
-                    }
-                    else
-                    {
-                        Out("/Encoding /WinAnsiEncoding");
-                    }
-                    Out(">>");
-                    Out("endobj");
-                    // Widths
-                    _newobj();
-                    cw = TypeSupport.ToArray(font1.cw);
-                    s = "[";
-                    for (i = 32; i <= 255; i++)
-                        s += TypeSupport.ToString(cw[Convert.ToString((char) i)]) + " ";
-                    Out(s + "]");
-                    Out("endobj");
-                    // Descriptor
-                    _newobj();
-                    s = "<</Type /FontDescriptor /FontName /" + TypeSupport.ToString(name);
-                    foreach (string k1 in font1.desc.Keys)
-                    {
-                        object v = font1.desc[k1];
-                        s += " /" + k1 + " " + TypeSupport.ToString(v);
-                    }
+                    case FontTypeEnum.Core:
+                        NewObject();
+                        Out("<</Type /Font");
+                        Out("/BaseFont /" + TypeSupport.ToString(name));
+                        Out("/Subtype /Type1");
+                        if (TypeSupport.ToString(name) != "Symbol" && TypeSupport.ToString(name) != "ZapfDingbats")
+                        {
+                            Out("/Encoding /WinAnsiEncoding");
+                        }
+                        Out(">>");
+                        Out("endobj");
+                        break;
+                    case FontTypeEnum.TrueType:
+                    case FontTypeEnum.Type1:
+                        {
+                            // Additional Type1 or TrueType/OpenType font
+                            NewObject();
+                            Out("<</Type /Font");
+                            Out("/BaseFont /" + TypeSupport.ToString(name));
+                            Out("/Subtype /" + TypeSupport.ToString(type));
+                            Out("/FirstChar 32 /LastChar 255");
+                            Out("/Widths " + (ObjectCount + 1).ToString(CultureInfo.InvariantCulture) + " 0 R");
+                            Out("/FontDescriptor " + (ObjectCount + 2).ToString(CultureInfo.InvariantCulture) + " 0 R");
+                            if (font1.diffn.HasValue)
+                            {
+                                Out("/Encoding " + (nf + font1.diffn) + " 0 R");
+                            }
+                            else
+                            {
+                                Out("/Encoding /WinAnsiEncoding");
+                            }
+                            Out(">>");
+                            Out("endobj");
+                            // Widths
+                            NewObject();
+                            var cw = TypeSupport.ToArray(font1.cw);
+                            string s = "[";
+                            int i;
+                            for (i = 32; i <= 255; i++)
+                                s += TypeSupport.ToString(cw[Convert.ToString((char) i)]) + " ";
+                            Out(s + "]");
+                            Out("endobj");
+                            // Descriptor
+                            NewObject();
+                            s = "<</Type /FontDescriptor /FontName /" + TypeSupport.ToString(name);
+                            foreach (string k1 in font1.desc.Keys)
+                            {
+                                string v = font1.desc[k1];
+                                s += " /" + k1 + " " + v;// TypeSupport.ToString(v);
+                            }
 
-                    if (!string.IsNullOrEmpty(font1.file))
-                    {
-                        s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " +
-                             TypeSupport.ToString(Fonts[font1.file].n) + " 0 R";
-                    }
-                    Out(s + ">>");
-                    Out("endobj");
-                }
-                else
-                {
-                    Error("Unsupported font type: " + TypeSupport.ToString(type));
+                            if (!string.IsNullOrEmpty(font1.file))
+                            {
+                                s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " +
+                                     TypeSupport.ToString(Fonts[font1.file].n) + " 0 R";
+                            }
+                            Out(s + ">>");
+                            Out("endobj");
+                        }
+                        break;
+                    default:
+                        Error("Unsupported font type: " + TypeSupport.ToString(type));
+                        break;
                 }
             }
         }
 
-        internal virtual void _putimages()
+        internal virtual void PutImages()
         {
             foreach (var file in Images)
             {
-                _putimage(file.Value);
+                PutImage(file.Value);
                 file.Value.data = null; //unset, probably not needed
                 file.Value.smask = null; //unset, probably not needed
             }
         }
 
-        internal virtual void _putimage(ImageInfo info)
+        internal virtual void PutImage(ImageInfo info)
         {
-            string trns;
-            string dp;
-            ImageInfo smask;
-            string filter;
-            byte[] pal;
-            _newobj();
+            NewObject();
             info.n = ObjectCount;
             Out("<</Type /XObject");
             Out("/Subtype /Image");
@@ -2439,7 +2356,7 @@ namespace Ego.PDF
             }
             if (info.trns != null && info.trns.Count() > 0)
             {
-                trns = "";
+                string trns = "";
                 foreach (int trn in info.trns)
                 {
                     trns += trn + " " + trn + " ";
@@ -2460,17 +2377,15 @@ namespace Ego.PDF
             //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
             if (info.smask != null)
             {
-                dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + TypeSupport.ToString(info.w);
-                smask = new ImageInfo
-                    {
-                        w = info.w,
-                        h = info.h,
-                        cs = "DeviceGray",
-                        bpc = 8,
-                        f = info.f,
-                        dp = dp,
-                        data = new List<byte[]> {info.smask}
-                    };
+                string dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + TypeSupport.ToString(info.w);
+                ImageInfo smask = new ImageInfo();
+                smask.w = info.w;
+                smask.h = info.h;
+                smask.cs = "DeviceGray";
+                smask.bpc = 8;
+                smask.f = info.f;
+                smask.dp = dp;
+                smask.data = new List<byte[]> {info.smask};
                 /*
                 smask = new PHP.OrderedMap(
                         new object[] { "w", info.w }, 
@@ -2481,22 +2396,15 @@ namespace Ego.PDF
                         new object[] { "dp", dp },
                         new object[] { "data", info.smask });
                 */
-                _putimage(smask);
+                PutImage(smask);
             }
             // Palette
             if (TypeSupport.ToString(info.cs) == "Indexed")
             {
-                filter = (Compress) ? "/Filter /FlateDecode " : "";
-                if (Compress)
-                {
-                    pal = GzCompress(info.pal);
-                }
-                else
-                {
-                    pal = info.pal;
-                }
-                _newobj();
-                Out("<<" + filter + "/Length " + pal.Length.ToString() + ">>");
+                var filter = (Compress) ? "/Filter /FlateDecode " : "";
+                var pal = Compress ? GzCompress(info.pal) : info.pal;
+                NewObject();
+                Out("<<" + filter + "/Length " + pal.Length.ToString(CultureInfo.InvariantCulture) + ">>");
                 PutStream(pal);
                 Out("endobj");
             }
@@ -2504,7 +2412,7 @@ namespace Ego.PDF
 
         internal virtual void PutXObjectDictionary()
         {
-            foreach (ImageInfo image in Images.Values)
+            foreach (var image in Images.Values)
             {
                 Out("/I" + TypeSupport.ToString(image.i) + " " + TypeSupport.ToString(image.n) + " 0 R");
             }
@@ -2514,9 +2422,9 @@ namespace Ego.PDF
         {
             Out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]");
             Out("/Font <<");
-            foreach (FontDefinition font in Fonts.Values)
+            foreach (var font in Fonts.Values)
             {
-                Out("/F" + TypeSupport.ToString(font.i) + " " + TypeSupport.ToString(font.n) + " 0 R");
+                Out("/F" + font.i + " " + font.n + " 0 R");
             }
             Out(">>");
             Out("/XObject <<");
@@ -2526,8 +2434,8 @@ namespace Ego.PDF
 
         internal virtual void PutResources()
         {
-            _putfonts();
-            _putimages();
+            PutFonts();
+            PutImages();
             // Resource dictionary
             Offsets[2] = Buffer.Length;
             Out("2 0 obj");
@@ -2570,62 +2478,61 @@ namespace Ego.PDF
         {
             Out("/Type /Catalog");
             Out("/Pages 1 0 R");
-            if (ZoomMode == ZoomEnum.FullPage)
+            switch (ZoomMode)
             {
-                Out("/OpenAction [3 0 R /Fit]");
+                case ZoomEnum.FullPage:
+                    Out("/OpenAction [3 0 R /Fit]");
+                    break;
+                case ZoomEnum.FullWidth:
+                    Out("/OpenAction [3 0 R /FitH null]");
+                    break;
+                case ZoomEnum.Real:
+                    Out("/OpenAction [3 0 R /XYZ null null 1]");
+                    break;
+                case ZoomEnum.Custom:
+                    Out("/OpenAction [3 0 R /XYZ null null " + sprintf("%.2F", ZoomValue/100) + "]");
+                    break;
             }
-            else if (ZoomMode == ZoomEnum.FullWidth)
+            switch (LayoutMode)
             {
-                Out("/OpenAction [3 0 R /FitH null]");
-            }
-            else if (ZoomMode == ZoomEnum.Real)
-            {
-                Out("/OpenAction [3 0 R /XYZ null null 1]");
-            }
-            else if (ZoomMode == ZoomEnum.Custom)
-            {
-                Out("/OpenAction [3 0 R /XYZ null null " + sprintf("%.2F", ZoomValue/100) + "]");
-            }
-            if (LayoutMode == LayoutEnum.Single)
-            {
-                Out("/PageLayout /SinglePage");
-            }
-            else if (LayoutMode == LayoutEnum.Continuous)
-            {
-                Out("/PageLayout /OneColumn");
-            }
-            else if (LayoutMode == LayoutEnum.Two)
-            {
-                Out("/PageLayout /TwoColumnLeft");
+                case LayoutEnum.Single:
+                    Out("/PageLayout /SinglePage");
+                    break;
+                case LayoutEnum.Continuous:
+                    Out("/PageLayout /OneColumn");
+                    break;
+                case LayoutEnum.Two:
+                    Out("/PageLayout /TwoColumnLeft");
+                    break;
             }
         }
 
-        internal virtual void _putheader()
+        internal virtual void PutHeader()
         {
             Out("%PDF-" + PdfVersion);
         }
 
-        internal virtual void _puttrailer()
+        internal virtual void PutTrailer()
         {
             Out("/Size " + (ObjectCount + 1).ToString());
             Out("/Root " + ObjectCount.ToString() + " 0 R");
             Out("/Info " + (ObjectCount - 1).ToString() + " 0 R");
         }
 
-        internal virtual void _enddoc()
+        internal virtual void EndDoc()
         {
             int i;
-            _putheader();
-            _putpages();
+            PutHeader();
+            PutPages();
             PutResources();
             // Info
-            _newobj();
+            NewObject();
             Out("<<");
             PutInfo();
             Out(">>");
             Out("endobj");
             // Catalog
-            _newobj();
+            NewObject();
             Out("<<");
             PutCatalog();
             Out(">>");
@@ -2652,7 +2559,7 @@ namespace Ego.PDF
             // Trailer
             Out("trailer");
             Out("<<");
-            _puttrailer();
+            PutTrailer();
             Out(">>");
             Out("startxref");
             Out(o);
