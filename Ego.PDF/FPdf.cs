@@ -179,7 +179,7 @@ namespace Ego.PDF
         public int Page { get; set; }
 
         /// <summary>
-        ///     current object number
+        /// Current object number
         /// <remarks>Previously named "n"</remarks>
         /// </summary>
         public int ObjectCount { get; set; }
