@@ -174,7 +174,7 @@ namespace Ego.PDF
         }
 
         /// <summary>
-        ///     current page number
+        /// Current page number
         /// </summary>
         public int Page { get; set; }
 
