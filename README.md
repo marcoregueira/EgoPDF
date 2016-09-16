@@ -6,7 +6,7 @@ Port of FPDF to C# and utility library
 Note that this is a port made using an automated tool with some fixes, mostly for fun purposes.
 
 
-Original licence
+Original license
 ================
 
 This is the license as stated by the original author of FPDF:
