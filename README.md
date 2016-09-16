@@ -2,3 +2,19 @@ fpdf.net
 ========
 
 Port of FPDF to C# and utility library
+
+Note that this is a port made using an automated too with some fixes, mostly for fun purposes.
+
+
+Original licence
+================
+
+This is the license as stated by the original author.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software to use, copy, modify, distribute, sublicense, and/or sell
+copies of the software, and to permit persons to whom the software is furnished
+to do so.
+
+For any substantial changes introduced by me MIT license will apply.
+
