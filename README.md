@@ -3,7 +3,7 @@ fpdf.net
 
 Port of FPDF to C# and utility library
 
-Note that this is a port made using an automated too with some fixes, mostly for fun purposes.
+Note that this is a port made using an automated tool with some fixes, mostly for fun purposes.
 
 
 Original licence
