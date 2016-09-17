@@ -20,6 +20,8 @@ using Ego.PDF.PHP;
 using Ego.PDF.Printf;
 using Ego.PDF.Support;
 
+using static Ego.PDF.Printf.SprintfTools;
+
 /*******************************************************************************
 * FPDF                                                                         *
 *                                                                              *
@@ -57,7 +59,7 @@ namespace Ego.PDF
             // Initialization of properties
             Page = 0;
             ObjectCount = 2;
-            Buffer = PrivateEncoding.GetString(new byte[] {});
+            Buffer = PrivateEncoding.GetString(new byte[] { });
             Offsets = new Dictionary<int, int>();
             Pages = new Dictionary<int, Page>();
             PageSizes = new Dictionary<int, Dimensions>();
@@ -85,9 +87,9 @@ namespace Ego.PDF
             Fontpath = FpdfFontpath;
 
             // Core fonts
-            CoreFonts = new List<string> {"courier", "helvetica", "times", "symbol", "zapfdingbats"};
+            CoreFonts = new List<string> { "courier", "helvetica", "times", "symbol", "zapfdingbats" };
             // Scale factor
-            k = 72/25.4; // unidades en milímetros
+            k = 72 / 25.4; // unidades en milímetros
 
             // Page sizes
             StdPageSizes = new List<PageSize>
@@ -105,11 +107,11 @@ namespace Ego.PDF
             }
             else if (unit == UnitEnum.Milimeter)
             {
-                k = 72/25.4;
+                k = 72 / 25.4;
             }
             else if (unit == UnitEnum.Centimeter)
             {
-                k = 72/2.54;
+                k = 72 / 2.54;
             }
             else if (unit == UnitEnum.Inch)
             {
@@ -145,17 +147,17 @@ namespace Ego.PDF
                 Error("Incorrect orientation: " + orientation);
             }
 
-            WPt = W*k;
-            HPt = H*k;
+            WPt = W * k;
+            HPt = H * k;
             // Page margins (1 cm)
-            double margin = 28.35/k;
+            double margin = 28.35 / k;
             SetMargins(margin, margin);
             // Interior cell margin (1 mm)
-            CMargin = margin/10;
+            CMargin = margin / 10;
             // Line width (0.2 mm)
-            LineWidth = .567/k;
+            LineWidth = .567 / k;
             // Automatic page break
-            SetAutoPageBreak(true, 2*margin);
+            SetAutoPageBreak(true, 2 * margin);
             // Default display mode
             SetDisplayMode(ZoomEnum.Default, LayoutEnum.Default);
             // Enable compression
@@ -575,7 +577,7 @@ namespace Ego.PDF
             Out("2 J");
             // Set line width
             LineWidth = lw;
-            Out(sprintf("%.2F w", lw*k));
+            Out(sprintf("%.2F w", lw * k));
 
             // Set font
             if (TypeSupport.ToBoolean(family))
@@ -603,7 +605,7 @@ namespace Ego.PDF
             if (LineWidth != lw)
             {
                 LineWidth = lw;
-                Out(sprintf("%.2F w", lw*k));
+                Out(sprintf("%.2F w", lw * k));
             }
             // Restore font
             if (TypeSupport.ToBoolean(family))
@@ -652,11 +654,11 @@ namespace Ego.PDF
             // Set color for all stroking operations
             if ((r == 0 && g == 0 && b == 0) || (!g.HasValue))
             {
-                DrawColor = sprintf("%.3F G", r/255);
+                DrawColor = sprintf("%.3F G", r / 255);
             }
             else
             {
-                DrawColor = sprintf("%.3F %.3F %.3F RG", r/255, g/255, b/255);
+                DrawColor = sprintf("%.3F %.3F %.3F RG", r / 255, g / 255, b / 255);
             }
             if (Page > 0)
             {
@@ -666,7 +668,7 @@ namespace Ego.PDF
 
         public virtual void SetFillColor(int grey)
         {
-            FillColor = sprintf("%.3F g", grey/255);
+            FillColor = sprintf("%.3F g", grey / 255);
             ColorFlag = (FillColor != TextColor);
             if (Page > 0)
             {
@@ -681,7 +683,7 @@ namespace Ego.PDF
             int b = blue;
 
             // Set color for all filling operations
-            FillColor = sprintf("%.3F %.3F %.3F rg", r/255, g/255, b/255);
+            FillColor = sprintf("%.3F %.3F %.3F rg", r / 255, g / 255, b / 255);
             ColorFlag = (FillColor != TextColor);
             if (Page > 0)
             {
@@ -691,7 +693,7 @@ namespace Ego.PDF
 
         public void SetTextColor(int greyColor)
         {
-            TextColor = sprintf("%.3F g", greyColor/255);
+            TextColor = sprintf("%.3F g", greyColor / 255);
             ColorFlag = (FillColor != TextColor);
         }
 
@@ -700,7 +702,7 @@ namespace Ego.PDF
             double r = red;
             double g = green;
             double b = blue;
-            TextColor = sprintf("%.3F %.3F %.3F rg", r/255, g/255, b/255);
+            TextColor = sprintf("%.3F %.3F %.3F rg", r / 255, g / 255, b / 255);
             ColorFlag = (FillColor != TextColor);
         }
 
@@ -711,7 +713,7 @@ namespace Ego.PDF
             var l = TypeSupport.ToString(s).Length;
             for (i = 0; i < l; i++)
                 w = w + TypeSupport.ToDouble(CurrentFont.Widths[s[i].ToString()]);
-            return w*FontSize/1000;
+            return w * FontSize / 1000;
         }
 
         public virtual void SetLineWidth(double width)
@@ -720,7 +722,7 @@ namespace Ego.PDF
             LineWidth = width;
             if (Page > 0)
             {
-                Out(sprintf("%.2F w", width*k));
+                Out(sprintf("%.2F w", width * k));
             }
         }
 
@@ -728,9 +730,9 @@ namespace Ego.PDF
         {
             // Draw a line
             Out(sprintf("%.2F %.2F m %.2F %.2F l S",
-                         x1*k,
-                         (H - y1)*k, x2*k,
-                         (H - y2)*k));
+                         x1 * k,
+                         (H - y1) * k, x2 * k,
+                         (H - y2) * k));
         }
 
         public virtual void Rect(double x, double y, double w, double h, string style)
@@ -749,7 +751,7 @@ namespace Ego.PDF
             {
                 op = "S";
             }
-            Out(sprintf("%.2F %.2F %.2F %.2F re %s", x*k, (H - y)*k, w*k, (-h)*k, op));
+            Out(sprintf("%.2F %.2F %.2F %.2F re %s", x * k, (H - y) * k, w * k, (-h) * k, op));
         }
 
         public virtual void AddFont(string family, string style, string file)
@@ -795,17 +797,17 @@ namespace Ego.PDF
                 if (fontInfo.type == FontTypeEnum.TrueType)
                 {
                     FontFiles[fontInfo.file] = new FontDefinition
-                        {
-                            length1 = fontInfo.originalsize
-                        };
+                    {
+                        length1 = fontInfo.originalsize
+                    };
                 }
                 else
                 {
                     FontFiles[fontInfo.file] = new FontDefinition
-                        {
-                            length1 = fontInfo.size1,
-                            length2 = fontInfo.size2
-                        };
+                    {
+                        length1 = fontInfo.size1,
+                        length2 = fontInfo.size2
+                    };
                 }
             }
             Fonts[fontkey] = fontInfo;
@@ -887,7 +889,7 @@ namespace Ego.PDF
             FontFamily = family;
             FontStyle = style;
             FontSizePt = size;
-            FontSize = size/k;
+            FontSize = size / k;
             CurrentFont = Fonts[fontkey];
             if (Page > 0)
             {
@@ -903,7 +905,7 @@ namespace Ego.PDF
                 return;
             }
             FontSizePt = size;
-            FontSize = size/k;
+            FontSize = size / k;
             if (Page > 0)
             {
                 Out(sprintf("BT /F%d %.2F Tf ET", CurrentFont.i, FontSizePt));
@@ -942,7 +944,7 @@ namespace Ego.PDF
             // Set destination of internal link
             if (y == -1)
             {
-                y = (int) (Y);
+                y = (int)(Y);
             }
             if (page == -1)
             {
@@ -955,14 +957,14 @@ namespace Ego.PDF
 
         public virtual void Link(double x, double y, double w, double h, LinkData link)
         {
-            Pages[Page].PageLinks.Add(new PageLink(x*k, HPt - y*k, w*k, h*k, link));
+            Pages[Page].PageLinks.Add(new PageLink(x * k, HPt - y * k, w * k, h * k, link));
         }
 
         public virtual void Text(double x, double y, string txt)
         {
             // Output a string
             object s;
-            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x*k, (H - y)*k, Escape(txt));
+            s = sprintf("BT %.2F %.2F Td (%s) Tj ET", x * k, (H - y) * k, Escape(txt));
             if (Underline && TypeSupport.ToString(txt) != "")
             {
                 s = TypeSupport.ToString(s) + " " + DoUnderline(x, y, txt);
@@ -1033,7 +1035,7 @@ namespace Ego.PDF
                 if (ws > 0)
                 {
                     Ws = ws;
-                    Out(sprintf("%.3F Tw", ws*k));
+                    Out(sprintf("%.3F Tw", ws * k));
                 }
             }
 
@@ -1056,28 +1058,28 @@ namespace Ego.PDF
                 {
                     op = "S";
                 }
-                s = sprintf("%.2F %.2F %.2F %.2F re %s ", X*k, (H - Y)*k, w*k, -h*k, op);
+                s = sprintf("%.2F %.2F %.2F %.2F re %s ", X * k, (H - Y) * k, w * k, -h * k, op);
             }
 
             if (!string.IsNullOrEmpty(border))
             {
                 if (border.Contains("L"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X*k, (H - Y)*k, X*k, (H - (Y + h))*k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - Y) * k, X * k, (H - (Y + h)) * k);
                 }
                 if (border.Contains("T"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X*k, (H - Y)*k, (X + w)*k, (H - Y)*k);
+                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - Y) * k, (X + w) * k, (H - Y) * k);
                 }
                 if (border.Contains("R"))
                 {
                     s = s +
-                        sprintf("%.2F %.2F m %.2F %.2F l S ", (X + w)*k, (H - Y)*k, (X + w)*k, (H - (Y + h))*k);
+                        sprintf("%.2F %.2F m %.2F %.2F l S ", (X + w) * k, (H - Y) * k, (X + w) * k, (H - (Y + h)) * k);
                 }
                 if (border.Contains("B"))
                 {
                     s = s +
-                        sprintf("%.2F %.2F m %.2F %.2F l S ", X*k, (H - (Y + h))*k, (X + w)*k, (H - (Y + h))*k);
+                        sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - (Y + h)) * k, (X + w) * k, (H - (Y + h)) * k);
                 }
             }
 
@@ -1090,7 +1092,7 @@ namespace Ego.PDF
                 }
                 else if (align == AlignEnum.Center)
                 {
-                    dx = (w - GetStringWidth(txt))/2;
+                    dx = (w - GetStringWidth(txt)) / 2;
                 }
                 else
                 {
@@ -1106,18 +1108,18 @@ namespace Ego.PDF
                     .Replace("(", "\\(")
                     .Replace(")", "\\)");
 
-                s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (X + dx)*k, (H - (Y + .5*h + .3*FontSize))*k, txt2);
+                s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (X + dx) * k, (H - (Y + .5 * h + .3 * FontSize)) * k, txt2);
                 if (Underline)
                 {
-                    s = s + " " + DoUnderline(X + dx, Y + .5*h.Value + .3*FontSize, txt);
+                    s = s + " " + DoUnderline(X + dx, Y + .5 * h.Value + .3 * FontSize, txt);
                 }
                 if (ColorFlag)
                 {
                     s = s + " Q";
                 }
-                if (TypeSupport.ToBoolean(link))
+                if (link != null)
                 {
-                    Link(X + dx, Y + .5*h.Value - .5*FontSize, GetStringWidth(txt), FontSize, link);
+                    Link(X + dx, Y + .5 * h.Value - .5 * FontSize, GetStringWidth(txt), FontSize, link);
                 }
             }
             if (!string.IsNullOrEmpty(s))
@@ -1169,9 +1171,9 @@ namespace Ego.PDF
             FontDefinition cw = CurrentFont;
             if (w == 0)
             {
-                w = TypeSupport.ToDouble(W) - RightMargin - X;
+                w = W - RightMargin - X;
             }
-            wmax = (w - 2*CMargin)*1000/FontSize;
+            wmax = (w - 2 * CMargin) * 1000 / FontSize;
             s = txt.Replace("\r", "");
             nb = s.Length;
             if (nb > 0 && TypeSupport.ToString(s[nb - 1]) == "\n")
@@ -1190,23 +1192,15 @@ namespace Ego.PDF
                 else
                 {
                     b2 = "";
-                    //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                    if (border.IndexOf("L") != Convert.ToInt32(false) ||
-                        !(border.IndexOf("L").GetType() == false.GetType()))
+                    if (border.Contains("L"))
                     {
                         b2 += "L";
                     }
-                    //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                    if (border.IndexOf("R") != Convert.ToInt32(false) ||
-                        !(border.IndexOf("R").GetType() == false.GetType()))
+                    if (border.Contains("R"))
                     {
                         b2 += "R";
                     }
-                    //CONVERSION_TODO: The equivalent in .NET for strpos may return a different value. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1007.htm 
-                    b = (border.IndexOf("T") != Convert.ToInt32(false) ||
-                         !(border.IndexOf("T").GetType() == false.GetType()))
-                            ? b2 + "T"
-                            : b2;
+                    b = border.Contains("T") ? b2 + "T" : b2;
                 }
             }
             sep = -1;
@@ -1269,9 +1263,9 @@ namespace Ego.PDF
                     {
                         if (align == AlignEnum.Justified)
                         {
-                            Ws = (ns > 1) ? (wmax - ls)/1000*FontSize/(ns - 1) : 0;
+                            Ws = (ns > 1) ? (wmax - ls) / 1000 * FontSize / (ns - 1) : 0;
 
-                            Out(sprintf("%.3F Tw", Ws*k));
+                            Out(sprintf("%.3F Tw", Ws * k));
                         }
                         //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
                         Cell(w, h, TypeSupport.ToString(s).Substring(j, sep - j), b, 2, align, fill, null);
@@ -1310,7 +1304,7 @@ namespace Ego.PDF
 
         public virtual void Write(int h, string txt)
         {
-            Write(h, txt, (LinkData) null);
+            Write(h, txt, (LinkData)null);
         }
 
         public virtual void Write(int h, string txt, int internalLink)
@@ -1330,7 +1324,7 @@ namespace Ego.PDF
             // Output text in flowing mode
             var cw = CurrentFont;
             double localWidth = W - RightMargin - X;
-            double wmax = (localWidth - 2*CMargin)*1000/FontSize;
+            double wmax = (localWidth - 2 * CMargin) * 1000 / FontSize;
             var s = txt.Replace("\r", "");
             var nb = s.Length;
             var sep = -1;
@@ -1354,7 +1348,7 @@ namespace Ego.PDF
                     {
                         X = LeftMargin;
                         localWidth = W - RightMargin - X;
-                        wmax = (localWidth - 2*CMargin)*1000/FontSize;
+                        wmax = (localWidth - 2 * CMargin) * 1000 / FontSize;
                     }
                     nl++;
                     continue;
@@ -1375,7 +1369,7 @@ namespace Ego.PDF
                             X = LeftMargin;
                             Y += h;
                             localWidth = W - RightMargin - X;
-                            wmax = (localWidth - 2*CMargin)*1000/FontSize;
+                            wmax = (localWidth - 2 * CMargin) * 1000 / FontSize;
                             i++;
                             nl++;
                             continue;
@@ -1398,7 +1392,7 @@ namespace Ego.PDF
                     {
                         X = LeftMargin;
                         localWidth = W - RightMargin - X;
-                        wmax = (localWidth - 2*CMargin)*1000/FontSize;
+                        wmax = (localWidth - 2 * CMargin) * 1000 / FontSize;
                     }
                     nl++;
                 }
@@ -1410,7 +1404,7 @@ namespace Ego.PDF
             // Last chunk
             if (i == j) return;
             //this._out(l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture));
-            double w2 = (double) l/1000*FontSize;
+            double w2 = (double)l / 1000 * FontSize;
             Cell(w2, h, s.Substring(j), 0.ToString(CultureInfo.InvariantCulture), 0, AlignEnum.Default, false, link);
             //string tail = l + " " + Convert.ToString(this.x, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.ws, CultureInfo.InvariantCulture) + " " + Convert.ToString(this.RightMargin, CultureInfo.InvariantCulture);
             //this._out(tail);
@@ -1432,7 +1426,7 @@ namespace Ego.PDF
 
         public virtual void Image(string file, double? x, double? y, double w, double h)
         {
-            Image(file, x, y, w, h, ImageTypeEnum.Default, (LinkData) null);
+            Image(file, x, y, w, h, ImageTypeEnum.Default, (LinkData)null);
         }
 
         public virtual void Image(string file, double w, double h, ImageTypeEnum type, LinkData link)
@@ -1501,19 +1495,19 @@ namespace Ego.PDF
             }
             if (w < 0)
             {
-                w = TypeSupport.ToDouble(-TypeSupport.ToDouble(imageInfo.w))*72/w/k;
+                w = TypeSupport.ToDouble(-TypeSupport.ToDouble(imageInfo.w)) * 72 / w / k;
             }
             if (h < 0)
             {
-                h = TypeSupport.ToDouble(-TypeSupport.ToDouble(imageInfo.h))*72/h/k;
+                h = TypeSupport.ToDouble(-TypeSupport.ToDouble(imageInfo.h)) * 72 / h / k;
             }
             if (w == 0)
             {
-                w = h*TypeSupport.ToDouble(imageInfo.w)/TypeSupport.ToDouble(imageInfo.h);
+                w = h * TypeSupport.ToDouble(imageInfo.w) / TypeSupport.ToDouble(imageInfo.h);
             }
             if (h == 0)
             {
-                h = w*TypeSupport.ToDouble(imageInfo.h)/TypeSupport.ToDouble(imageInfo.w);
+                h = w * TypeSupport.ToDouble(imageInfo.h) / TypeSupport.ToDouble(imageInfo.w);
             }
 
             // Flowing mode
@@ -1534,7 +1528,7 @@ namespace Ego.PDF
             {
                 x = X;
             }
-            Out(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q", w*k, h*k, x*k, ((H - (y + h))*k), imageInfo.i));
+            Out(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q", w * k, h * k, x * k, ((H - (y + h)) * k), imageInfo.i));
             if (link != null)
             {
                 Link(x.Value, y.Value, w, h, link);
@@ -1597,7 +1591,7 @@ namespace Ego.PDF
             SetX(x);
         }
 
-      
+
         /*******************************************************************************
         *                                                                              *
         *                              Protected methods                               *
@@ -1614,7 +1608,7 @@ namespace Ego.PDF
         internal virtual Dimensions GetPageSize(Dimensions dimensions)
         {
             return dimensions.Width > dimensions.Heigth
-                       ? new Dimensions {Width = dimensions.Heigth, Heigth = dimensions.Width}
+                       ? new Dimensions { Width = dimensions.Heigth, Heigth = dimensions.Width }
                        : dimensions;
         }
 
@@ -1647,15 +1641,15 @@ namespace Ego.PDF
                     H = size.Width;
                 }
 
-                WPt = W*k;
-                HPt = H*k;
+                WPt = W * k;
+                HPt = H * k;
                 PageBreakTrigger = TypeSupport.ToDouble(H) - PageBreakMargin;
                 CurOrientation = orientation;
                 CurPageSize = size;
             }
             if (orientation != DefOrientation || size.Width != DefPageSize.Width || size.Heigth != DefPageSize.Heigth)
             {
-                PageSizes[Page] = new Dimensions {Width = WPt, Heigth = HPt};
+                PageSizes[Page] = new Dimensions { Width = WPt, Heigth = HPt };
             }
         }
 
@@ -1697,9 +1691,9 @@ namespace Ego.PDF
             // Underline text
             var up = CurrentFont.up;
             var ut = CurrentFont.ut;
-            var w = GetStringWidth(txt) + Ws*StringSupport.SubstringCount(txt, " ");
-            return sprintf("%.2F %.2F %.2F %.2F re f", x*k, (H - (y - up/(double) 1000*FontSize))*k, w*k,
-                           (-ut)/(double) 1000*FontSizePt);
+            var w = GetStringWidth(txt) + Ws * StringSupport.SubstringCount(txt, " ");
+            return sprintf("%.2F %.2F %.2F %.2F re f", x * k, (H - (y - up / (double)1000 * FontSize)) * k, w * k,
+                           (-ut) / (double)1000 * FontSizePt);
         }
 
         internal virtual ImageInfo ParseJpg(string file)
@@ -1712,16 +1706,16 @@ namespace Ego.PDF
             var bi = new BitmapImage(new Uri(path));
             const string colspace = "DeviceRGB";
             var bpc = bi.Format.BitsPerPixel;
-            var data = new List<byte[]> {FileSystemSupport.ReadContentBytes(file)};
+            var data = new List<byte[]> { FileSystemSupport.ReadContentBytes(file) };
             return new ImageInfo
-                {
-                    w = bi.PixelWidth,
-                    h = bi.PixelHeight,
-                    cs = colspace,
-                    bpc = bpc,
-                    f = "DCTDecode",
-                    data = data
-                };
+            {
+                w = bi.PixelWidth,
+                h = bi.PixelHeight,
+                cs = colspace,
+                bpc = bpc,
+                f = "DCTDecode",
+                data = data
+            };
         }
 
         /// <summary>
@@ -1805,9 +1799,9 @@ namespace Ego.PDF
                      bpc + " /Columns " + w;
 
             // Scan chunks looking for palette, transparency and image data
-            var pal = new byte[] {};
-            var trns = new int[] {};
-            var data = new byte[] {};
+            var pal = new byte[] { };
+            var trns = new int[] { };
+            var data = new byte[] { };
             do
             {
                 n = reader.ReadInt32();
@@ -1825,17 +1819,17 @@ namespace Ego.PDF
                             switch (ct)
                             {
                                 case 0:
-                                    trns = new[] {Convert.ToInt32(t[1])};
-                                        // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
+                                    trns = new[] { Convert.ToInt32(t[1]) };
+                                    // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
                                     break;
                                 case 2:
-                                    trns = new[] {Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5])};
+                                    trns = new[] { Convert.ToInt32(t[1]), Convert.ToInt32(t[3]), Convert.ToInt32(t[5]) };
                                     break;
                                 default:
-                                    pos = t.IndexOf(Convert.ToString((char) 0));
+                                    pos = t.IndexOf(Convert.ToString((char)0));
                                     if (pos > 0)
                                     {
-                                        trns = new[] {pos};
+                                        trns = new[] { pos };
                                     }
                                     break;
                             }
@@ -1859,16 +1853,16 @@ namespace Ego.PDF
                 Error("Missing palette in " + file);
             }
             var info = new ImageInfo
-                {
-                    w = w,
-                    h = height,
-                    cs = colspace,
-                    bpc = bpc,
-                    f = "FlateDecode",
-                    dp = dp,
-                    pal = pal,
-                    trns = trns
-                };
+            {
+                w = w,
+                h = height,
+                cs = colspace,
+                bpc = bpc,
+                f = "FlateDecode",
+                dp = dp,
+                pal = pal,
+                trns = trns
+            };
 
             if (ct >= 4)
             {
@@ -1881,10 +1875,10 @@ namespace Ego.PDF
                 if (ct == 4)
                 {
                     // Gray image
-                    len = 2*w;
+                    len = 2 * w;
                     for (var i = 0; i < height; i++)
                     {
-                        pos = (1 + len)*i;
+                        pos = (1 + len) * i;
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
@@ -1898,10 +1892,10 @@ namespace Ego.PDF
                 else
                 {
                     // RGB image
-                    len = 4*w;
+                    len = 4 * w;
                     for (var i = 0; i < height; i++)
                     {
-                        pos = (1 + len)*i;
+                        pos = (1 + len) * i;
                         color.Append(newData[pos]);
                         alpha.Append(newData[pos]);
                         line = newData.Substring(pos + 1, len);
@@ -1922,7 +1916,7 @@ namespace Ego.PDF
             }
             else
             {
-                info.data = new List<byte[]> {data};
+                info.data = new List<byte[]> { data };
             }
             return info;
         }
@@ -2084,7 +2078,7 @@ namespace Ego.PDF
                 }
                 else if (s is byte[])
                 {
-                    Buffer += PrivateEncoding.GetString((byte[]) s);
+                    Buffer += PrivateEncoding.GetString((byte[])s);
                     Buffer += "\n";
                 }
                 else
@@ -2109,13 +2103,13 @@ namespace Ego.PDF
             }
             if (DefOrientation == PageOrientation.Portrait)
             {
-                wPt = DefPageSize.Width*k;
-                hPt = DefPageSize.Heigth*k;
+                wPt = DefPageSize.Width * k;
+                hPt = DefPageSize.Heigth * k;
             }
             else
             {
-                wPt = DefPageSize.Heigth*k;
-                hPt = DefPageSize.Width*k;
+                wPt = DefPageSize.Heigth * k;
+                hPt = DefPageSize.Width * k;
             }
             var filter = (Compress) ? "/Filter /FlateDecode " : "";
             foreach (var currentPage in Pages)
@@ -2143,7 +2137,7 @@ namespace Ego.PDF
                             var link = Links[(pl.Link as LinkDataInternal).InternalLink];
                             var pageIndex = link.PageIndex;
                             var h = (PageSizes.ContainsKey(pageIndex)) ? PageSizes[pageIndex].Heigth : hPt;
-                            annots += sprintf("/Dest [%d 0 R /XYZ 0 %.2F null]>>", 1 + 2*link.PageIndex, h - link.Y*k);
+                            annots += sprintf("/Dest [%d 0 R /XYZ 0 %.2F null]>>", 1 + 2 * link.PageIndex, h - link.Y * k);
                         }
                         else if (pl.Link is LinkDataUri)
                         {
@@ -2184,7 +2178,7 @@ namespace Ego.PDF
             Out("<</Type /Pages");
             var kids = "/Kids [";
             for (i = 0; i < Page; i++)
-                kids += (3 + 2*i).ToString(CultureInfo.InvariantCulture) + " 0 R ";
+                kids += (3 + 2 * i).ToString(CultureInfo.InvariantCulture) + " 0 R ";
             Out(kids + "]");
             Out("/Count " + Page.ToString(CultureInfo.InvariantCulture));
             Out(sprintf("/MediaBox [0 0 %.2F %.2F]", wPt, hPt));
@@ -2286,7 +2280,7 @@ namespace Ego.PDF
                             string s = "[";
                             int i;
                             for (i = 32; i <= 255; i++)
-                                s += TypeSupport.ToString(cw[Convert.ToString((char) i)]) + " ";
+                                s += TypeSupport.ToString(cw[Convert.ToString((char)i)]) + " ";
                             Out(s + "]");
                             Out("endobj");
                             // Descriptor
@@ -2334,7 +2328,7 @@ namespace Ego.PDF
             Out("/Height " + info.h.ToString());
             if (info.cs == "Indexed")
             {
-                Out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length/3 - 1).ToString() + " " + (ObjectCount + 1).ToString() +
+                Out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length / 3 - 1).ToString() + " " + (ObjectCount + 1).ToString() +
                      " 0 R]");
             }
             else
@@ -2378,23 +2372,18 @@ namespace Ego.PDF
             if (info.smask != null)
             {
                 string dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + TypeSupport.ToString(info.w);
-                ImageInfo smask = new ImageInfo();
-                smask.w = info.w;
-                smask.h = info.h;
-                smask.cs = "DeviceGray";
-                smask.bpc = 8;
-                smask.f = info.f;
-                smask.dp = dp;
-                smask.data = new List<byte[]> {info.smask};
+                var smask = new ImageInfo
+                {
+                    w = info.w,
+                    h = info.h,
+                    cs = "DeviceGray",
+                    bpc = 8,
+                    f = info.f,
+                    dp = dp,
+                    data = new List<byte[]> { info.smask }
+                };
                 /*
-                smask = new PHP.OrderedMap(
-                        new object[] { "w", info.w }, 
-                        new object[] { "h", info.h },
-                        new object[] { "cs", "DeviceGray" }, 
-                        new object[] { "bpc", 8 },
-                        new object[] { "f", info.f }, 
-                        new object[] { "dp", dp },
-                        new object[] { "data", info.smask });
+                    smask = new PHP.OrderedMap(... new object[] { "data", info.smask });
                 */
                 PutImage(smask);
             }
@@ -2490,7 +2479,7 @@ namespace Ego.PDF
                     Out("/OpenAction [3 0 R /XYZ null null 1]");
                     break;
                 case ZoomEnum.Custom:
-                    Out("/OpenAction [3 0 R /XYZ null null " + sprintf("%.2F", ZoomValue/100) + "]");
+                    Out("/OpenAction [3 0 R /XYZ null null " + sprintf("%.2F", ZoomValue / 100) + "]");
                     break;
             }
             switch (LayoutMode)
@@ -2567,12 +2556,6 @@ namespace Ego.PDF
             State = 3;
         }
 
-        public static string sprintf(string Format, params object[] Parameters)
-        {
-            var result = SprintfTools.sprintf(Format, Parameters);
-            return result;
-        }
-
         public byte[] GzCompress(byte[] value)
         {
             var outstream = new MemoryStream();
@@ -2588,7 +2571,7 @@ namespace Ego.PDF
             var instream = new MemoryStream(value, false);
             var g = new ZlibStream(instream, CompressionMode.Decompress);
             var reader = new BinaryReader(g);
-            byte[] bytes = reader.ReadBytes(Int16.MaxValue*100);
+            byte[] bytes = reader.ReadBytes(Int16.MaxValue * 100);
             g.Close();
             return bytes;
         }
