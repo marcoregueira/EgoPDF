@@ -19,7 +19,7 @@ namespace Ego.PDF.Samples
         public static FPdf GetSample(string path)
         {
             var pdf = new Sample5();
-            string[] header = {"Country", "Capital", "Area (sq km)", "Pop. (thousands)"};
+            string[] header = { "Country", "Capital", "Area (sq km)", "Pop. (thousands)" };
             pdf.LocalPath = path;
 
             pdf.LoadData("countries.txt");
@@ -44,7 +44,7 @@ namespace Ego.PDF.Samples
             while (!reader.EndOfStream)
             {
                 string line = reader.ReadLine();
-                Data.Add(line.Split(new[] {';'}));
+                Data.Add(line.Split(new[] { ';' }));
             }
             reader.Close();
         }
@@ -56,20 +56,23 @@ namespace Ego.PDF.Samples
                 Cell(40, 7, header, "1");
             }
             Ln();
-
+            Data[0][0] += " loren tal y pas\ncuasld lde duarte";
             foreach (var row in Data)
             {
+                var height = row.Max(x => CellMeasure(40, 6, x));
+
                 foreach (var col in row)
                 {
-                    Cell(40, 6, col, "1");
+                    BoxedText(40, 6, height, col, "1", 0, AlignEnum.Left, false);
                 }
+
                 Ln();
             }
         }
 
         public void ImprovedTable(IList<string> headers)
         {
-            int[] w = {40, 35, 40, 45};
+            int[] w = { 40, 35, 40, 45 };
             for (int i = 0; i < headers.Count(); i++)
             {
                 Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center);
@@ -94,7 +97,7 @@ namespace Ego.PDF.Samples
             SetLineWidth(0.3);
             SetFont("", "B");
 
-            int[] w = {40, 35, 40, 45};
+            int[] w = { 40, 35, 40, 45 };
             for (int i = 0; i < headers.Count(); i++)
             {
                 Cell(w[i], 7, headers[i], "1", 0, AlignEnum.Center, true);

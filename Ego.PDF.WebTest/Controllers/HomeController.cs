@@ -112,6 +112,16 @@ namespace Ego.PDF.WebTest.Controllers
             return result;
         }
 
+        public FileStreamResult GetSample8()
+        {
+            var pdf = Sample8.GetSample(Server.MapPath("../bin"));
+            var s = pdf.Output("ap.pdf", OutputDevice.ReturnAsString);
+            var m = new MemoryStream(FPdf.PrivateEncoding.GetBytes(s));
+            var result = new FileStreamResult(m, "application/pdf");
+            return result;
+        }
+
+
         public ActionResult ViewSample(string id)
         {
             ViewBag.Title = "Sample " + id;

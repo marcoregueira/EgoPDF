@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -40,7 +41,7 @@ using static Ego.PDF.Printf.SprintfTools;
 
 namespace Ego.PDF
 {
-    public class FPdf
+    public partial class FPdf
     {
         public static readonly Encoding PrivateEncoding = Encoding.GetEncoding(1252);
         public readonly string FpdfVersion = "1.7";
@@ -124,11 +125,11 @@ namespace Ego.PDF
 
             Dimensions size = GetPageSize(pageSize);
             DefPageSize = size;
-            CurPageSize = size;
+            CurrentPageSize = size;
 
             // Page orientation
             DefOrientation = orientation;
-            CurOrientation = DefOrientation;
+            CurrentOrientation = DefOrientation;
 
             if (orientation == PageOrientation.Portrait)
             {
@@ -224,7 +225,7 @@ namespace Ego.PDF
         /// <summary>
         ///     current orientation
         /// </summary>
-        public PageOrientation CurOrientation { get; set; }
+        public PageOrientation CurrentOrientation { get; set; }
 
         /// <summary>
         ///     standard page sizes
@@ -239,7 +240,7 @@ namespace Ego.PDF
         /// <summary>
         ///     current page size
         /// </summary>
-        public Dimensions CurPageSize { get; set; }
+        public Dimensions CurrentPageSize { get; set; }
 
         /// <summary>
         ///     used for pages with non default sizes or orientations
@@ -297,8 +298,8 @@ namespace Ego.PDF
         public string FontStyle { get; set; }
         public bool Underline { get; set; }
         public FontDefinition CurrentFont { get; set; }
-        public double FontSizePt { get; set; }
-        public double FontSize { get; set; }
+        public double FontSizePt { get; private set; }
+        public double FontSize { get; private set; }
         public string DrawColor { get; set; }
         public string FillColor { get; set; }
         public string TextColor { get; set; }
@@ -307,6 +308,7 @@ namespace Ego.PDF
         public bool AutoPageBreak { get; set; }
         public double PageBreakTrigger { get; set; }
         public bool InHeader { get; set; }
+        public double BelowHeaderY { get; set; }
         public bool InFooter { get; set; }
         public string Title { get; set; }
         public string Subject { get; set; }
@@ -599,6 +601,7 @@ namespace Ego.PDF
             ColorFlag = cf;
             // Page header
             InHeader = true;
+            BelowHeaderY = TopMargin;
             Header();
             InHeader = false;
             // Restore line width
@@ -676,11 +679,17 @@ namespace Ego.PDF
             }
         }
 
+
+        public virtual void SetFillColor(Color color)
+        {
+            SetFillColor(color.R, color.G, color.B);
+        }
+
         public virtual void SetFillColor(int red, int green, int blue)
         {
-            int r = red;
-            int g = green;
-            int b = blue;
+            double r = red;
+            double g = green;
+            double b = blue;
 
             // Set color for all filling operations
             FillColor = sprintf("%.3F %.3F %.3F rg", r / 255, g / 255, b / 255);
@@ -982,56 +991,64 @@ namespace Ego.PDF
             return AutoPageBreak;
         }
 
-        public virtual void Cell(double w)
+        public virtual void Cell(double cellWidth)
         {
-            Cell(w, null, null, "0", 0, AlignEnum.Default, false, null);
+            Cell(cellWidth, null, null, "0", 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt)
+        public virtual void Cell(double cellWidth, double? cellHeight, string text)
         {
-            Cell(w, h, txt, "0", 0, AlignEnum.Default, false, null);
+            Cell(cellWidth, cellHeight, text, "0", 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border)
+        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border)
         {
-            Cell(w, h, txt, border, 0, AlignEnum.Default, false, null);
+            Cell(cellWidth, cellHeight, text, border, 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, int ln)
+        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line)
         {
-            Cell(w, h, txt, border, ln, AlignEnum.Default, false, null);
+            Cell(cellWidth, cellHeight, text, border, line, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, int ln, AlignEnum align)
+        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align)
         {
-            Cell(w, h, txt, border, ln, align, false, null);
+            Cell(cellWidth, cellHeight, text, border, line, align, false, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, int ln, AlignEnum align, bool fill)
+        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill)
         {
-            Cell(w, h, txt, border, ln, align, fill, null);
+            Cell(cellWidth, cellHeight, text, border, line, align, fill, null);
         }
 
-        public virtual void Cell(double w, double? h, string txt, string border, int ln, AlignEnum align, bool fill,
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cellWidth"></param>
+        /// <param name="cellHeight"></param>
+        /// <param name="text"></param>
+        /// <param name="border">1, T, B, L, R</param>
+        /// <param name="line"></param>
+        /// <param name="align"></param>
+        /// <param name="fill"></param>
+        /// <param name="link"></param>
+        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill,
                                  LinkData link)
         {
-            // Output a cell
-            string s;
+            if (!cellHeight.HasValue) cellHeight = 0;
 
-            if (!h.HasValue) h = 0;
-
-            if (Y + h > PageBreakTrigger && !InHeader && !InFooter && AcceptPageBreak())
+            if (Y + cellHeight > PageBreakTrigger && !InHeader && !InFooter && AcceptPageBreak())
             {
                 // Automatic page break
-                double xxx = X;
+                double savedXPos = X;
                 double ws = Ws;
                 if (ws > 0)
                 {
                     Ws = 0;
                     Out("0 Tw");
                 }
-                AddPage(CurOrientation, CurPageSize);
-                X = xxx;
+                AddPage(CurrentOrientation, CurrentPageSize);
+                X = savedXPos;
                 if (ws > 0)
                 {
                     Ws = ws;
@@ -1039,17 +1056,17 @@ namespace Ego.PDF
                 }
             }
 
-            if (w == 0)
+            if (cellWidth == 0)
             {
-                w = W - RightMargin - X;
+                cellWidth = W - RightMargin - X;
             }
 
-            s = string.Empty;
+            var outputString = string.Empty;
 
             int borderi = TypeSupport.ToInt32(border);
             if (fill || borderi == 1)
             {
-                string op = string.Empty;
+                var op = string.Empty;
                 if (fill)
                 {
                     op = (borderi == 1) ? "B" : "f";
@@ -1058,41 +1075,41 @@ namespace Ego.PDF
                 {
                     op = "S";
                 }
-                s = sprintf("%.2F %.2F %.2F %.2F re %s ", X * k, (H - Y) * k, w * k, -h * k, op);
+                outputString = sprintf("%.2F %.2F %.2F %.2F re %s ", X * k, (H - Y) * k, cellWidth * k, -cellHeight * k, op);
             }
 
             if (!string.IsNullOrEmpty(border))
             {
                 if (border.Contains("L"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - Y) * k, X * k, (H - (Y + h)) * k);
+                    outputString = outputString + sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - Y) * k, X * k, (H - (Y + cellHeight)) * k);
                 }
                 if (border.Contains("T"))
                 {
-                    s = s + sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - Y) * k, (X + w) * k, (H - Y) * k);
+                    outputString = outputString + sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - Y) * k, (X + cellWidth) * k, (H - Y) * k);
                 }
                 if (border.Contains("R"))
                 {
-                    s = s +
-                        sprintf("%.2F %.2F m %.2F %.2F l S ", (X + w) * k, (H - Y) * k, (X + w) * k, (H - (Y + h)) * k);
+                    outputString = outputString +
+                        sprintf("%.2F %.2F m %.2F %.2F l S ", (X + cellWidth) * k, (H - Y) * k, (X + cellWidth) * k, (H - (Y + cellHeight)) * k);
                 }
                 if (border.Contains("B"))
                 {
-                    s = s +
-                        sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - (Y + h)) * k, (X + w) * k, (H - (Y + h)) * k);
+                    outputString = outputString +
+                        sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - (Y + cellHeight)) * k, (X + cellWidth) * k, (H - (Y + cellHeight)) * k);
                 }
             }
 
-            if (!string.IsNullOrEmpty(txt))
+            if (!string.IsNullOrEmpty(text))
             {
                 double dx;
                 if (align == AlignEnum.Right)
                 {
-                    dx = w - CMargin - GetStringWidth(txt);
+                    dx = cellWidth - CMargin - GetStringWidth(text);
                 }
                 else if (align == AlignEnum.Center)
                 {
-                    dx = (w - GetStringWidth(txt)) / 2;
+                    dx = (cellWidth - GetStringWidth(text)) / 2;
                 }
                 else
                 {
@@ -1100,54 +1117,54 @@ namespace Ego.PDF
                 }
                 if (ColorFlag)
                 {
-                    s = s + "q " + TypeSupport.ToString(TextColor) + " ";
+                    outputString = outputString + "q " + TypeSupport.ToString(TextColor) + " ";
                 }
 
-                string txt2 = txt
+                string txt2 = text
                     .Replace("\\", "\\\\")
                     .Replace("(", "\\(")
                     .Replace(")", "\\)");
 
-                s = s + sprintf("BT %.2F %.2F Td (%s) Tj ET", (X + dx) * k, (H - (Y + .5 * h + .3 * FontSize)) * k, txt2);
+                outputString = outputString + sprintf("BT %.2F %.2F Td (%s) Tj ET", (X + dx) * k, (H - (Y + .5 * cellHeight + .3 * FontSize)) * k, txt2);
                 if (Underline)
                 {
-                    s = s + " " + DoUnderline(X + dx, Y + .5 * h.Value + .3 * FontSize, txt);
+                    outputString = outputString + " " + DoUnderline(X + dx, Y + .5 * cellHeight.Value + .3 * FontSize, text);
                 }
                 if (ColorFlag)
                 {
-                    s = s + " Q";
+                    outputString = outputString + " Q";
                 }
                 if (link != null)
                 {
-                    Link(X + dx, Y + .5 * h.Value - .5 * FontSize, GetStringWidth(txt), FontSize, link);
+                    Link(X + dx, Y + .5 * cellHeight.Value - .5 * FontSize, GetStringWidth(text), FontSize, link);
                 }
             }
-            if (!string.IsNullOrEmpty(s))
+            if (!string.IsNullOrEmpty(outputString))
             {
-                Out(s);
+                Out(outputString);
             }
-            Lasth = h.Value;
-            if (ln > 0)
+            Lasth = cellHeight.Value;
+            if (line > 0)
             {
                 // Go to next line
-                Y += h.Value;
-                if (ln == 1)
+                Y += cellHeight.Value;
+                if (line == 1)
                 {
                     X = LeftMargin;
                 }
             }
             else
             {
-                X += w;
+                X += cellWidth;
             }
         }
 
-        public virtual void MultiCell(double w, int h, string txt)
+        public virtual void MultiCell(double cellWidth, int cellHeight, string text)
         {
-            MultiCell(w, h, txt, null, AlignEnum.Default, false);
+            MultiCell(cellWidth, cellHeight, text, null, AlignEnum.Default, false);
         }
 
-        public virtual void MultiCell(double w, int h, string txt, string border, AlignEnum align, bool fill)
+        public virtual void MultiCell(double cellWidth, double cellHeight, string text, string border, AlignEnum align, bool fill)
         {
             if (align == AlignEnum.Default)
             {
@@ -1156,37 +1173,33 @@ namespace Ego.PDF
 
             // Output text with automatic or explicit line breaks
             double wmax;
-            string s;
-            int nb;
-            string b;
+            int textLength;
+            string newBorder;
             string b2 = string.Empty;
-            int sep;
-            int i;
-            int j;
+            int wordSeparator;
             double l;
             int ns;
             int nl;
-            string c;
             double ls = 0;
             FontDefinition cw = CurrentFont;
-            if (w == 0)
+            if (cellWidth == 0)
             {
-                w = W - RightMargin - X;
+                cellWidth = W - RightMargin - X;
             }
-            wmax = (w - 2 * CMargin) * 1000 / FontSize;
-            s = txt.Replace("\r", "");
-            nb = s.Length;
-            if (nb > 0 && TypeSupport.ToString(s[nb - 1]) == "\n")
+            wmax = (cellWidth - 2 * CMargin) * 1000 / FontSize;
+            text = text.Replace("\r", "");
+            textLength = text.Length;
+            if (textLength > 0 && text[textLength - 1] == '\n')
             {
-                nb--;
+                textLength--;
             }
-            b = 0.ToString();
+            newBorder = 0.ToString();
             if (TypeSupport.ToBoolean(border))
             {
                 if (TypeSupport.ToInt32(border) == 1)
                 {
                     border = "LTRB";
-                    b = "LRT";
+                    newBorder = "LRT";
                     b2 = "LR";
                 }
                 else
@@ -1200,64 +1213,63 @@ namespace Ego.PDF
                     {
                         b2 += "R";
                     }
-                    b = border.Contains("T") ? b2 + "T" : b2;
+                    newBorder = border.Contains("T") ? b2 + "T" : b2;
                 }
             }
-            sep = -1;
-            i = 0;
-            j = 0;
+            wordSeparator = -1;
+            var currentPosition = 0;
+            var paragraphBeginning = 0;
             l = 0;
             ns = 0;
             nl = 1;
-            while (i < nb)
+            while (currentPosition < textLength)
             {
                 // Get next character
-                c = s[i].ToString();
-                if (TypeSupport.ToString(c) == "\n")
+                var nextChar = text[currentPosition].ToString();
+                if (nextChar == "\n")
                 {
-                    // Explicit line break
+                    // Explicit line break, dump a cell with the text so far.
                     if (Ws > 0)
                     {
                         Ws = 0;
                         Out("0 Tw");
                     }
-                    //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                    Cell(w, h, TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
-                    i++;
-                    sep = -1;
-                    j = i;
+
+                    Cell(cellWidth, cellHeight, text.Substring(paragraphBeginning, currentPosition - paragraphBeginning), newBorder, 2, align, fill, null);
+                    currentPosition++;
+                    wordSeparator = -1;
+                    paragraphBeginning = currentPosition;
                     l = 0;
                     ns = 0;
                     nl++;
                     if (TypeSupport.ToBoolean(border) && nl == 2)
                     {
-                        b = b2;
+                        newBorder = b2;
                     }
                     continue;
                 }
-                if (TypeSupport.ToString(c) == " ")
+                if (nextChar == " ")
                 {
-                    sep = i;
+                    wordSeparator = currentPosition;
                     ls = l;
                     ns++;
                 }
-                l = l + TypeSupport.ToDouble(cw.Widths[c]);
+                l = l + TypeSupport.ToDouble(cw.Widths[nextChar]);
                 if (l > wmax)
                 {
                     // Automatic line break
-                    if (sep == -1)
+                    if (wordSeparator == -1)
                     {
-                        if (i == j)
+                        if (currentPosition == paragraphBeginning)
                         {
-                            i++;
+                            currentPosition++;
                         }
                         if (Ws > 0)
                         {
                             Ws = 0;
                             Out("0 Tw");
                         }
-                        //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        Cell(w, h, TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
+                        Cell(cellWidth, cellHeight, TypeSupport.ToString(text).Substring(paragraphBeginning, currentPosition - paragraphBeginning), newBorder, 2, align, fill, null);
                     }
                     else
                     {
@@ -1267,23 +1279,22 @@ namespace Ego.PDF
 
                             Out(sprintf("%.3F Tw", Ws * k));
                         }
-                        //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                        Cell(w, h, TypeSupport.ToString(s).Substring(j, sep - j), b, 2, align, fill, null);
-                        i = sep + 1;
+                        Cell(cellWidth, cellHeight, TypeSupport.ToString(text).Substring(paragraphBeginning, wordSeparator - paragraphBeginning), newBorder, 2, align, fill, null);
+                        currentPosition = wordSeparator + 1;
                     }
-                    sep = -1;
-                    j = i;
+                    wordSeparator = -1;
+                    paragraphBeginning = currentPosition;
                     l = 0;
                     ns = 0;
                     nl++;
                     if (TypeSupport.ToBoolean(border) && nl == 2)
                     {
-                        b = b2;
+                        newBorder = b2;
                     }
                 }
                 else
                 {
-                    i++;
+                    currentPosition++;
                 }
             }
             // Last chunk
@@ -1296,10 +1307,110 @@ namespace Ego.PDF
             if (TypeSupport.ToBoolean(border) &&
                 (border.IndexOf("B") != Convert.ToInt32(false) || !(border.IndexOf("B").GetType() == false.GetType())))
             {
-                b += "B";
+                newBorder += "B";
             }
-            Cell(w, h, TypeSupport.ToString(s).Substring(j, i - j), b, 2, align, fill, null);
+            Cell(cellWidth, cellHeight, TypeSupport.ToString(text).Substring(paragraphBeginning, currentPosition - paragraphBeginning), newBorder, 2, align, fill, null);
             X = LeftMargin;
+        }
+
+        public virtual double CellMeasure(double cellWidth, double cellHeight, string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                text = " ";
+            // Output text with automatic or explicit line breaks
+            var cw = CurrentFont;
+            if (cellWidth == 0)
+            {
+                cellWidth = W - RightMargin - X;
+            }
+            var wmax = (cellWidth - 2 * CMargin) * 1000 / FontSize;
+            text = text.Replace("\r", "");
+            var textLength = text.Length;
+            if (textLength > 0 && text[textLength - 1] == '\n')
+            {
+                textLength--;
+            }
+            var wordSeparator = -1;
+            var currentPosition = 0;
+            var paragraphBeginning = 0;
+            double l = 0;
+            var nl = 1;
+            var lines = 1;
+            while (currentPosition < textLength)
+            {
+                // Get next character
+                var nextChar = text[currentPosition].ToString();
+                if (nextChar == "\n")
+                {
+                    // Explicit line break, dump a cell with the text so far.
+                    if (Ws > 0)
+                    {
+                        Ws = 0;
+                    }
+
+                    lines++;
+                    currentPosition++;
+                    wordSeparator = -1;
+                    paragraphBeginning = currentPosition;
+                    l = 0;
+                    nl++;
+                    continue;
+                }
+                if (nextChar == " ")
+                {
+                    wordSeparator = currentPosition;
+                }
+                //l = l + TypeSupport.ToDouble(cw.Widths[nextChar]);
+                l += cw.Widths[nextChar];
+                if (l > wmax)
+                {
+                    // Automatic line break
+                    if (wordSeparator == -1)
+                    {
+                        if (currentPosition == paragraphBeginning)
+                        {
+                            currentPosition++;
+                        }
+                        lines++;
+                    }
+                    else
+                    {
+                        lines++;
+                        currentPosition = wordSeparator + 1;
+                    }
+                    wordSeparator = -1;
+                    paragraphBeginning = currentPosition;
+                    l = 0;
+                    nl++;
+                }
+                else
+                {
+                    currentPosition++;
+                }
+            }
+            // Last chunk
+            return lines * cellHeight;
+        }
+
+        public void BoxedText(double cellWidth, double cellHeight, double fullCellHeight, string text, string border, int line, AlignEnum align, bool fill)
+        {
+            var preserveY = Y;
+            var preserveX = X;
+            var oldPage = Page;
+            Cell(cellWidth, fullCellHeight, string.Empty, border, line);
+            var newX = X;
+            var newY = Y;
+            X = preserveX;
+            Y = preserveY;
+            if (Page != oldPage)
+            {
+                Y = BelowHeaderY;
+            }
+
+            MultiCell(cellWidth, cellHeight, text, "", align, fill);
+            X = newX;
+            Y = newY;
+            Lasth = fullCellHeight;
         }
 
         public virtual void Write(int h, string txt)
@@ -1517,7 +1628,7 @@ namespace Ego.PDF
                 {
                     // Automatic page break
                     var x2 = X;
-                    AddPage(CurOrientation, CurPageSize);
+                    AddPage(CurrentOrientation, CurrentPageSize);
                     X = x2;
                 }
                 y = Y;
@@ -1627,7 +1738,7 @@ namespace Ego.PDF
             }
             size = size == null ? DefPageSize : GetPageSize(size);
 
-            if (orientation != CurOrientation || size.Width != CurPageSize.Width || size.Heigth != CurPageSize.Heigth)
+            if (orientation != CurrentOrientation || size.Width != CurrentPageSize.Width || size.Heigth != CurrentPageSize.Heigth)
             {
                 // New size or orientation
                 if (orientation == PageOrientation.Portrait)
@@ -1644,8 +1755,8 @@ namespace Ego.PDF
                 WPt = W * k;
                 HPt = H * k;
                 PageBreakTrigger = TypeSupport.ToDouble(H) - PageBreakMargin;
-                CurOrientation = orientation;
-                CurPageSize = size;
+                CurrentOrientation = orientation;
+                CurrentPageSize = size;
             }
             if (orientation != DefOrientation || size.Width != DefPageSize.Width || size.Heigth != DefPageSize.Heigth)
             {

@@ -11,7 +11,6 @@ namespace Ego.PDF.Samples
     public class Sample4 : FPdf
     {
         private int col;
-        private double y0;
         public string LocalPath { get; set; }
 
         public static FPdf GetSample(string path)
@@ -40,7 +39,8 @@ namespace Ego.PDF.Samples
             SetLineWidth(1);
             Cell(w, 9, title, "1", 1, AlignEnum.Center, true, null);
             Ln(10);
-            y0 = GetY();
+
+            this.BelowHeaderY = GetY();
         }
 
         public override void Footer()
@@ -66,7 +66,7 @@ namespace Ego.PDF.Samples
             if (col < 2)
             {
                 SetCol(col + 1);
-                SetY(y0);
+                SetY(BelowHeaderY);
                 return false;
             }
             else
@@ -86,7 +86,7 @@ namespace Ego.PDF.Samples
             Cell(0, 6, "Chapter " + num.ToString() + " : " + label, "0", 1, AlignEnum.Left, true, null);
             // Line break
             Ln(4);
-            y0 = GetY();
+            BelowHeaderY = GetY();
             SetCol(0);
         }
 

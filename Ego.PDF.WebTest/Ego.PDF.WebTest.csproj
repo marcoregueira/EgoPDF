@@ -107,30 +107,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Ego.PDF.Samples\Sample1.cs">
-      <Link>Samples\Sample1.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Ego.PDF.Samples\Sample2.cs">
-      <Link>Samples\Sample2.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Ego.PDF.Samples\Sample3.cs">
-      <Link>Samples\Sample3.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Ego.PDF.Samples\Sample4.cs">
-      <Link>Samples\Sample4.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Ego.PDF.Samples\Sample5.cs">
-      <Link>Samples\Sample5.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Ego.PDF.Samples\Sample6.cs">
-      <Link>Samples\Sample6.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Compile Include="App_Start\BootstrapBundleConfig.cs" />
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />

@@ -54,6 +54,7 @@
     <Compile Include="Data\ImageInfo.cs" />
     <Compile Include="Data\Page.cs" />
     <Compile Include="Data\PageLink.cs" />
+    <Compile Include="Data\TableRow.cs" />
     <Compile Include="FPdfExtensions.cs" />
     <Compile Include="Miscellaneous Utility Library\BigEndianBitConverter.cs" />
     <Compile Include="Miscellaneous Utility Library\DoubleConverter.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Data\PageSize.cs" />
     <Compile Include="Miscellaneous Utility Library\Endianness.cs" />
     <Compile Include="Miscellaneous Utility Library\LittleEndianBitConverter.cs" />
+    <Compile Include="PdfStatus.cs" />
     <Compile Include="PHP\FileSystemSupport.cs" />
     <Compile Include="PHP\OrderedMap.cs" />
     <Compile Include="PHP\TypeSupport.cs" />

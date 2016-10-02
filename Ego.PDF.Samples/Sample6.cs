@@ -33,8 +33,7 @@ namespace Ego.PDF.Samples
             // Second page
             pdf.AddPage();
             pdf.SetLink(link);
-            pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default,
-                      "http://www.fpdf.org");
+            pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
             pdf.SetLeftMargin(45);
             pdf.SetFontSize(14);
             pdf.WriteHtml(html);
@@ -117,7 +116,7 @@ namespace Ego.PDF.Samples
             TagCount[tag] = TagCount[tag] + (enable ? 1 : -1);
             string style = string.Empty;
 
-            foreach (var token in new[] {"B", "I", "U"})
+            foreach (var token in new[] { "B", "I", "U" })
             {
                 if (TagCount.ContainsKey(token) && TagCount[token] > 0)
                 {
