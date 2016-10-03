@@ -28,7 +28,7 @@ namespace Ego.PDF.Samples
             pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
 
             var rowHeader = new TableRow(22, 120)
-                                                    .SerBorder("0")
+                                                    .SetBorder("0")
                                                     .SetCellHeight(5);
             //pdf.PaintRow(rowHeader, "", @"Strada General Traian Moșoiu 24, <<--- characted not supported 
             pdf.Ln(3);
@@ -40,7 +40,7 @@ Romania");
             pdf.SetY(pdf.TopMargin);
             pdf.SetFontSize(32);
 
-            var alignRight = new TableRow(pdf.CurrentPageSize.Width - pdf.LeftMargin - pdf.RightMargin).SerBorder("");
+            var alignRight = new TableRow(pdf.CurrentPageSize.Width - pdf.LeftMargin - pdf.RightMargin).SetBorder("");
             alignRight.Cells.Last().Align = AlignEnum.Right;
             pdf.PaintRow(alignRight, "INVOICE");
 
@@ -53,7 +53,21 @@ Romania");
             pdf.Ln();
             pdf.SetFont("Arial", string.Empty, 10);
 
-            pdf.Write(6, "VAT number: HL34.123.666-Z");
+            pdf.Write(6, "VAT number: RO34.123.666-Z");
+            pdf.Ln();
+
+            pdf.SetY(50);
+            var clientRow = new TableRow(100, 50).SetBorder();
+            pdf.PaintRow(clientRow, "", "CLIENT");
+            pdf.PaintRow(clientRow, "", "Jonathan Harker");
+            clientRow.CellHeight = 4;
+            pdf.PaintRow(clientRow, "", "Lyndhurst Rd");
+            pdf.PaintRow(clientRow, "", "Exeter");
+            pdf.PaintRow(clientRow, "", "EX2 4PA");
+            pdf.PaintRow(clientRow, "", "UK");
+
+
+
 
             pdf.SetY(100);
 
@@ -72,11 +86,24 @@ Romania");
             pdf.PaintRow(row, "00002", "Around the World in 80 Days", "1", "$7.95", "$7.95");
             pdf.PaintRow(row, "00002", "The Misterious Island", "1", "$7.95", "$7.95");
 
-            for (int i = 0; i < 15; i++)
+
+
+            for (int i = 0; i < 10; i++)
             {
                 pdf.PaintRow(row);
 
             }
+
+            var totalsRow = new TableRow(1, 0.4, 0.3, 0.4)
+                .NormalizeWidths(pdf.CurrentPageSize.Width - pdf.LeftMargin - pdf.RightMargin)
+                .SetAlign(AlignEnum.Right);
+            totalsRow.Cells[0].Border = "0";
+            totalsRow.Cells[1].Border = "0";
+            totalsRow.Cells[1].Align = AlignEnum.Left;
+
+            pdf.PaintRow(totalsRow, "", "Invoiced amount", "", "$100.00");
+            pdf.PaintRow(totalsRow, "", "Vat", "20%", "$20.00");
+            pdf.PaintRow(totalsRow, "", "Due amount", "", "$20.00");
 
             pdf.Ln(2);
             DecoratorLine(pdf);
@@ -94,7 +121,7 @@ Romania");
         private static void DecoratorLine(Sample8 pdf)
         {
             var decorator = new TableRow(10, 1, 1, 0.5)
-                .SerBorder()
+                .SetBorder()
                 .SetCellHeight(2);
             decorator.NormalizeWidths(pdf.CurrentPageSize.Width - pdf.LeftMargin - pdf.RightMargin);
             decorator.Cells[0].Background = Color.Cyan;

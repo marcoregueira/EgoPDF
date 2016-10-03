@@ -29,7 +29,7 @@ namespace Ego.PDF.Data
             }
         }
 
-        public void NormalizeWidths(double width)
+        public TableRow NormalizeWidths(double width)
         {
             var sum = Cells.Sum(x => x.Width);
             if (width > 0)
@@ -40,9 +40,10 @@ namespace Ego.PDF.Data
                     tableCell.Width = tableCell.Width / (sum / width);
                 }
             }
+            return this;
         }
 
-        public TableRow SerBorder(string border = "None")
+        public TableRow SetBorder(string border = "None")
         {
             foreach (var tableCell in this.Cells)
             {
@@ -50,6 +51,16 @@ namespace Ego.PDF.Data
             }
             return this;
         }
+
+        public TableRow SetAlign(AlignEnum align)
+        {
+            foreach (var tableCell in this.Cells)
+            {
+                tableCell.Align = align;
+            }
+            return this;
+        }
+
 
         public TableRow SetCellHeight(double height)
         {
