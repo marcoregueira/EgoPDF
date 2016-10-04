@@ -53,6 +53,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\DrawingPoint.cs" />
     <Compile Include="Data\Enums.cs" />
     <Compile Include="Data\ImageInfo.cs" />
     <Compile Include="Data\Page.cs" />

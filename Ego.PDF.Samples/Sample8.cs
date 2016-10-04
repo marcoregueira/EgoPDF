@@ -103,15 +103,35 @@ Romania");
 
             pdf.PaintRow(totalsRow, "", "Invoiced amount", "", "$100.00");
             pdf.PaintRow(totalsRow, "", "Vat", "20%", "$20.00");
-            pdf.PaintRow(totalsRow, "", "Due amount", "", "$20.00");
+            pdf.PaintRow(totalsRow, "", "Due amount", "", "$120.00");
 
             pdf.Ln(2);
             DecoratorLine(pdf);
 
+            pdf.Ln(8);
+            var points = new[]
+            {
+                new DrawingPoint(0, 0),
+                new DrawingPoint(5, -5),
+                new DrawingPoint(5, -15),
+                new DrawingPoint(80, -15),
+                new DrawingPoint(80, 15),
+                new DrawingPoint(5, 15),
+                new DrawingPoint(5, 5),
+                new DrawingPoint(0, 0)
+            };
+
+            foreach (var drawingPoint in points)
+            {
+                drawingPoint.X = drawingPoint.X + pdf.LeftMargin + 90;
+                drawingPoint.Y = drawingPoint.Y + 5;
+            }
+
+            pdf.DrawArea(Color.Aqua, 0.001, points);
+
             string html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
                     <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
-
 
             pdf.SetFontSize(14);
             pdf.WriteHtml(html, 8);

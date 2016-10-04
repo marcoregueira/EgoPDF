@@ -94,13 +94,13 @@ namespace Ego.PDF
 
             // Page sizes
             StdPageSizes = new List<PageSize>
-                {
-                    new PageSize("a3", 841.89, 1190.55),
-                    new PageSize("a4", 595.28, 841.89),
-                    new PageSize("a5", 420.94, 595.28),
-                    new PageSize("legal", 612, 792),
-                    new PageSize("letter", 612, 1008),
-                };
+            {
+                new PageSize("a3", 841.89, 1190.55),
+                new PageSize("a4", 595.28, 841.89),
+                new PageSize("a5", 420.94, 595.28),
+                new PageSize("legal", 612, 792),
+                new PageSize("letter", 612, 1008),
+            };
 
             if (unit == UnitEnum.Point)
             {
@@ -739,9 +739,9 @@ namespace Ego.PDF
         {
             // Draw a line
             Out(sprintf("%.2F %.2F m %.2F %.2F l S",
-                         x1 * k,
-                         (H - y1) * k, x2 * k,
-                         (H - y2) * k));
+                x1 * k,
+                (H - y1) * k, x2 * k,
+                (H - y2) * k));
         }
 
         public virtual void Rect(double x, double y, double w, double h, string style)
@@ -1033,7 +1033,7 @@ namespace Ego.PDF
         /// <param name="fill"></param>
         /// <param name="link"></param>
         public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill,
-                                 LinkData link)
+            LinkData link)
         {
             if (!cellHeight.HasValue) cellHeight = 0;
 
@@ -1091,12 +1091,12 @@ namespace Ego.PDF
                 if (border.Contains("R"))
                 {
                     outputString = outputString +
-                        sprintf("%.2F %.2F m %.2F %.2F l S ", (X + cellWidth) * k, (H - Y) * k, (X + cellWidth) * k, (H - (Y + cellHeight)) * k);
+                                   sprintf("%.2F %.2F m %.2F %.2F l S ", (X + cellWidth) * k, (H - Y) * k, (X + cellWidth) * k, (H - (Y + cellHeight)) * k);
                 }
                 if (border.Contains("B"))
                 {
                     outputString = outputString +
-                        sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - (Y + cellHeight)) * k, (X + cellWidth) * k, (H - (Y + cellHeight)) * k);
+                                   sprintf("%.2F %.2F m %.2F %.2F l S ", X * k, (H - (Y + cellHeight)) * k, (X + cellWidth) * k, (H - (Y + cellHeight)) * k);
                 }
             }
 
@@ -1556,7 +1556,7 @@ namespace Ego.PDF
         }
 
         public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type,
-                                  LinkData link)
+            LinkData link)
         {
             // Put an image on the page
             ImageInfo imageInfo;
@@ -1719,8 +1719,8 @@ namespace Ego.PDF
         internal virtual Dimensions GetPageSize(Dimensions dimensions)
         {
             return dimensions.Width > dimensions.Heigth
-                       ? new Dimensions { Width = dimensions.Heigth, Heigth = dimensions.Width }
-                       : dimensions;
+                ? new Dimensions { Width = dimensions.Heigth, Heigth = dimensions.Width }
+                : dimensions;
         }
 
         internal virtual void BeginPage(PageOrientation orientation, Dimensions size)
@@ -1804,7 +1804,7 @@ namespace Ego.PDF
             var ut = CurrentFont.ut;
             var w = GetStringWidth(txt) + Ws * StringSupport.SubstringCount(txt, " ");
             return sprintf("%.2F %.2F %.2F %.2F re f", x * k, (H - (y - up / (double)1000 * FontSize)) * k, w * k,
-                           (-ut) / (double)1000 * FontSizePt);
+                (-ut) / (double)1000 * FontSizePt);
         }
 
         internal virtual ImageInfo ParseJpg(string file)
@@ -2305,7 +2305,7 @@ namespace Ego.PDF
                 // Encodings
                 NewObject();
                 Out("<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [" + TypeSupport.ToString(diff) +
-                     "]>>");
+                    "]>>");
                 Out("endobj");
             }
 
@@ -2400,7 +2400,7 @@ namespace Ego.PDF
                             foreach (string k1 in font1.desc.Keys)
                             {
                                 string v = font1.desc[k1];
-                                s += " /" + k1 + " " + v;// TypeSupport.ToString(v);
+                                s += " /" + k1 + " " + v; // TypeSupport.ToString(v);
                             }
 
                             if (!string.IsNullOrEmpty(font1.file))
@@ -2440,7 +2440,7 @@ namespace Ego.PDF
             if (info.cs == "Indexed")
             {
                 Out("/ColorSpace [/Indexed /DeviceRGB " + (info.pal.Length / 3 - 1).ToString() + " " + (ObjectCount + 1).ToString() +
-                     " 0 R]");
+                    " 0 R]");
             }
             else
             {
@@ -2699,6 +2699,45 @@ namespace Ego.PDF
             byte[] bytes = PrivateEncoding.GetBytes(value);
             byte[] result = GzCompress(bytes);
             return result;
+        }
+
+
+
+        //ADDONS
+
+        public void DrawArea(Color? fill, double? lineWidth, params DrawingPoint[] points)
+        {
+            fill = fill ?? Color.Empty;
+            if (points.Length < 3) throw new InvalidOperationException("At least three points are required");
+
+            var firstPoint = points.First();
+            var doFill = (fill.Value != Color.Empty && fill.Value != Color.Transparent);
+            var doLine = true;
+
+            if (doFill)
+                SetFillColor(fill.Value);
+
+            if (lineWidth.HasValue)
+                SetLineWidth(lineWidth.Value);
+
+            var pointString = new StringBuilder();
+            var start = H - Y;
+
+            foreach (var drawingPoint in points)
+            {
+                drawingPoint.Y = start - drawingPoint.Y;
+            }
+            foreach (var drawingPoint in points)
+            {
+                pointString.Append(sprintf("%.2F %.2F", drawingPoint.X * k, (drawingPoint.Y) * k));
+                pointString.Append(drawingPoint == firstPoint ? " m " : " l ");
+            }
+
+            if (doFill && doLine) pointString.Append(" b ");
+            else if (doFill) pointString.Append(" f ");
+            else if (doLine) pointString.Append(" s ");
+
+            this.Out(pointString.ToString());
         }
     }
 }
