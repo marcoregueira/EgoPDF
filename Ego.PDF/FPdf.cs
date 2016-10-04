@@ -648,11 +648,16 @@ namespace Ego.PDF
             return Page;
         }
 
+        public virtual void SetDrawColor(Color color)
+        {
+            SetDrawColor(color.R, color.G, color.B);
+        }
+
         public virtual void SetDrawColor(int red, int? green, int? blue)
         {
-            int r = red;
-            int? g = green;
-            int? b = blue;
+            double r = red;
+            double? g = green;
+            double? b = blue;
 
             // Set color for all stroking operations
             if ((r == 0 && g == 0 && b == 0) || (!g.HasValue))
@@ -671,7 +676,7 @@ namespace Ego.PDF
 
         public virtual void SetFillColor(int grey)
         {
-            FillColor = sprintf("%.3F g", grey / 255);
+            FillColor = sprintf("%.3F g", (double)grey / 255);
             ColorFlag = (FillColor != TextColor);
             if (Page > 0)
             {
