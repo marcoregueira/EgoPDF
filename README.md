@@ -1,6 +1,8 @@
 fpdf.net
 ========
 
+[![Build status](https://ci.appveyor.com/api/projects/status/crjef9ve4cq6g9rj?svg=true)](https://ci.appveyor.com/project/marcoregueira/egopdf)
+
 Port of FPDF to C# and utility library
 
 Note that this is a port made using an automated tool with some fixes, mostly for fun purposes.
