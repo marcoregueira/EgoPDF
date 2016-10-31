@@ -3,14 +3,14 @@
   <metadata>
     <id>$id$</id>
     <version>$version$</version>
-    <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <title>EgoPDF</title>
+    <authors>Marco Regueira</authors>
+    <owners>Marco Regueira</owners>
     <projectUrl>https://github.com/marcoregueira/EgoPDF</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
-    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <description>EgoPDF is a port of FDF by  Olivier PLATHEY</description>
+    <releaseNotes>Rolling version</releaseNotes>
     <copyright>Copyright 2016</copyright>
-    <tags>PDF</tags>
+    <tags>PDF FPDF</tags>
   </metadata>
 </package>
