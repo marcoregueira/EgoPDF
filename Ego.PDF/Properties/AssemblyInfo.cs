@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Ego.PDF")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Fractal Moves")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Ego.PDF")]
-[assembly: AssemblyCopyright("Copyright © Fractal Moves 2012")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Copyright ©Marco Regueira 2016")]
+[assembly: AssemblyTrademark("Based on FPDF, MIT permissive license")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

@@ -99,6 +99,7 @@
     <Content Include="makefont\ttfparser.aspx.txt" />
     <Content Include="Miscellaneous Utility Library\_licence.txt" />
     <Content Include="Printf\_license.txt" />
+    <None Include="appveyor.yml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="makefont\cp1250.map" />
@@ -161,6 +162,7 @@
     <Content Include="makefont\koi8-u.map" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Ego.PDF.nuspec" />
     <None Include="FPdf.php">
       <SubType>Designer</SubType>
     </None>
