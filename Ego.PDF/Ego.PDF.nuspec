@@ -8,7 +8,7 @@
     <owners>Marco Regueira</owners>
     <projectUrl>https://github.com/marcoregueira/EgoPDF</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>EgoPDF is a port of FDF by  Olivier PLATHEY</description>
+    <description>EgoPDF is a port of FDF by Olivier PLATHEY</description>
     <releaseNotes>Rolling version</releaseNotes>
     <copyright>Copyright 2016</copyright>
     <tags>PDF FPDF</tags>
