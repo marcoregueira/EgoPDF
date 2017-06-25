@@ -12,9 +12,7 @@ namespace Ego.PDF.Samples
 {
     public class Sample8 : FPdf
     {
-        private Dictionary<string, int> TagCount = new Dictionary<string, int>();
-        public string href;
-        private string Path { get; set; }
+        private readonly Dictionary<string, int> _tagCount = new Dictionary<string, int>();
 
         public static FPdf GetSample(string path)
         {
@@ -23,7 +21,7 @@ namespace Ego.PDF.Samples
             pdf.AddPage();
 
             pdf.SetMargins(20, 20, 20);
-            pdf.SetFont("Arial", string.Empty, 14);
+            pdf.SetFont("Courier", string.Empty, 14);
 
             pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
 
@@ -126,13 +124,17 @@ Romania");
                 drawingPoint.Y = drawingPoint.Y + 5;
             }
 
-            pdf.SetDrawColor(Color.Aqua);
-            pdf.DrawArea(Color.Aqua, 0.00, points);
+            pdf.SetDrawColor(Color.Green);
+            pdf.DrawArea(Color.Green, 0.00, points);
 
             pdf.SetFontSize(24);
             pdf.WriteHtml("<b>Thank</b>", 6);
             pdf.WriteHtml("<b><i>you!</i></b>", 18);
 
+            pdf.X = pdf.LeftMargin + 70;
+            pdf.SetTextColor(Color.White);
+            pdf.SetFontSize(25);
+            pdf.Cell(100, 40, "45,000.00", "", 0, AlignEnum.Right);
 
             pdf.SetY(270);
             DecoratorLine(pdf);
@@ -224,17 +226,17 @@ Romania");
         public void SetStyle(string tag, bool enable)
         {
             tag = tag.ToUpper();
-            if (!TagCount.ContainsKey(tag))
+            if (!_tagCount.ContainsKey(tag))
             {
-                TagCount[tag] = 0;
+                _tagCount[tag] = 0;
             }
 
-            TagCount[tag] = TagCount[tag] + (enable ? 1 : -1);
+            _tagCount[tag] = _tagCount[tag] + (enable ? 1 : -1);
             string style = string.Empty;
 
             foreach (var token in new[] { "B", "I", "U" })
             {
-                if (TagCount.ContainsKey(token) && TagCount[token] > 0)
+                if (_tagCount.ContainsKey(token) && _tagCount[token] > 0)
                 {
                     style += token;
                 }

@@ -81,4 +81,14 @@ namespace Ego.PDF.Data
         Custom,
         Real
     }
+
+    public enum BorderStyle
+    {
+        None = 0,
+        Dashed,
+        Beveled,
+        Inset,
+        Underline,
+        Solid
+    }
 }

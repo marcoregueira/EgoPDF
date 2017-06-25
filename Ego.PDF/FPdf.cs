@@ -711,6 +711,11 @@ namespace Ego.PDF
             ColorFlag = (FillColor != TextColor);
         }
 
+        public virtual void SetTextColor(Color color)
+        {
+            SetTextColor(color.R, color.G, color.B);
+        }
+
         public virtual void SetTextColor(int red, int green, int blue)
         {
             double r = red;
@@ -1068,7 +1073,7 @@ namespace Ego.PDF
 
             var outputString = string.Empty;
 
-            int borderi = TypeSupport.ToInt32(border);
+            var borderi = TypeSupport.ToInt32(border);
             if (fill || borderi == 1)
             {
                 var op = string.Empty;
@@ -1108,17 +1113,17 @@ namespace Ego.PDF
             if (!string.IsNullOrEmpty(text))
             {
                 double dx;
-                if (align == AlignEnum.Right)
+                switch (align)
                 {
-                    dx = cellWidth - CMargin - GetStringWidth(text);
-                }
-                else if (align == AlignEnum.Center)
-                {
-                    dx = (cellWidth - GetStringWidth(text)) / 2;
-                }
-                else
-                {
-                    dx = CMargin;
+                    case AlignEnum.Right:
+                        dx = cellWidth - CMargin - GetStringWidth(text);
+                        break;
+                    case AlignEnum.Center:
+                        dx = (cellWidth - GetStringWidth(text)) / 2;
+                        break;
+                    default:
+                        dx = CMargin;
+                        break;
                 }
                 if (ColorFlag)
                 {

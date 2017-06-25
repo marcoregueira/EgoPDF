@@ -56,9 +56,11 @@
     <Compile Include="Data\DrawingPoint.cs" />
     <Compile Include="Data\Enums.cs" />
     <Compile Include="Data\ImageInfo.cs" />
+    <Compile Include="Data\JsOptions.cs" />
     <Compile Include="Data\Page.cs" />
     <Compile Include="Data\PageLink.cs" />
     <Compile Include="Data\TableRow.cs" />
+    <Compile Include="TcfpdfExtensions.cs" />
     <Compile Include="FPdfExtensions.cs" />
     <Compile Include="Miscellaneous Utility Library\BigEndianBitConverter.cs" />
     <Compile Include="Miscellaneous Utility Library\DoubleConverter.cs" />
@@ -83,9 +85,7 @@
     <Content Include="Font\symbol.txt">
       <SubType>Form</SubType>
     </Content>
-    <Content Include="Font\timesb.txt">
-      <SubType>Form</SubType>
-    </Content>
+    <Content Include="Font\timesb.txt" />
     <Content Include="Font\timesbi.txt">
       <SubType>Form</SubType>
     </Content>
@@ -99,7 +99,6 @@
     <Content Include="makefont\ttfparser.aspx.txt" />
     <Content Include="Miscellaneous Utility Library\_licence.txt" />
     <Content Include="Printf\_license.txt" />
-    <None Include="appveyor.yml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="makefont\cp1250.map" />
