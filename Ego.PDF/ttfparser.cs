@@ -13,18 +13,21 @@
 
 using System;
 using System.IO;
+using System.Text;
+using MiscUtil.Conversion;
+using MiscUtil.IO;
 
 namespace Ego.PDF
 {
     public class TtfParser
     {
-        public BinaryReader f;
+        private EndianBinaryReader f;
         public PHP.OrderedMap tables = new PHP.OrderedMap();
         public uint unitsPerEm;
-        public double xMin;
-        public double yMin;
-        public double xMax;
-        public double yMax;
+        public int xMin;
+        public int yMin;
+        public int xMax;
+        public int yMax;
         public uint numberOfHMetrics;
         public uint numGlyphs;
         public PHP.OrderedMap widths = new PHP.OrderedMap();
@@ -32,35 +35,51 @@ namespace Ego.PDF
         public string postScriptName;
         public bool Embeddable;
         public bool Bold;
-        public double typoAscender;
-        public double typoDescender;
-        public double capHeight;
-        public double italicAngle;
-        public double underlinePosition;
-        public double underlineThickness;
+        public short typoAscender;
+        public short typoDescender;
+        public short capHeight;
+        public short italicAngle;
+        public short underlinePosition;
+        public short underlineThickness;
         public bool isFixedPitch;
 
         public virtual void Parse(string file)
         {
-            string version;
+            this.ParseOffsetTable(file);
+            this.ParseHead();
+            this.ParseHhea();
+            this.ParseMaxp();
+            this.ParseHmtx();
+            this.ParseCmap();
+            this.ParseName();
+            this.ParseOS2();
+            this.ParsePost();
+
+            //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
+            f.BaseStream.Close();
+        }
+
+        private void ParseOffsetTable(string file)
+        {
+            int version;
             uint numTables;
-            int i;
+            uint i;
             string tag;
             ulong offset;
             //CONVERSION_WARNING: Method 'fopen' was converted to 'PHP.FileSystemSupport.FileOpen' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fopen.htm 
             var stream = PHP.FileSystemSupport.FileOpen(file, "rb");
-            this.f = new BinaryReader(stream);
+            this.f = new EndianBinaryReader(new BigEndianBitConverter(), stream);
             if (!PHP.TypeSupport.ToBoolean(this.f))
             {
                 this.Error("Can\'t open file: " + file);
             }
 
-            version = this.Read(4);
-            if (version == "OTTO")
+            version = this.ReadLong();
+            if (version == 0x4F54544F) //OTTO
             {
                 this.Error("OpenType fonts based on PostScript outlines are not supported");
             }
-            if (version != "\x00\x01\x00\x00")
+            if (version != 0x00010000)
             {
                 this.Error("Unrecognized file format");
             }
@@ -76,18 +95,6 @@ namespace Ego.PDF
                 this.Skip(4); // length
                 this.tables[tag] = offset;
             }
-
-            this.ParseHead();
-            this.ParseHhea();
-            this.ParseMaxp();
-            this.ParseHmtx();
-            this.ParseCmap();
-            this.ParseName();
-            this.ParseOS2();
-            this.ParsePost();
-
-            //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
-            f.BaseStream.Close();
         }
 
         public virtual void ParseHead()
@@ -147,7 +154,7 @@ namespace Ego.PDF
         public virtual void ParseCmap()
         {
             uint numTables;
-            int i;
+            uint i;
             long offset31;
             uint platformID;
             uint encodingID;
@@ -157,7 +164,7 @@ namespace Ego.PDF
             var idDelta = new PHP.OrderedMap();
             var idRangeOffset = new PHP.OrderedMap();
             uint format;
-            string segCount;
+            ushort segCount;
             int c1;
             int c2;
             int d;
@@ -200,7 +207,7 @@ namespace Ego.PDF
                 this.Error("Unexpected subtable format: " + format);
             }
             this.Skip(2 * 2); // length, language
-            segCount = (PHP.TypeSupport.ToDouble(this.ReadUShort()) / 2).ToString();
+            segCount = (ushort)(this.ReadUShort() / Convert.ToUInt16(2));
             this.Skip(3 * 2); // searchRange, entrySelector, rangeShift
             //CONVERSION_ISSUE: Incrementing/decrementing only supported on numerical types, '++' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
             for (i = 0; i.CompareTo(segCount) < 0; i++)
@@ -241,7 +248,7 @@ namespace Ego.PDF
                     if (ro > 0)
                     {
                         gid = this.ReadShort();
-                        if (gid.CompareTo(0.ToString()) > 0)
+                        if (gid.CompareTo(0) > 0)
                         {
                             gid = gid + d;
                         }
@@ -251,7 +258,7 @@ namespace Ego.PDF
                         gid = (c + d);
                     }
 
-                    if (gid.CompareTo(0.ToString()) > 0)
+                    if (gid.CompareTo(0) > 0)
                     {
                         this.chars[c] = gid;
                     }
@@ -262,9 +269,9 @@ namespace Ego.PDF
         public virtual void ParseName()
         {
             long tableOffset;
-            uint count;
+            ushort count;
             uint stringOffset;
-            int i;
+            ushort i;
             uint nameID;
             int length;
             uint offset;
@@ -325,7 +332,7 @@ namespace Ego.PDF
             this.Skip(2 * 2); // usFirstCharIndex, usLastCharIndex
             this.typoAscender = this.ReadShort();
             this.typoDescender = this.ReadShort();
-            if (version.CompareTo(2.ToString()) >= 0)
+            if (version.CompareTo((uint)2) >= 0)
             {
                 this.Skip(3 * 2 + 2 * 4 + 2);
                 this.capHeight = this.ReadShort();
@@ -375,24 +382,28 @@ namespace Ego.PDF
             return PHP.FileSystemSupport.Read(this.f, n);
         }
 
-        public virtual uint ReadUShort()
+        public virtual ushort ReadUShort()
         {
-            return f.ReadUInt32();
+
+            var i16 = f.ReadUInt16();
+            return i16;
         }
 
-        public virtual int ReadShort()
+        public virtual short ReadShort()
         {
-            var v = f.ReadInt32();
+            var v = f.ReadInt16();
             return v;
         }
 
-        public virtual long ReadLong()
+        public virtual int ReadLong()
         {
-            return f.ReadInt64();
+            var i32 = f.ReadInt32();
+            return i32;
         }
-        public virtual ulong ReadULong()
+        public virtual uint ReadULong()
         {
-            return f.ReadUInt64();
+            var i32 = f.ReadUInt32();
+            return i32;
         }
     }
 }

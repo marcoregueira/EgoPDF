@@ -74,5 +74,11 @@ namespace Ego.PDF.WindowsFormsTest
             DoSample5();
             DoSample6();
         }
+
+        private void BtnParseFont_Click(object sender, EventArgs e)
+        {
+            var ttfParser = new TtfParser();    
+            ttfParser.Parse("C:\\Users\\MarcoAntonio\\Downloads\\RetroArch (1)\\assets\\zarch\\Roboto-Condensed.ttf");
+        }
     }
 }

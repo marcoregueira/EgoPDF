@@ -1,3 +1,5 @@
+using System;
+
 namespace Ego.PDF.PHP
 {
     /// <summary>
@@ -45,17 +47,17 @@ namespace Ego.PDF.PHP
             double result = 0;
             if (instance != null)
             {
-                if (instance is int || instance is long || instance is double || instance is bool)
+                if (instance is int || instance is long || instance is double || instance is bool || instance is UInt32 || instance is UInt16)
                 {
                     result = System.Convert.ToDouble(instance);
                 }
                 else if (instance is string)
                 {
-                    result = ToDouble((string) instance);
+                    result = ToDouble((string)instance);
                 }
                 else if (instance is OrderedMap)
                 {
-                    OrderedMap orderedMap = (OrderedMap) instance;
+                    OrderedMap orderedMap = (OrderedMap)instance;
                     result = orderedMap.Count == 0 ? 0 : 1;
                 }
                 else
@@ -108,17 +110,17 @@ namespace Ego.PDF.PHP
             int result = 0;
             if (instance != null)
             {
-                if (instance is int || instance is long || instance is double || instance is bool)
+                if (instance is int || instance is long || instance is double || instance is bool || instance is UInt32 || instance is UInt16)
                 {
                     result = System.Convert.ToInt32(instance);
                 }
                 else if (instance is string)
                 {
-                    result = ToInt32((string) instance);
+                    result = ToInt32((string)instance);
                 }
                 else if (instance is OrderedMap)
                 {
-                    OrderedMap orderedMap = (OrderedMap) instance;
+                    OrderedMap orderedMap = (OrderedMap)instance;
                     result = orderedMap.Count == 0 ? 0 : 1;
                 }
                 else
@@ -173,11 +175,11 @@ namespace Ego.PDF.PHP
                 }
                 else if (objectValue is string)
                 {
-                    result = ToBoolean((string) objectValue);
+                    result = ToBoolean((string)objectValue);
                 }
                 else if (objectValue is OrderedMap)
                 {
-                    OrderedMap orderedMap = (OrderedMap) objectValue;
+                    OrderedMap orderedMap = (OrderedMap)objectValue;
                     result = orderedMap.Count == 0 ? false : true;
                 }
                 else
@@ -212,7 +214,7 @@ namespace Ego.PDF.PHP
                 }
                 else if (objectValue is bool)
                 {
-                    result = (bool) objectValue ? "1" : "";
+                    result = (bool)objectValue ? "1" : "";
                 }
                 else if (objectValue is OrderedMap)
                 {
@@ -242,7 +244,7 @@ namespace Ego.PDF.PHP
             if (obj != null)
             {
                 if (obj is OrderedMap)
-                    result = new OrderedMap((OrderedMap) obj, false);
+                    result = new OrderedMap((OrderedMap)obj, false);
                 else if (obj is string || obj is int || obj is long || obj is double || obj is bool)
                     result = new OrderedMap(obj);
                 else
