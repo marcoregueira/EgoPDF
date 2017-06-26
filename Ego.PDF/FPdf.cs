@@ -38,7 +38,7 @@ using static Ego.PDF.Printf.SprintfTools;
 
 namespace Ego.PDF
 {
-    public sealed class FPdf
+    public class FPdf
     {
         public static readonly Encoding PrivateEncoding = Encoding.GetEncoding(1252);
         public readonly string FpdfVersion = "1.7";
@@ -2487,7 +2487,7 @@ namespace Ego.PDF
                         {
                             Out("/Encoding /WinAnsiEncoding");
                         }
-                        if (font1.uv.Count>0)
+                        if (font1.uv.Count > 0)
                             Out("/ToUnicode " + CMaps[cmapkey] + " 0 R");
                         Out(">>");
                         Out("endobj");
