@@ -65,6 +65,14 @@ namespace Ego.PDF.WindowsFormsTest
             pdf.Output("sample6.pdf", OutputDevice.SaveToFile);
         }
 
+        public void DoSample8()
+        {
+            string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var pdf = Sample8.GetSample(path);
+            pdf.Output("sample8.pdf", OutputDevice.SaveToFile);
+        }
+
+
         private void BtnRunSamples_Click(object sender, EventArgs e)
         {
             DoSample1();
@@ -79,6 +87,12 @@ namespace Ego.PDF.WindowsFormsTest
         {
             var ttfParser = new TtfParser();    
             ttfParser.Parse("C:\\Users\\MarcoAntonio\\Downloads\\RetroArch (1)\\assets\\zarch\\Roboto-Condensed.ttf");
+        }
+
+        private void BtnMakeFont_Click(object sender, EventArgs e)
+        {
+            var fontMaker = new Make();
+            fontMaker.MakeFont("C:\\Users\\MarcoAntonio\\Downloads\\RetroArch (1)\\assets\\zarch\\Roboto-Condensed.ttf");
         }
     }
 }

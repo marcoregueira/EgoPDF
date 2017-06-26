@@ -60,6 +60,7 @@
     <Compile Include="Data\Page.cs" />
     <Compile Include="Data\PageLink.cs" />
     <Compile Include="Data\TableRow.cs" />
+    <Compile Include="Make.cs" />
     <Compile Include="TcfpdfExtensions.cs" />
     <Compile Include="FPdfExtensions.cs" />
     <Compile Include="Miscellaneous Utility Library\BigEndianBitConverter.cs" />

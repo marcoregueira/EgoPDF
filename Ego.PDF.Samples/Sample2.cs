@@ -20,7 +20,7 @@ namespace Ego.PDF.Samples
             p.SetFont("Times", "", 12);
             for (var i = 1; i <= 40; i++)
             {
-                p.Cell(0, 10, "Printing line number " + i.ToString(), "0", 1);
+                p.Cell(0, 10, "Printing line number " + i, "0", 1);
             }
             return p;
         }
@@ -28,7 +28,7 @@ namespace Ego.PDF.Samples
         public override void Header()
         {
             base.Header();
-            Image(ImageFile, 10, 6, 30, 0);
+            Image(ImageFile, 10, 6, 30);
             SetFont("Arial", "B", 15);
             Cell(80);
             Cell(30, 10, "Title", "1", 0, AlignEnum.Center);
