@@ -4,11 +4,14 @@ using System.Collections.Generic;
 
 using Ego.PDF;
 using Ego.PDF.Data;
+using Ego.PDF.PHP;
 
 namespace Ego.PDF.Font
 {
     public class FontDefinition
     {
+        public string enc = "cp1252";
+        public Dictionary<int, object> uv = new Dictionary<int,object>();
         public FontTypeEnum type { get; set; }
         public string name { get; set; }
         public int up { get; set; }
@@ -20,7 +23,7 @@ namespace Ego.PDF.Font
         public int length1 { get; set; }
         public int length2 { get; set; }
 
-        public object diff { get; set; }
+        public string diff { get; set; }
         public int? diffn { get; set; }
 
         public string file { get; set; }
@@ -32,6 +35,7 @@ namespace Ego.PDF.Font
         public PHP.OrderedMap cw { get; set; }
         public Dictionary<string, int> Widths { get; set; }
         public Dictionary<string, string> desc { get; set; }
+        public bool Subsetted { get; set; }
 
         public FontDefinition()
         {

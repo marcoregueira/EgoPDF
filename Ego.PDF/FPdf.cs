@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Web;
 using System.Windows.Media.Imaging;
 
 using Ionic.Zlib;
@@ -18,7 +16,6 @@ using MiscUtil.IO;
 using Ego.PDF.Data;
 using Ego.PDF.Font;
 using Ego.PDF.PHP;
-using Ego.PDF.Printf;
 using Ego.PDF.Support;
 
 using static Ego.PDF.Printf.SprintfTools;
@@ -41,7 +38,7 @@ using static Ego.PDF.Printf.SprintfTools;
 
 namespace Ego.PDF
 {
-    public partial class FPdf
+    public sealed class FPdf
     {
         public static readonly Encoding PrivateEncoding = Encoding.GetEncoding(1252);
         public readonly string FpdfVersion = "1.7";
@@ -50,6 +47,9 @@ namespace Ego.PDF
         public double Ws;
         public ZoomEnum ZoomMode;
         public decimal ZoomValue = 1;
+        public OrderedMap CMaps { get; set; } = new OrderedMap();
+        public OrderedMap Encodings { get; set; } = new OrderedMap();
+
 
         public FPdf(PageOrientation orientation, UnitEnum unit, PageSizeEnum pageSize)
         {
@@ -330,7 +330,7 @@ namespace Ego.PDF
         ///     El margen derecho es igual al izquierdo
         ///     <param name="top"></param>
         /// </summary>
-        public virtual void SetMargins(double left, double top)
+        public void SetMargins(double left, double top)
         {
             SetMargins(left, top, left);
         }
@@ -341,14 +341,14 @@ namespace Ego.PDF
         /// <param name="left"></param>
         /// <param name="top"></param>
         /// <param name="right"></param>
-        public virtual void SetMargins(double left, double top, double right)
+        public void SetMargins(double left, double top, double right)
         {
             LeftMargin = left;
             TopMargin = top;
             RightMargin = right;
         }
 
-        public virtual void SetLeftMargin(double margin)
+        public void SetLeftMargin(double margin)
         {
             // Set left margin
             LeftMargin = margin;
@@ -358,19 +358,19 @@ namespace Ego.PDF
             }
         }
 
-        public virtual void SetTopMargin(double margin)
+        public void SetTopMargin(double margin)
         {
             // Set top margin
             TopMargin = margin;
         }
 
-        public virtual void SetRightMargin(double margin)
+        public void SetRightMargin(double margin)
         {
             // Set right margin
             RightMargin = margin;
         }
 
-        public virtual void SetAutoPageBreak(bool auto, double margin)
+        public void SetAutoPageBreak(bool auto, double margin)
         {
             // Set auto page break mode and triggering margin
             AutoPageBreak = auto;
@@ -383,31 +383,31 @@ namespace Ego.PDF
         /// </summary>
         /// <param name="zoom"></param>
         /// <param name="layout"></param>
-        public virtual void SetDisplayMode(ZoomEnum zoom, LayoutEnum layout)
+        public void SetDisplayMode(ZoomEnum zoom, LayoutEnum layout)
         {
             SetZoom(zoom);
             SetLayout(layout);
         }
 
-        public virtual void SetDisplayMode(decimal zoomValue, LayoutEnum layout)
+        public void SetDisplayMode(decimal zoomValue, LayoutEnum layout)
         {
             SetZoom(zoomValue);
             SetLayout(layout);
         }
 
-        public virtual void SetZoom(ZoomEnum zoom)
+        public void SetZoom(ZoomEnum zoom)
         {
             if (zoom != ZoomEnum.Default)
                 ZoomMode = zoom;
         }
 
-        public virtual void SetZoom(decimal zoom)
+        public void SetZoom(decimal zoom)
         {
             ZoomMode = ZoomEnum.Custom;
             ZoomValue = zoom;
         }
 
-        public virtual void SetLayout(LayoutEnum layout)
+        public void SetLayout(LayoutEnum layout)
         {
             LayoutMode = layout;
         }
@@ -416,7 +416,7 @@ namespace Ego.PDF
         ///     Set page compression
         /// </summary>
         /// <param name="compress"></param>
-        public virtual void SetCompression(bool compress)
+        public void SetCompression(bool compress)
         {
             Compress = compress;
         }
@@ -425,7 +425,7 @@ namespace Ego.PDF
         ///     Title of document
         /// </summary>
         /// <param name="title"></param>
-        public virtual FPdf SetTitle(string title)
+        public FPdf SetTitle(string title)
         {
             Title = title;
             return this;
@@ -435,7 +435,7 @@ namespace Ego.PDF
         ///     Subject of document
         /// </summary>
         /// <param name="subject"></param>
-        public virtual void SetSubject(string subject)
+        public void SetSubject(string subject)
         {
             Subject = subject;
         }
@@ -444,7 +444,7 @@ namespace Ego.PDF
         ///     Keywords of document
         /// </summary>
         /// <param name="author"></param>
-        public virtual FPdf SetAuthor(string author)
+        public FPdf SetAuthor(string author)
         {
             // Author of document
             Author = author;
@@ -455,7 +455,7 @@ namespace Ego.PDF
         ///     Keywords of document
         /// </summary>
         /// <param name="keywords"></param>
-        public virtual FPdf SetKeywords(string keywords)
+        public FPdf SetKeywords(string keywords)
         {
             Keywords = keywords;
             return this;
@@ -465,7 +465,7 @@ namespace Ego.PDF
         ///     Creator of document
         /// </summary>
         /// <param name="creator"></param>
-        public virtual void SetCreator(string creator)
+        public void SetCreator(string creator)
         {
             Creator = creator;
         }
@@ -483,7 +483,7 @@ namespace Ego.PDF
         ///     Define an alias for total number of pages
         /// </summary>
         /// <param name="alias"></param>
-        public virtual void AliasNbPages(string alias)
+        public void AliasNbPages(string alias)
         {
             AliasNbPagesRenamed = alias;
         }
@@ -492,7 +492,7 @@ namespace Ego.PDF
         ///     Fatal error
         /// </summary>
         /// <param name="msg"></param>
-        public virtual void Error(string msg)
+        public void Error(string msg)
         {
             throw new InvalidOperationException(msg);
         }
@@ -500,7 +500,7 @@ namespace Ego.PDF
         /// <summary>
         ///     Begin document
         /// </summary>
-        public virtual void Open()
+        public void Open()
         {
             State = 1;
         }
@@ -508,7 +508,7 @@ namespace Ego.PDF
         /// <summary>
         ///     Terminate document
         /// </summary>
-        public virtual void Close()
+        public void Close()
         {
             if (State == 3)
             {
@@ -528,28 +528,28 @@ namespace Ego.PDF
             EndDoc();
         }
 
-        public virtual void AddPage()
+        public void AddPage()
         {
             AddPage(PageOrientation.Default, DefPageSize);
         }
 
-        public virtual void AddPage(PageOrientation orientation)
+        public void AddPage(PageOrientation orientation)
         {
             AddPage(orientation, PageSizeEnum.Default);
         }
 
-        public virtual void AddPage(PageSizeEnum size)
+        public void AddPage(PageSizeEnum size)
         {
             AddPage(PageOrientation.Default, size);
         }
 
-        public virtual void AddPage(PageOrientation orientation, PageSizeEnum pagesize)
+        public void AddPage(PageOrientation orientation, PageSizeEnum pagesize)
         {
             Dimensions page = GetPageSize(pagesize);
             AddPage(orientation, page);
         }
 
-        public virtual void AddPage(PageOrientation orientation, Dimensions size)
+        public void AddPage(PageOrientation orientation, Dimensions size)
         {
             // Start a new page
             if (State == 0)
@@ -632,28 +632,28 @@ namespace Ego.PDF
             ColorFlag = cf;
         }
 
-        public virtual void Header()
+        public void Header()
         {
             // To be implemented in your own inherited class
         }
 
-        public virtual void Footer()
+        public void Footer()
         {
             // To be implemented in your own inherited class
         }
 
-        public virtual int PageNo()
+        public int PageNo()
         {
             // Get current page number
             return Page;
         }
 
-        public virtual void SetDrawColor(Color color)
+        public void SetDrawColor(Color color)
         {
             SetDrawColor(color.R, color.G, color.B);
         }
 
-        public virtual void SetDrawColor(int red, int? green, int? blue)
+        public void SetDrawColor(int red, int? green, int? blue)
         {
             double r = red;
             double? g = green;
@@ -674,7 +674,7 @@ namespace Ego.PDF
             }
         }
 
-        public virtual void SetFillColor(int grey)
+        public void SetFillColor(int grey)
         {
             FillColor = sprintf("%.3F g", (double)grey / 255);
             ColorFlag = (FillColor != TextColor);
@@ -685,12 +685,12 @@ namespace Ego.PDF
         }
 
 
-        public virtual void SetFillColor(Color color)
+        public void SetFillColor(Color color)
         {
             SetFillColor(color.R, color.G, color.B);
         }
 
-        public virtual void SetFillColor(int red, int green, int blue)
+        public void SetFillColor(int red, int green, int blue)
         {
             double r = red;
             double g = green;
@@ -711,12 +711,12 @@ namespace Ego.PDF
             ColorFlag = (FillColor != TextColor);
         }
 
-        public virtual void SetTextColor(Color color)
+        public void SetTextColor(Color color)
         {
             SetTextColor(color.R, color.G, color.B);
         }
 
-        public virtual void SetTextColor(int red, int green, int blue)
+        public void SetTextColor(int red, int green, int blue)
         {
             double r = red;
             double g = green;
@@ -725,7 +725,7 @@ namespace Ego.PDF
             ColorFlag = (FillColor != TextColor);
         }
 
-        public virtual double GetStringWidth(string s)
+        public double GetStringWidth(string s)
         {
             int i;
             double w = 0;
@@ -735,7 +735,7 @@ namespace Ego.PDF
             return w * FontSize / 1000;
         }
 
-        public virtual void SetLineWidth(double width)
+        public void SetLineWidth(double width)
         {
             // Set line width
             LineWidth = width;
@@ -745,7 +745,7 @@ namespace Ego.PDF
             }
         }
 
-        public virtual void Line(double x1, double y1, double x2, double y2)
+        public void Line(double x1, double y1, double x2, double y2)
         {
             // Draw a line
             Out(sprintf("%.2F %.2F m %.2F %.2F l S",
@@ -754,7 +754,7 @@ namespace Ego.PDF
                 (H - y2) * k));
         }
 
-        public virtual void Rect(double x, double y, double w, double h, string style)
+        public void Rect(double x, double y, double w, double h, string style)
         {
             // Draw a rectangle
             string op;
@@ -773,7 +773,7 @@ namespace Ego.PDF
             Out(sprintf("%.2F %.2F %.2F %.2F re %s", x * k, (H - y) * k, w * k, (-h) * k, op));
         }
 
-        public virtual void AddFont(string family, string style, string file)
+        public void AddFont(string family, string style, string file)
         {
             // Add a TrueType, OpenType or Type1 font
             int n;
@@ -833,17 +833,17 @@ namespace Ego.PDF
         }
 
 
-        public virtual void SetFont(string family)
+        public void SetFont(string family)
         {
             SetFont(family, string.Empty);
         }
 
-        public virtual void SetFont(string family, string style)
+        public void SetFont(string family, string style)
         {
             SetFont(family, style, 0);
         }
 
-        public virtual void SetFont(string family, string style, double size)
+        public void SetFont(string family, string style, double size)
         {
             // Select a font; size given in points
             if (string.IsNullOrEmpty(family))
@@ -916,7 +916,7 @@ namespace Ego.PDF
             }
         }
 
-        public virtual void SetFontSize(double size)
+        public void SetFontSize(double size)
         {
             // Set font size in points
             if (FontSizePt == size)
@@ -952,13 +952,13 @@ namespace Ego.PDF
             return l;
         }
 
-        public virtual LinkDataInternal SetLink(int link, double y)
+        public LinkDataInternal SetLink(int link, double y)
         {
             LinkDataInternal l = SetLink(link, y, -1);
             return l;
         }
 
-        public virtual LinkDataInternal SetLink(int link, double y, int page)
+        public LinkDataInternal SetLink(int link, double y, int page)
         {
             // Set destination of internal link
             if (y == -1)
@@ -974,12 +974,12 @@ namespace Ego.PDF
             return linkInternal;
         }
 
-        public virtual void Link(double x, double y, double w, double h, LinkData link)
+        public void Link(double x, double y, double w, double h, LinkData link)
         {
             Pages[Page].PageLinks.Add(new PageLink(x * k, HPt - y * k, w * k, h * k, link));
         }
 
-        public virtual void Text(double x, double y, string txt)
+        public void Text(double x, double y, string txt)
         {
             // Output a string
             object s;
@@ -995,38 +995,38 @@ namespace Ego.PDF
             Out(s);
         }
 
-        public virtual bool AcceptPageBreak()
+        public bool AcceptPageBreak()
         {
             // Accept automatic page break or not
             return AutoPageBreak;
         }
 
-        public virtual void Cell(double cellWidth)
+        public void Cell(double cellWidth)
         {
             Cell(cellWidth, null, null, "0", 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double cellWidth, double? cellHeight, string text)
+        public void Cell(double cellWidth, double? cellHeight, string text)
         {
             Cell(cellWidth, cellHeight, text, "0", 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border)
+        public void Cell(double cellWidth, double? cellHeight, string text, string border)
         {
             Cell(cellWidth, cellHeight, text, border, 0, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line)
+        public void Cell(double cellWidth, double? cellHeight, string text, string border, int line)
         {
             Cell(cellWidth, cellHeight, text, border, line, AlignEnum.Default, false, null);
         }
 
-        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align)
+        public void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align)
         {
             Cell(cellWidth, cellHeight, text, border, line, align, false, null);
         }
 
-        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill)
+        public void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill)
         {
             Cell(cellWidth, cellHeight, text, border, line, align, fill, null);
         }
@@ -1042,7 +1042,7 @@ namespace Ego.PDF
         /// <param name="align"></param>
         /// <param name="fill"></param>
         /// <param name="link"></param>
-        public virtual void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill,
+        public void Cell(double cellWidth, double? cellHeight, string text, string border, int line, AlignEnum align, bool fill,
             LinkData link)
         {
             if (!cellHeight.HasValue) cellHeight = 0;
@@ -1169,12 +1169,12 @@ namespace Ego.PDF
             }
         }
 
-        public virtual void MultiCell(double cellWidth, int cellHeight, string text)
+        public void MultiCell(double cellWidth, int cellHeight, string text)
         {
             MultiCell(cellWidth, cellHeight, text, null, AlignEnum.Default, false);
         }
 
-        public virtual void MultiCell(double cellWidth, double cellHeight, string text, string border, AlignEnum align, bool fill)
+        public void MultiCell(double cellWidth, double cellHeight, string text, string border, AlignEnum align, bool fill)
         {
             if (align == AlignEnum.Default)
             {
@@ -1323,7 +1323,7 @@ namespace Ego.PDF
             X = LeftMargin;
         }
 
-        public virtual double CellMeasure(double cellWidth, double cellHeight, string text)
+        public double CellMeasure(double cellWidth, double cellHeight, string text)
         {
             if (string.IsNullOrEmpty(text))
                 text = " ";
@@ -1423,24 +1423,24 @@ namespace Ego.PDF
             Lasth = fullCellHeight;
         }
 
-        public virtual void Write(int h, string txt)
+        public void Write(int h, string txt)
         {
             Write(h, txt, (LinkData)null);
         }
 
-        public virtual void Write(int h, string txt, int internalLink)
+        public void Write(int h, string txt, int internalLink)
         {
             LinkDataInternal link = Links[internalLink];
             Write(h, txt, link);
         }
 
-        public virtual void Write(int h, string txt, string uri)
+        public void Write(int h, string txt, string uri)
         {
             var data = new LinkDataUri(uri);
             Write(h, txt, data);
         }
 
-        protected virtual void Write(int h, string txt, LinkData link)
+        private void Write(int h, string txt, LinkData link)
         {
             // Output text in flowing mode
             var cw = CurrentFont;
@@ -1531,41 +1531,46 @@ namespace Ego.PDF
             //this._out(tail);
         }
 
-        public virtual void Ln()
+        public void Ln()
         {
             // Line feed; default value is last cell height
             X = LeftMargin;
             Y += Lasth;
         }
 
-        public virtual void Ln(int h)
+        public void Ln(int h)
         {
             // Line feed; 
             X = LeftMargin;
             Y += h;
         }
 
-        public virtual void Image(string file, double? x, double? y, double w, double h)
+        public void Image(string file, double? x, double? y, double w)
+        {
+            Image(file, x, y, w, 0, ImageTypeEnum.Default, (LinkData)null);
+        }
+
+        public void Image(string file, double? x, double? y, double w, double h)
         {
             Image(file, x, y, w, h, ImageTypeEnum.Default, (LinkData)null);
         }
 
-        public virtual void Image(string file, double w, double h, ImageTypeEnum type, LinkData link)
+        public void Image(string file, double w, double h, ImageTypeEnum type, LinkData link)
         {
             Image(file, null, null, w, h, type, link);
         }
 
-        public virtual void Image(string file, double w, double h, ImageTypeEnum type, string link)
+        public void Image(string file, double w, double h, ImageTypeEnum type, string link)
         {
             Image(file, null, null, w, h, type, new LinkDataUri(link));
         }
 
-        public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type, string link)
+        public void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type, string link)
         {
             Image(file, x, y, w, h, type, new LinkDataUri(link));
         }
 
-        public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type,
+        public void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type,
             LinkData link)
         {
             // Put an image on the page
@@ -1656,13 +1661,13 @@ namespace Ego.PDF
             }
         }
 
-        public virtual double GetX()
+        public double GetX()
         {
             // Get x position
             return X;
         }
 
-        public virtual void SetX(double x)
+        public void SetX(double x)
         {
             // Set x position
             if (x >= 0)
@@ -1679,7 +1684,7 @@ namespace Ego.PDF
         ///     Get y position
         /// </summary>
         /// <returns></returns>
-        public virtual double GetY()
+        public double GetY()
         {
             return Y;
         }
@@ -1688,7 +1693,7 @@ namespace Ego.PDF
         ///     Set y position and reset x
         /// </summary>
         /// <param name="y"></param>
-        public virtual void SetY(double y)
+        public void SetY(double y)
         {
             X = LeftMargin;
             if (y >= 0)
@@ -1706,7 +1711,7 @@ namespace Ego.PDF
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public virtual void SetXY(double x, double y)
+        public void SetXY(double x, double y)
         {
             SetY(y);
             SetX(x);
@@ -1719,21 +1724,21 @@ namespace Ego.PDF
         *                                                                              *
         *******************************************************************************/
 
-        internal virtual Dimensions GetPageSize(PageSizeEnum index)
+        internal Dimensions GetPageSize(PageSizeEnum index)
         {
             PageSize size = StdPageSizes.FirstOrDefault(x => x.Name.ToLower() == index.ToString().ToLower());
             Debug.Assert(size != null, "size != null");
             return size.GetDimensions(k);
         }
 
-        internal virtual Dimensions GetPageSize(Dimensions dimensions)
+        internal Dimensions GetPageSize(Dimensions dimensions)
         {
             return dimensions.Width > dimensions.Heigth
                 ? new Dimensions { Width = dimensions.Heigth, Heigth = dimensions.Width }
                 : dimensions;
         }
 
-        internal virtual void BeginPage(PageOrientation orientation, Dimensions size)
+        internal void BeginPage(PageOrientation orientation, Dimensions size)
         {
             Page++;
             Pages[Page] = new Page();
@@ -1774,24 +1779,24 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void EndPage()
+        internal void EndPage()
         {
             State = 1;
         }
 
-        internal virtual FontDefinition LoadFont(string font)
+        internal FontDefinition LoadFont(string font)
         {
             // Load a font definition file from the font directory
             FontDefinition fontData;
             FontBuilder.Fonts.TryGetValue(font, out fontData);
-            if (fontData == null || string.IsNullOrEmpty(fontData.name))
+            if (string.IsNullOrEmpty(fontData?.name))
             {
                 Error("Could not include font definition file");
             }
             return fontData;
         }
 
-        internal virtual object Escape(string s)
+        internal object Escape(string s)
         {
             s = s
                 .Replace("\\", "\\\\")
@@ -1801,13 +1806,13 @@ namespace Ego.PDF
             return s;
         }
 
-        internal virtual string TextString(string s)
+        internal string TextString(string s)
         {
             // Format a text string
             return "(" + TypeSupport.ToString(Escape(s)) + ")";
         }
 
-        internal virtual string DoUnderline(double x, double y, string txt)
+        internal string DoUnderline(double x, double y, string txt)
         {
             // Underline text
             var up = CurrentFont.up;
@@ -1817,7 +1822,7 @@ namespace Ego.PDF
                 (-ut) / (double)1000 * FontSizePt);
         }
 
-        internal virtual ImageInfo ParseJpg(string file)
+        internal ImageInfo ParseJpg(string file)
         {
             // Extract info from a JPEG file
 
@@ -1844,7 +1849,7 @@ namespace Ego.PDF
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        internal virtual ImageInfo ParsePng(string file)
+        internal ImageInfo ParsePng(string file)
         {
             var f = FileSystemSupport.FileOpen(file, "rb");
             if (!TypeSupport.ToBoolean(f))
@@ -1859,7 +1864,7 @@ namespace Ego.PDF
             return info;
         }
 
-        internal virtual ImageInfo ParsePngStream(FileStream f, EndianBinaryReader reader, string file)
+        internal ImageInfo ParsePngStream(FileStream f, EndianBinaryReader reader, string file)
         {
             int n;
             int pos;
@@ -1877,7 +1882,7 @@ namespace Ego.PDF
             }
             var w = reader.ReadInt32();
             var height = reader.ReadInt32();
-            var bpc = ReadStream(reader, 1)[0];
+            int bpc = ReadStream(reader, 1)[0];
             if (bpc > 8)
             {
                 Error("16-bit depth not supported: " + file);
@@ -1917,7 +1922,7 @@ namespace Ego.PDF
             }
             ReadStream(reader, 4);
             var dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1) + " /BitsPerComponent " +
-                     bpc + " /Columns " + w;
+                     bpc.ToString() + " /Columns " + w;
 
             // Scan chunks looking for palette, transparency and image data
             var pal = new byte[] { };
@@ -1948,7 +1953,7 @@ namespace Ego.PDF
                                     break;
                                 default:
                                     pos = t.IndexOf(Convert.ToString((char)0));
-                                    if (pos > 0)
+                                    if (pos >= 0)
                                     {
                                         trns = new[] { pos };
                                     }
@@ -2042,13 +2047,13 @@ namespace Ego.PDF
             return info;
         }
 
-        internal virtual byte[] ReadStreamBytes(EndianBinaryReader br, int n)
+        internal byte[] ReadStreamBytes(EndianBinaryReader br, int n)
         {
             byte[] result = br.ReadBytes(n);
             return result;
         }
 
-        internal virtual string ReadStream(EndianBinaryReader br, int n)
+        internal string ReadStream(EndianBinaryReader br, int n)
         {
             // Read n bytes from stream
             string s;
@@ -2071,13 +2076,13 @@ namespace Ego.PDF
             return res;
         }
 
-        internal virtual Int32 ReadInt(FileStream f, BinaryReader br)
+        internal Int32 ReadInt(FileStream f, BinaryReader br)
         {
             Int32 a = br.ReadInt32();
             return a;
         }
 
-        internal virtual ImageInfo ParseGif(string file)
+        internal ImageInfo ParseGif(string file)
         {
             throw new NotImplementedException();
             /*
@@ -2147,7 +2152,7 @@ namespace Ego.PDF
              */
         }
 
-        internal virtual void NewObject()
+        internal void NewObject()
         {
             // Begin a new object
             ObjectCount++;
@@ -2155,28 +2160,48 @@ namespace Ego.PDF
             Out(ObjectCount.ToString() + " 0 obj");
         }
 
-        internal virtual void PutStream(string s)
+        internal void PutStream(string s)
         {
             Out("stream");
             Out(s);
             Out("endstream");
         }
 
-        internal virtual void PutStream(byte[] bytes)
+        internal void PutStream(byte[] bytes)
         {
             Out("stream");
             Out(bytes);
             Out("endstream");
         }
 
-        internal virtual void PutStream(List<byte[]> bytes)
+        internal void PutStream(List<byte[]> bytes)
         {
             Out("stream");
             Out(bytes);
             Out("endstream");
         }
 
-        internal virtual void Out(object s)
+        internal void PutStreamObject(string data)
+        {
+            string entries;
+            if (this.Compress)
+            {
+                entries = "/Filter /FlateDecode ";
+                var data2 = GzCompressString(data);
+
+            }
+            else
+            {
+                entries = "";
+            }
+            entries += "/Length " + data.Length;
+            this.NewObject();
+            this.Out("<<" + entries + ">>");
+            this.PutStream(data);
+            this.Out("endobj");
+        }
+
+        internal void Out(object s)
         {
             // Add a line to the document
             if (State == 2)
@@ -2209,7 +2234,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void PutPages()
+        internal void PutPages()
         {
             double wPt;
             double hPt;
@@ -2307,17 +2332,66 @@ namespace Ego.PDF
             Out("endobj");
         }
 
-        internal virtual void PutFonts()
+        internal string ToUnicodeCMap(Dictionary<int, object> uv)
         {
-            var nf = ObjectCount;
-            foreach (var diff in Diffs.Values)
+            var ranges = new StringBuilder();
+            var chars = new StringBuilder();
+            int nbr = 0;
+            int nbc = 0;
+            foreach (var key in uv.Keys)
             {
-                // Encodings
-                NewObject();
-                Out("<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [" + TypeSupport.ToString(diff) +
-                    "]>>");
-                Out("endobj");
+                var keyValue = Convert.ToInt32(key);
+                var value = uv[key];
+                var values = value as int[];
+                if (values != null)
+                {
+                    ranges.Append(sprintf("<%02X> <%02X> <%04X>\n", keyValue, keyValue + values[1] - 1, values[0]));
+                    nbr++;
+                }
+                else
+                {
+                    var val = Convert.ToInt32(value);
+                    chars.Append(sprintf("<%02X> <%04X>\n", keyValue, val));
+                    nbc++;
+                }
             }
+            var result = new StringBuilder();
+            var s =
+                "/CIDInit /ProcSet findresource begin\n";
+            s += "12 dict begin\n";
+            s += "begincmap\n";
+            s += "/CIDSystemInfo\n";
+            s += "<</Registry (Adobe)\n";
+            s += "/Ordering (UCS)\n";
+            s += "/Supplement 0\n";
+            s += ">> def\n";
+            s += "/CMapName /Adobe-Identity-UCS def\n";
+            s += "/CMapType 2 def\n";
+            s += "1 begincodespacerange\n";
+            s += "<00> <FF>\n";
+            s += "endcodespacerange\n";
+            if (nbr > 0)
+            {
+                s += $"{nbr} beginbfrange\n";
+                s += ranges.ToString();
+                s += "endbfrange\n";
+            }
+            if (nbc > 0)
+            {
+                s += $"{nbc} beginbfchar\n";
+                s += chars;
+                s += "endbfchar\n";
+            }
+            s += "endcmap\n";
+            s += "CMapName currentdict /CMap defineresource pop\n";
+            s += "end\n";
+            s += "end";
+            return s;
+        }
+
+        internal void PutFonts()
+        {
+
 
             foreach (var file in FontFiles.Keys)
             {
@@ -2356,10 +2430,52 @@ namespace Ego.PDF
             foreach (var fontKey in Fonts.Keys)
             {
                 var font1 = Fonts[fontKey];
+
+                //Encoding
+                if (!string.IsNullOrWhiteSpace(font1.diff))
+                {
+                    if (string.IsNullOrWhiteSpace(font1.enc))
+                    {
+                        var nf = ObjectCount;
+                        // Encodings
+                        NewObject();
+                        Out("<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [" + TypeSupport.ToString(font1.diff) +
+                            "]>>");
+                        Out("endobj");
+                        this.Encodings[font1.enc] = ObjectCount;
+                    }
+                }
+
+                string cmapkey = "--";
+
+                if (font1.uv != null && font1.uv.Count > 0)
+                {
+                    if (!string.IsNullOrWhiteSpace(font1.enc))
+                    {
+                        cmapkey = font1.enc;
+                    }
+                    else
+                    {
+                        cmapkey = font1.name;
+                    }
+
+                    if (!CMaps.KeyExists(cmapkey))
+                    {
+                        var cmap = ToUnicodeCMap(font1.uv);
+                        PutStreamObject(cmap);
+                        CMaps[cmapkey] = this.ObjectCount;
+                    }
+                }
+
                 // Font objects
-                font1.n = ObjectCount + 1;
+                Fonts[fontKey].n = ObjectCount + 1;
                 var type = font1.type;
                 var name = font1.name;
+                if (font1.Subsetted)
+                {
+                    name = "AAAAAA" + name;
+                }
+
                 switch (type)
                 {
                     case FontTypeEnum.Core:
@@ -2371,6 +2487,8 @@ namespace Ego.PDF
                         {
                             Out("/Encoding /WinAnsiEncoding");
                         }
+                        if (font1.uv.Count>0)
+                            Out("/ToUnicode " + CMaps[cmapkey] + " 0 R");
                         Out(">>");
                         Out("endobj");
                         break;
@@ -2387,12 +2505,14 @@ namespace Ego.PDF
                             Out("/FontDescriptor " + (ObjectCount + 2).ToString(CultureInfo.InvariantCulture) + " 0 R");
                             if (font1.diffn.HasValue)
                             {
-                                Out("/Encoding " + (nf + font1.diffn) + " 0 R");
+                                Out("/Encoding " + Encodings[font1.enc] + " 0 R");
                             }
                             else
                             {
                                 Out("/Encoding /WinAnsiEncoding");
                             }
+                            if (font1.uv.Count > 0)
+                                Out("/ToUnicode " + CMaps[cmapkey] + " 0 R");
                             Out(">>");
                             Out("endobj");
                             // Widths
@@ -2429,7 +2549,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void PutImages()
+        internal void PutImages()
         {
             foreach (var file in Images)
             {
@@ -2439,7 +2559,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void PutImage(ImageInfo info)
+        internal void PutImage(ImageInfo info)
         {
             NewObject();
             info.n = ObjectCount;
@@ -2520,7 +2640,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void PutXObjectDictionary()
+        internal void PutXObjectDictionary()
         {
             foreach (var image in Images.Values)
             {
@@ -2528,7 +2648,7 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void PutResourceDictionary()
+        internal void PutResourceDictionary()
         {
             Out("/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]");
             Out("/Font <<");
@@ -2542,7 +2662,7 @@ namespace Ego.PDF
             Out(">>");
         }
 
-        internal virtual void PutResources()
+        internal void PutResources()
         {
             PutFonts();
             PutImages();
@@ -2556,7 +2676,7 @@ namespace Ego.PDF
         }
 
         //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
-        internal virtual void PutInfo()
+        internal void PutInfo()
         {
             Out("/Producer " + TextString("FPDF " + FpdfVersion));
             if (!VariableSupport.Empty(Title))
@@ -2584,7 +2704,7 @@ namespace Ego.PDF
             Out("/CreationDate " + TextString("D:" + DateTime.Now.ToString("YmdHis")));
         }
 
-        internal virtual void PutCatalog()
+        internal void PutCatalog()
         {
             Out("/Type /Catalog");
             Out("/Pages 1 0 R");
@@ -2617,19 +2737,19 @@ namespace Ego.PDF
             }
         }
 
-        internal virtual void PutHeader()
+        internal void PutHeader()
         {
             Out("%PDF-" + PdfVersion);
         }
 
-        internal virtual void PutTrailer()
+        internal void PutTrailer()
         {
             Out("/Size " + (ObjectCount + 1).ToString());
             Out("/Root " + ObjectCount.ToString() + " 0 R");
             Out("/Info " + (ObjectCount - 1).ToString() + " 0 R");
         }
 
-        internal virtual void EndDoc()
+        internal void EndDoc()
         {
             int i;
             PutHeader();
