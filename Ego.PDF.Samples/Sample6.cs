@@ -28,7 +28,7 @@ namespace Ego.PDF.Samples
             pdf.Write(5, "To find out what's new in this tutorial, click ");
             pdf.SetFont("", "U");
             var link = pdf.AddLink();
-            pdf.Write(5, "here", link);
+            pdf.Write(5, "here", link.InternalLink);
             pdf.SetFont(string.Empty);
             // Second page
             pdf.AddPage();
