@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Media.Imaging;
-using Ego.PdfCore.Support;
 using Ionic.Zlib;
 using MiscUtil.Conversion;
 using MiscUtil.IO;
