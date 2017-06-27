@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Media.Imaging;
-
+using Ego.PdfCore.Support;
 using Ionic.Zlib;
 using MiscUtil.Conversion;
 using MiscUtil.IO;
@@ -1826,17 +1826,17 @@ namespace Ego.PDF
         {
             // Extract info from a JPEG file
 
-            var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            Debug.Assert(path != null, "path != null");
-            path = Path.Combine(path, file);
-            var bi = new BitmapImage(new Uri(path));
+            var bi = JpgParser.GetJpegDimensions(file);
+
             const string colspace = "DeviceRGB";
-            var bpc = bi.Format.BitsPerPixel;
+
+            //TODO: GET THIS PROPERLY
+            var bpc = 8;// bi.Format.BitsPerPixel;
             var data = new List<byte[]> { FileSystemSupport.ReadContentBytes(file) };
             return new ImageInfo
             {
-                w = bi.PixelWidth,
-                h = bi.PixelHeight,
+                w = bi.Width,
+                h = bi.Height,
                 cs = colspace,
                 bpc = bpc,
                 f = "DCTDecode",
