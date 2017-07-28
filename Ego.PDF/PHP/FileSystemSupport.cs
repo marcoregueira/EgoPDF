@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace Ego.PDF.PHP
 {
@@ -21,51 +22,51 @@ namespace Ego.PDF.PHP
                 return System.IO.Path.GetFileName(path);
         }
 
-        /// <summary>
-        /// Gets the number of available bytes of the specified disk.
-        /// </summary>
-        /// <param name="disk">The disk to obtain the information for.<param>
-        /// <returns>Returns number of available bytes of the specified disk.</returns>
-        public static long GetDiskFreeSpace(string disk)
-        {
-            long result = 0;
-            try
-            {
-                string root = System.IO.Path.GetPathRoot(System.IO.Path.GetFullPath(disk));
-                root = root.Replace(@"\", "");
-                System.Management.ManagementObject theDisk =
-                    new System.Management.ManagementObject("win32_logicaldisk.deviceid=\"" + root + "\"");
-                theDisk.Get();
-                result = System.Convert.ToInt64(theDisk["FreeSpace"]);
-            }
-            catch
-            {
-            }
-            return result;
-        }
+        ///// <summary>
+        ///// Gets the number of available bytes of the specified disk.
+        ///// </summary>
+        ///// <param name="disk">The disk to obtain the information for.<param>
+        ///// <returns>Returns number of available bytes of the specified disk.</returns>
+        //public static long GetDiskFreeSpace(string disk)
+        //{
+        //    long result = 0;
+        //    try
+        //    {
+        //        string root = System.IO.Path.GetPathRoot(System.IO.Path.GetFullPath(disk));
+        //        root = root.Replace(@"\", "");
+        //        System.Management.ManagementObject theDisk =
+        //            new System.Management.ManagementObject("win32_logicaldisk.deviceid=\"" + root + "\"");
+        //        theDisk.Get();
+        //        result = System.Convert.ToInt64(theDisk["FreeSpace"]);
+        //    }
+        //    catch
+        //    {
+        //    }
+        //    return result;
+        //}
 
-        /// <summary>
-        /// Gets total size of the specified disk.
-        /// </summary>
-        /// <param name="disk">The disk to obtain the information for.<param>
-        /// <returns>Returns total size of the specified disk.</returns>
-        public static long GetDiskSize(string disk)
-        {
-            long result = 0;
-            try
-            {
-                string root = System.IO.Path.GetPathRoot(System.IO.Path.GetFullPath(disk));
-                root = root.Replace(@"\", "");
-                System.Management.ManagementObject theDisk =
-                    new System.Management.ManagementObject("win32_logicaldisk.deviceid=\"" + root + "\"");
-                theDisk.Get();
-                result = System.Convert.ToInt64(theDisk["Size"]);
-            }
-            catch
-            {
-            }
-            return result;
-        }
+        ///// <summary>
+        ///// Gets total size of the specified disk.
+        ///// </summary>
+        ///// <param name="disk">The disk to obtain the information for.<param>
+        ///// <returns>Returns total size of the specified disk.</returns>
+        //public static long GetDiskSize(string disk)
+        //{
+        //    long result = 0;
+        //    try
+        //    {
+        //        string root = System.IO.Path.GetPathRoot(System.IO.Path.GetFullPath(disk));
+        //        root = root.Replace(@"\", "");
+        //        System.Management.ManagementObject theDisk =
+        //            new System.Management.ManagementObject("win32_logicaldisk.deviceid=\"" + root + "\"");
+        //        theDisk.Get();
+        //        result = System.Convert.ToInt64(theDisk["Size"]);
+        //    }
+        //    catch
+        //    {
+        //    }
+        //    return result;
+        //}
 
         /// <summary>
         /// Returns an OrderedMap with information about the specified path.
@@ -120,7 +121,8 @@ namespace Ego.PDF.PHP
                         if (!System.IO.File.Exists(fileName))
                         {
                             file = new System.IO.FileStream(fileName, System.IO.FileMode.CreateNew);
-                            file.Close();
+                            //file.Close();
+                            file.Dispose();
                         }
                         fileMode = System.IO.FileMode.Truncate;
                         fileAccess = System.IO.FileAccess.Write;
@@ -129,7 +131,7 @@ namespace Ego.PDF.PHP
                         if (!System.IO.File.Exists(fileName))
                         {
                             file = new System.IO.FileStream(fileName, System.IO.FileMode.CreateNew);
-                            file.Close();
+                            file.Dispose();
                         }
                         fileMode = System.IO.FileMode.Truncate;
                         fileAccess = System.IO.FileAccess.Write;
@@ -138,7 +140,7 @@ namespace Ego.PDF.PHP
                         if (!System.IO.File.Exists(fileName))
                         {
                             file = new System.IO.FileStream(fileName, System.IO.FileMode.CreateNew);
-                            file.Close();
+                            file.Dispose();
                         }
                         fileMode = System.IO.FileMode.Append;
                         fileAccess = System.IO.FileAccess.Write;
@@ -147,7 +149,7 @@ namespace Ego.PDF.PHP
                         if (!System.IO.File.Exists(fileName))
                         {
                             file = new System.IO.FileStream(fileName, System.IO.FileMode.CreateNew);
-                            file.Close();
+                            file.Dispose();
                         }
                         fileMode = System.IO.FileMode.Append;
                         fileAccess = System.IO.FileAccess.Write;
@@ -173,7 +175,7 @@ namespace Ego.PDF.PHP
         /// <returns>Returns the string representation of the read block of bytes.</returns>
         public static string Read(System.IO.BinaryReader stream, long length)
         {
-            int theLength = (int) length;
+            int theLength = (int)length;
             string result = null;
             try
             {
@@ -196,7 +198,7 @@ namespace Ego.PDF.PHP
         /// <returns>Returns the string representation of the read block of bytes.</returns>
         public static string Read(MiscUtil.IO.EndianBinaryReader stream, long length)
         {
-            int theLength = (int) length;
+            int theLength = (int)length;
             string result = null;
             try
             {
@@ -221,10 +223,13 @@ namespace Ego.PDF.PHP
             string result = null;
             try
             {
-                System.IO.StreamReader reader = new System.IO.StreamReader(fileName);
-                string contents = reader.ReadToEnd();
-                reader.Close();
-                result = contents;
+                using (var file = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    var reader = new StreamReader(file);
+                    string contents = reader.ReadToEnd();
+                    reader.Dispose();
+                    result = contents;
+                }
             }
             catch
             {
@@ -234,14 +239,15 @@ namespace Ego.PDF.PHP
 
         public static byte[] ReadContentBytes(string fileName)
         {
-
-            System.IO.FileStream file = new System.IO.FileStream(fileName, System.IO.FileMode.Open,
-                                                                 System.IO.FileAccess.Read, System.IO.FileShare.Read);
-            System.IO.BinaryReader reader = new System.IO.BinaryReader(file);
-            int size = Convert.ToInt32(file.Length);
-            var result = reader.ReadBytes(size);
-            reader.Close();
-            return result;
+            using (System.IO.FileStream file = new System.IO.FileStream(fileName, System.IO.FileMode.Open,
+                System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            {
+                System.IO.BinaryReader reader = new System.IO.BinaryReader(file);
+                int size = Convert.ToInt32(file.Length);
+                var result = reader.ReadBytes(size);
+                reader.Dispose();
+                return result;
+            }
         }
 
         /// <summary>
@@ -254,7 +260,7 @@ namespace Ego.PDF.PHP
             string result = null;
             try
             {
-                result = System.Text.Encoding.ASCII.GetString(new byte[] {(byte) stream.ReadByte()});
+                result = System.Text.Encoding.ASCII.GetString(new byte[] { (byte)stream.ReadByte() });
             }
             catch
             {
@@ -270,21 +276,19 @@ namespace Ego.PDF.PHP
         public static OrderedMap FileToArray(string fileName)
         {
             OrderedMap result = null;
-            try
+            using (System.IO.FileStream file = new System.IO.FileStream(fileName, System.IO.FileMode.Open,
+                System.IO.FileAccess.Read, System.IO.FileShare.Read))
             {
                 result = new OrderedMap();
-                System.IO.StreamReader reader = new System.IO.StreamReader(fileName);
+                System.IO.StreamReader reader = new StreamReader(file);
                 string line = reader.ReadLine();
                 while (line != null)
                 {
                     result[line] = line;
                     line = reader.ReadLine();
                 }
-                reader.Close();
             }
-            catch
-            {
-            }
+
             return result;
         }
 
@@ -298,7 +302,7 @@ namespace Ego.PDF.PHP
             bool result;
             try
             {
-                if (stream != null) stream.Close();
+                if (stream != null) stream.Dispose();
                 result = true;
             }
             catch
@@ -324,7 +328,7 @@ namespace Ego.PDF.PHP
                 System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
                 byte[] bytes = encoding.GetBytes(data);
                 stream.Write(bytes, 0, bytes.Length);
-                resultLength = (int) bytes.Length;
+                resultLength = (int)bytes.Length;
             }
             catch
             {
@@ -376,84 +380,84 @@ namespace Ego.PDF.PHP
             return result;
         }
 
-        /// <summary>
-        /// Reads and outputs the contents of the specified file.
-        /// </summary>
-        /// <param name="fileName">The file name of the file to be read.</param>
-        /// <returns>Returns the length of the data read.</returns>
-        public static int OutputFile(string fileName)
-        {
-            int length = -1;
-            try
-            {
-                string contents = ReadContents(fileName);
-                System.Web.HttpContext.Current.Response.Write(contents);
-                length = (int) contents.Length;
-            }
-            catch
-            {
-            }
-            return length;
-        }
+        ///// <summary>
+        ///// Reads and outputs the contents of the specified file.
+        ///// </summary>
+        ///// <param name="fileName">The file name of the file to be read.</param>
+        ///// <returns>Returns the length of the data read.</returns>
+        //public static int OutputFile(string fileName)
+        //{
+        //    int length = -1;
+        //    try
+        //    {
+        //        string contents = ReadContents(fileName);
+        //        System.Web.HttpContext.Current.Response.Write(contents);
+        //        length = (int)contents.Length;
+        //    }
+        //    catch
+        //    {
+        //    }
+        //    return length;
+        //}
 
-        /// <summary>
-        /// Returns an OrderedMap with the pathnames that match the specified pattern.
-        /// </summary>
-        /// <param name="pattern">The search pattern.</param>
-        /// <returns>Returns an OrderedMap with the pathnames that match the specified pattern.</returns>
-        public static OrderedMap Glob(string pattern)
-        {
-            OrderedMap newOrderedMap = null;
-            try
-            {
-                string path =
-                    System.Web.HttpContext.Current.Request.MapPath(
-                        System.Web.HttpContext.Current.Request.ApplicationPath);
-                System.IO.DirectoryInfo dirInfo = new System.IO.DirectoryInfo(System.IO.Path.GetDirectoryName(path));
-                System.IO.FileSystemInfo[] fileInfos = dirInfo.GetFiles(pattern);
-                if (fileInfos.Length > 0)
-                {
-                    newOrderedMap = new OrderedMap();
-                    for (int index = 0; index < fileInfos.Length; index++)
-                        newOrderedMap[index] = fileInfos[index].Name;
-                }
-            }
-            catch
-            {
-            }
-            return newOrderedMap;
-        }
+        ///// <summary>
+        ///// Returns an OrderedMap with the pathnames that match the specified pattern.
+        ///// </summary>
+        ///// <param name="pattern">The search pattern.</param>
+        ///// <returns>Returns an OrderedMap with the pathnames that match the specified pattern.</returns>
+        //public static OrderedMap Glob(string pattern)
+        //{
+        //    OrderedMap newOrderedMap = null;
+        //    try
+        //    {
+        //        string path =
+        //            System.Web.HttpContext.Current.Request.MapPath(
+        //                System.Web.HttpContext.Current.Request.ApplicationPath);
+        //        System.IO.DirectoryInfo dirInfo = new System.IO.DirectoryInfo(System.IO.Path.GetDirectoryName(path));
+        //        System.IO.FileSystemInfo[] fileInfos = dirInfo.GetFiles(pattern);
+        //        if (fileInfos.Length > 0)
+        //        {
+        //            newOrderedMap = new OrderedMap();
+        //            for (int index = 0; index < fileInfos.Length; index++)
+        //                newOrderedMap[index] = fileInfos[index].Name;
+        //        }
+        //    }
+        //    catch
+        //    {
+        //    }
+        //    return newOrderedMap;
+        //}
 
-        /// <summary>
-        /// Reads the specified INI file and returns the contents in an OrderedMap.
-        /// </summary>
-        /// <param name="fileName">The INI file to read.</param>
-        /// <returns>Returns the contents of the specified INI file.</returns>
-        public static OrderedMap ParseINI(string fileName)
-        {
-            OrderedMap newOrderedMap = null;
-            try
-            {
-                using (System.IO.StreamReader stream = new System.IO.StreamReader(fileName))
-                {
-                    newOrderedMap = new OrderedMap();
-                    string line;
-                    while ((line = stream.ReadLine()) != null)
-                    {
-                        line = line.Trim();
-                        if (line != "" && !line.StartsWith(";") && !line.StartsWith("["))
-                        {
-                            string[] lineContents = line.Split('=');
-                            newOrderedMap[lineContents[0].Trim()] = lineContents[1].Trim();
-                        }
-                    }
-                }
-            }
-            catch
-            {
-            }
-            return newOrderedMap;
-        }
+        ///// <summary>
+        ///// Reads the specified INI file and returns the contents in an OrderedMap.
+        ///// </summary>
+        ///// <param name="fileName">The INI file to read.</param>
+        ///// <returns>Returns the contents of the specified INI file.</returns>
+        //public static OrderedMap ParseINI(string fileName)
+        //{
+        //    OrderedMap newOrderedMap = null;
+        //    try
+        //    {
+        //        using (System.IO.StreamReader stream = new System.IO.StreamReader(fileName))
+        //        {
+        //            newOrderedMap = new OrderedMap();
+        //            string line;
+        //            while ((line = stream.ReadLine()) != null)
+        //            {
+        //                line = line.Trim();
+        //                if (line != "" && !line.StartsWith(";") && !line.StartsWith("["))
+        //                {
+        //                    string[] lineContents = line.Split('=');
+        //                    newOrderedMap[lineContents[0].Trim()] = lineContents[1].Trim();
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch
+        //    {
+        //    }
+        //    return newOrderedMap;
+        //}
 
         /// <summary>
         /// Reads a line from the specified stream. 
@@ -482,16 +486,16 @@ namespace Ego.PDF.PHP
                         //	a carriage return (hexadecimal 0x000d)
                         //	a line feed (hexadecimal 0x000a)
                         //	or carriage return + line feed (hexadecimal 0x000d 0x000a)
-                        byte theByte = (byte) stream.ReadByte();
-                        if (theByte == (byte) 0x0d || theByte == (byte) 0x0a)
+                        byte theByte = (byte)stream.ReadByte();
+                        if (theByte == (byte)0x0d || theByte == (byte)0x0a)
                         {
-                            byte nextByte = (byte) stream.ReadByte();
-                            if (nextByte != (byte) 0x0a)
+                            byte nextByte = (byte)stream.ReadByte();
+                            if (nextByte != (byte)0x0a)
                                 stream.Position--; //if line ends with 0x000d 0x000a, then consume 0x000a.
                             endOfLine = true;
                         }
                         else
-                            line += System.Text.Encoding.ASCII.GetString(new byte[] {theByte});
+                            line += System.Text.Encoding.ASCII.GetString(new byte[] { theByte });
                     }
                     else
                         endOfLine = true;
@@ -550,26 +554,26 @@ namespace Ego.PDF.PHP
             return result;
         }
 
-        /// <summary>
-        /// Outputs all remaining data in a file stream to the current HTTP output content stream. It also closes the stream.
-        /// </summary>
-        /// <param name="stream">The stream to read the data from.</param>
-        /// <returns>Returns the number of bytes written.</returns>
-        public static int OutputContents(System.IO.BinaryReader stream)
-        {
-            int length = -1;
-            try
-            {
-                var result = stream.ReadBytes(Convert.ToInt32(stream.BaseStream.Length - stream.BaseStream.Position));
-                stream.Close();
-                System.Web.HttpContext.Current.Response.Write(result);
-                length = (int) result.Length;
-            }
-            catch
-            {
-            }
-            return length;
-        }
+        ///// <summary>
+        ///// Outputs all remaining data in a file stream to the current HTTP output content stream. It also closes the stream.
+        ///// </summary>
+        ///// <param name="stream">The stream to read the data from.</param>
+        ///// <returns>Returns the number of bytes written.</returns>
+        //public static int OutputContents(System.IO.BinaryReader stream)
+        //{
+        //    int length = -1;
+        //    try
+        //    {
+        //        var result = stream.ReadBytes(Convert.ToInt32(stream.BaseStream.Length - stream.BaseStream.Position));
+        //        stream.Close();
+        //        System.Web.HttpContext.Current.Response.Write(result);
+        //        length = (int)result.Length;
+        //    }
+        //    catch
+        //    {
+        //    }
+        //    return length;
+        //}
 
         /// <summary>
         /// Creates a temporal file and opens it.

@@ -1,3 +1,6 @@
+using System;
+using System.Reflection;
+
 namespace Ego.PDF.PHP
 {
     /// <summary>
@@ -16,15 +19,15 @@ namespace Ego.PDF.PHP
             if (obj != null)
             {
                 if (obj is System.String)
-                    return ((string) obj == System.String.Empty || (string) obj == "0");
+                    return ((string)obj == System.String.Empty || (string)obj == "0");
                 else if (obj is System.Int32)
-                    return ((int) obj == 0);
+                    return ((int)obj == 0);
                 else if (obj is System.Double)
-                    return ((double) obj == 0);
+                    return ((double)obj == 0);
                 else if (obj is System.Boolean)
-                    return ((bool) obj == false);
-                else if (obj.GetType() == typeof (OrderedMap))
-                    return (((OrderedMap) obj).Count == 0);
+                    return ((bool)obj == false);
+                else if (obj.GetType() == typeof(OrderedMap))
+                    return (((OrderedMap)obj).Count == 0);
                 else //objects with [empty] properties returns false at all times.
                     return false;
             }
@@ -153,7 +156,7 @@ namespace Ego.PDF.PHP
                 if (method is System.String)
                 {
                     callableName = method.ToString();
-                    methodInfo = declaringType.GetMethod(method.ToString());
+                    methodInfo = declaringType.GetTypeInfo().GetMethod(method.ToString());
                     if (methodInfo != null)
                     {
                         callableName = methodInfo.Name;
@@ -162,9 +165,9 @@ namespace Ego.PDF.PHP
                 }
                 else if (method is OrderedMap)
                 {
-                    OrderedMap typeMethod = (OrderedMap) method;
+                    OrderedMap typeMethod = (OrderedMap)method;
                     callableName = typeMethod.ToString();
-                    methodInfo = typeMethod.GetValueAt(0).GetType().GetMethod(typeMethod.GetValueAt(1).ToString());
+                    methodInfo = typeMethod.GetValueAt(0).GetType().GetTypeInfo().GetMethod(typeMethod.GetValueAt(1).ToString());
                     if (methodInfo != null)
                     {
                         callableName = typeMethod.GetValueAt(0).GetType().Name + ":" + methodInfo.Name;
@@ -247,12 +250,12 @@ namespace Ego.PDF.PHP
                     if (var is OrderedMap)
                     {
                         int orderedMapLevel = indentLevel == 0 ? indentLevel : indentLevel + 1;
-                        result = ((OrderedMap) var).ToStringContents(ref orderedMapLevel).TrimEnd() + "\r\n";
+                        result = ((OrderedMap)var).ToStringContents(ref orderedMapLevel).TrimEnd() + "\r\n";
                     }
                     else
                     {
                         if (var is System.Boolean)
-                            result = (bool) var ? "1" : "";
+                            result = (bool)var ? "1" : "";
                         else
                             result = var.ToString();
                     }
@@ -262,13 +265,13 @@ namespace Ego.PDF.PHP
                     System.Type theType = var.GetType();
 
                     indentLevel++;
-                    string indentSpaces = new string(' ', (indentLevel - 1)*4);
+                    string indentSpaces = new string(' ', (indentLevel - 1) * 4);
                     string classFields = theType.Name.ToLower() + " Object\r\n" + indentSpaces + "(\r\n";
 
-                    System.Reflection.FieldInfo[] theFields = theType.GetFields();
+                    System.Reflection.FieldInfo[] theFields = theType.GetTypeInfo().GetFields();
                     foreach (System.Reflection.FieldInfo field in theFields)
                     {
-                        indentSpaces = new string(' ', indentLevel*4);
+                        indentSpaces = new string(' ', indentLevel * 4);
 
                         object fieldValue = field.GetValue(var);
                         string fieldValueString = "";
@@ -289,7 +292,7 @@ namespace Ego.PDF.PHP
                         classFields += indentSpaces + "[" + field.Name + "] => " + fieldValueString + "\r\n";
                     }
 
-                    indentSpaces = new string(' ', (indentLevel - 1)*4);
+                    indentSpaces = new string(' ', (indentLevel - 1) * 4);
                     indentLevel--;
                     classFields += indentSpaces + ")\r\n";
                     result = classFields;
@@ -297,7 +300,8 @@ namespace Ego.PDF.PHP
             }
             if (!returnValue)
             {
-                System.Web.HttpContext.Current.Response.Write(result);
+                throw new NotImplementedException();
+                //System.Web.HttpContext.Current.Response.Write(result);
                 result = "1";
             }
 

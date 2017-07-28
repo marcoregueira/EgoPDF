@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-using Ego.PDF;
 using Ego.PDF.Data;
-using Ego.PDF.PHP;
 
 namespace Ego.PDF.Font
 {

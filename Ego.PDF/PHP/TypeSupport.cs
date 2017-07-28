@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 
 namespace Ego.PDF.PHP
 {
@@ -249,7 +250,7 @@ namespace Ego.PDF.PHP
                     result = new OrderedMap(obj);
                 else
                 {
-                    System.Reflection.FieldInfo[] fields = obj.GetType().GetFields();
+                    System.Reflection.FieldInfo[] fields = obj.GetType().GetTypeInfo().GetFields();
                     for (int index = 0; index < fields.Length; index++)
                         result[fields[index].Name] = fields[index].GetValue(obj);
                 }

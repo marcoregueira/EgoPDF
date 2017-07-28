@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Web;
 using Ego.PDF.Data;
-using Ego.PDF.PHP;
 
 namespace Ego.PDF
 {
@@ -64,7 +58,7 @@ namespace Ego.PDF
                     throw new ArgumentOutOfRangeException();
             }
 
-            opt.Border = new double {};
+            opt.Border = new double { };
 
             return string.Empty;
         }

@@ -56,7 +56,7 @@ namespace Ego.PDF
             this.ParsePost();
 
             //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
-            f.BaseStream.Close();
+            f.BaseStream.Dispose();
         }
 
         private void ParseOffsetTable(string file)

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
-using Ionic.Zlib;
+
 using MiscUtil.Conversion;
 using MiscUtil.IO;
 
@@ -15,7 +17,9 @@ using Ego.PDF.Font;
 using Ego.PDF.PHP;
 using Ego.PDF.Support;
 
+using Microsoft.Xna.Framework;
 using static Ego.PDF.Printf.SprintfTools;
+using Ego.PdfCore.Support;
 
 /*******************************************************************************
 * FPDF                                                                         *
@@ -35,7 +39,7 @@ using static Ego.PDF.Printf.SprintfTools;
 
 namespace Ego.PDF
 {
-    public class FPdf
+    public class FPdf : IDisposable
     {
         public static readonly Encoding PrivateEncoding = Encoding.GetEncoding(1252);
         public readonly string FpdfVersion = "1.7";
@@ -47,8 +51,19 @@ namespace Ego.PDF
         public OrderedMap CMaps { get; set; } = new OrderedMap();
         public OrderedMap Encodings { get; set; } = new OrderedMap();
 
+        public FPdf() : this(null)
+        {
 
-        public FPdf(PageOrientation orientation, UnitEnum unit, PageSizeEnum pageSize)
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="orientation"></param>
+        /// <param name="unit"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="filePath">If provided, internal storage will be sent to a file, else a memorystream will be used</param>
+        public FPdf(PageOrientation orientation, UnitEnum unit, PageSizeEnum pageSize, string filePath)
         {
             pageSize = pageSize == PageSizeEnum.Default ? PageSizeEnum.A4 : pageSize;
             unit = unit == UnitEnum.Default ? UnitEnum.Milimeter : unit;
@@ -57,7 +72,15 @@ namespace Ego.PDF
             // Initialization of properties
             Page = 0;
             ObjectCount = 2;
-            Buffer = new StreamWriter(System.IO.File.Create("C:\\temp\\sample2.a.stream.pdf"), PrivateEncoding);
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                Buffer = new StreamWriter(new MemoryStream(), PrivateEncoding);
+            }
+            else
+            {
+                Buffer = new StreamWriter(System.IO.File.Create(filePath), PrivateEncoding);
+            }
+
             Offsets = new Dictionary<int, long>();
             Pages = new Dictionary<int, Page>();
             PageSizes = new Dictionary<int, Dimensions>();
@@ -169,7 +192,7 @@ namespace Ego.PDF
             PageNumberFormat = "d";
         }
 
-        public FPdf() : this(PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4)
+        public FPdf(string path) : this(PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4, path)
         {
         }
 
@@ -1173,6 +1196,7 @@ namespace Ego.PDF
 
         public virtual void MultiCell(double cellWidth, double cellHeight, string text, string border, AlignEnum align, bool fill)
         {
+            text = text ?? "";
             if (align == AlignEnum.Default)
             {
                 align = AlignEnum.Justified;
@@ -1535,7 +1559,7 @@ namespace Ego.PDF
             Y += Lasth;
         }
 
-        public virtual void Ln(int h)
+        public virtual void Ln(double h)
         {
             // Line feed; 
             X = LeftMargin;
@@ -1570,6 +1594,9 @@ namespace Ego.PDF
         public virtual void Image(string file, double? x, double? y, double w, double h, ImageTypeEnum type,
             LinkData link)
         {
+            var holew = w;
+            var holey =h;// ?? 0;
+
             // Put an image on the page
             ImageInfo imageInfo;
             if (!Images.ContainsKey(file))
@@ -1609,6 +1636,8 @@ namespace Ego.PDF
                 imageInfo = Images[file];
             }
 
+            var calculateRatio = w > 0 && h > 0;
+
             // Automatic width and height calculation if needed
             if (w == 0 && h == 0)
             {
@@ -1631,6 +1660,22 @@ namespace Ego.PDF
             if (h == 0)
             {
                 h = w * TypeSupport.ToDouble(imageInfo.h) / TypeSupport.ToDouble(imageInfo.w);
+            }
+
+            if (calculateRatio)
+            {
+                var ratiow = imageInfo.w / w;
+                var ratioh = imageInfo.h / h;
+                if (ratioh > ratiow)
+                {
+                    w = w * ratiow / ratioh;
+                    x = x + (holew - w) / 2;
+                }
+                if (ratiow >= ratioh)
+                {
+                    h = h * ratioh / ratiow;
+                    y = y + (holey - h) / 2;
+                }
             }
 
             // Flowing mode
@@ -1658,6 +1703,44 @@ namespace Ego.PDF
             }
         }
 
+        public virtual DrawingPoint GetPos()
+        {
+            return new DrawingPoint(this.X, this.Y);
+        }
+
+        public virtual void SetPos(DrawingPoint point)
+        {
+            this.SetX(point.X);
+            this.SetY(point.Y);
+        }
+
+        private Stack<DrawingPoint> SavedPositions = new Stack<DrawingPoint>();
+
+        public void SavePos()
+        {
+            SavedPositions.Push(GetPos());
+        }
+
+        public enum GoBackMode
+        {
+            Both,
+            X,
+            Y
+        }
+
+        public DrawingPoint GoBack(GoBackMode mode = GoBackMode.Both)
+        {
+            var pos = SavedPositions.Pop();
+            this.X = pos.X;
+            this.Y = pos.Y;
+            return pos;
+        }
+
+        public DrawingPoint LastPosition()
+        {
+            return SavedPositions.Peek();
+        }
+
         public virtual double GetX()
         {
             // Get x position
@@ -1673,7 +1756,7 @@ namespace Ego.PDF
             }
             else
             {
-                X = TypeSupport.ToDouble(W) + x;
+                X = W + x;
             }
         }
 
@@ -1879,7 +1962,7 @@ namespace Ego.PDF
             }
             var w = reader.ReadInt32();
             var height = reader.ReadInt32();
-            int bpc = ReadStream(reader, 1)[0];
+            var bpc = (int)ReadStream(reader, 1)[0];
             if (bpc > 8)
             {
                 Error("16-bit depth not supported: " + file);
@@ -1919,7 +2002,7 @@ namespace Ego.PDF
             }
             ReadStream(reader, 4);
             var dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1) + " /BitsPerComponent " +
-                     bpc.ToString() + " /Columns " + w;
+                     bpc + " /Columns " + w;
 
             // Scan chunks looking for palette, transparency and image data
             var pal = new byte[] { };
@@ -1990,7 +2073,7 @@ namespace Ego.PDF
             if (ct >= 4)
             {
                 // Extract alpha channel
-                var newData = GzUncompressString(data);
+                var newData = DeflateString(data);
                 var color = new StringBuilder();
                 var alpha = new StringBuilder();
                 int len;
@@ -2814,20 +2897,37 @@ namespace Ego.PDF
         public virtual byte[] GzCompress(byte[] value)
         {
             var outstream = new MemoryStream();
-            var g = new ZlibStream(outstream, CompressionMode.Compress);
+            var g = new GZipStream(outstream, CompressionMode.Compress);
             g.Write(value, 0, value.Length);
-            g.Close();
+            g.Dispose();
             byte[] result = outstream.ToArray();
+            return result;
+        }
+
+        public virtual byte[] Deflate(byte[] value)
+        {
+            var instream = new MemoryStream(value, false);
+            var g = new DeflateStream(instream, CompressionMode.Decompress);
+            var reader = new BinaryReader(g);
+            var bytes = reader.ReadBytes(Int16.MaxValue * 100);
+            g.Dispose();
+            return bytes;
+        }
+
+        public virtual string DeflateString(byte[] value)
+        {
+            byte[] uncompressedArray = Deflate(value);
+            string result = PrivateEncoding.GetString(uncompressedArray);
             return result;
         }
 
         public virtual byte[] GzUncompress(byte[] value)
         {
             var instream = new MemoryStream(value, false);
-            var g = new ZlibStream(instream, CompressionMode.Decompress);
+            var g = new GZipStream(instream, CompressionMode.Decompress);
             var reader = new BinaryReader(g);
             byte[] bytes = reader.ReadBytes(Int16.MaxValue * 100);
-            g.Close();
+            g.Dispose();
             return bytes;
         }
 
@@ -2851,11 +2951,11 @@ namespace Ego.PDF
 
         public virtual void DrawArea(Color? fill, double? lineWidth, params DrawingPoint[] points)
         {
-            fill = fill ?? Color.Empty;
+            fill = fill ?? Color.Transparent;
             if (points.Length < 3) throw new InvalidOperationException("At least three points are required");
 
             var firstPoint = points.First();
-            var doFill = (fill.Value != Color.Empty && fill.Value != Color.Transparent);
+            var doFill = (fill.Value != Color.TransparentBlack && fill.Value != Color.Transparent);
             var doLine = true;
 
             if (doFill)
@@ -2882,6 +2982,14 @@ namespace Ego.PDF
             else if (doLine) pointString.Append(" s ");
 
             this.Out(pointString.ToString());
+        }
+
+        public void Dispose()
+        {
+            if (this.State < 3)
+                Close();
+
+            Buffer?.Dispose();
         }
     }
 }

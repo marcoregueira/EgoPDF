@@ -1,7 +1,21 @@
+using System;
 using System.Collections;
+using System.Reflection;
 
 namespace Ego.PDF.PHP
 {
+    public class MyComparer : IEqualityComparer
+    {
+        public new bool Equals(object x, object y)
+        {
+            return x == y;
+        }
+
+        public int GetHashCode(object obj)
+        {
+            return obj.GetHashCode();
+        }
+    }
     /// <summary>
     /// Represents a collection of associated String keys and Object values.
     /// </summary>
@@ -152,7 +166,7 @@ namespace Ego.PDF.PHP
             /// <returns>Returns a value that indicates the relative order of the comparands.</returns>
             public int CompareTo(object object2)
             {
-                OrderedMapSortItem item2 = (OrderedMapSortItem) object2;
+                OrderedMapSortItem item2 = (OrderedMapSortItem)object2;
 
                 //the two values (or keys) to compare.
                 object value1 = this._byValue ? this._value : this._key;
@@ -179,7 +193,7 @@ namespace Ego.PDF.PHP
                             }
                             else if (value1 is bool)
                             {
-                                if ((bool) value1)
+                                if ((bool)value1)
                                     return 1;
                                 else
                                     return -1;
@@ -190,7 +204,7 @@ namespace Ego.PDF.PHP
                             }
                             else if (value2 is bool)
                             {
-                                if ((bool) value2)
+                                if ((bool)value2)
                                     return -1;
                                 else
                                     return 1;
@@ -221,11 +235,11 @@ namespace Ego.PDF.PHP
                 {
                     //use a user-defined comparing method.
                     System.Type theType = this._instance.GetType();
-                    System.Reflection.MethodInfo callbackMethod = theType.GetMethod(this._methodName);
+                    System.Reflection.MethodInfo callbackMethod = theType.GetTypeInfo().GetMethod(_methodName);
 
                     object[] parameters;
                     if (this._byValue)
-                        parameters = new object[] {value1, value2};
+                        parameters = new object[] { value1, value2 };
                     else
                     {
                         parameters = new object[]
@@ -235,7 +249,7 @@ namespace Ego.PDF.PHP
                             };
                     }
 
-                    return (int) callbackMethod.Invoke(this._instance, parameters);
+                    return (int)callbackMethod.Invoke(this._instance, parameters);
                 }
             }
         }
@@ -248,10 +262,12 @@ namespace Ego.PDF.PHP
         /// Creates a new empty OrderedMap.
         /// </summary>
         public OrderedMap()
-            : base(null, new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture))
+            : base(new MyComparer())
         {
             this._index = 0;
         }
+
+
 
         /// <summary>
         /// Adds the values from the ICollection into the new OrderedMap.
@@ -259,7 +275,7 @@ namespace Ego.PDF.PHP
         /// <param name="collection">The ICollection that contains the values.</param>
         /// <param name="isReadOnly">A boolean value that indicates whether the new instance is read-only.</param>
         public OrderedMap(System.Collections.ICollection collection, bool isReadOnly)
-            : base(null, new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture))
+            : base(new MyComparer())
         {
             int keys = 0;
             foreach (object element in collection)
@@ -277,7 +293,7 @@ namespace Ego.PDF.PHP
         /// <param name="dictionary">The IDictionary that contains the entries.</param>
         /// <param name="isReadOnly">A boolean value that indicates whether the new instance is read-only.</param>
         public OrderedMap(System.Collections.IDictionary dictionary, bool isReadOnly)
-            : base(null, new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture))
+            : base(new MyComparer())
         {
             foreach (System.Collections.DictionaryEntry entry in dictionary)
             {
@@ -293,7 +309,7 @@ namespace Ego.PDF.PHP
         /// <param name="collection">The NameValueCollection that contains the entries.</param>
         /// <param name="isReadOnly">A boolean value that indicates whether the new instance is read-only.</param>
         public OrderedMap(System.Collections.Specialized.NameValueCollection collection, bool isReadOnly)
-            : base(null, new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture))
+            : base(new MyComparer())
         {
             for (int index = 0; index < collection.Count; index++)
             {
@@ -312,7 +328,7 @@ namespace Ego.PDF.PHP
         /// <param name="orderedMap">The OrderedMap used to create the new OrderedMap.</param>
         /// <param name="isReadOnly">A boolean value that indicates whether the new instance is read-only.</param>
         public OrderedMap(OrderedMap orderedMap, bool isReadOnly)
-            : base(null, new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture))
+            : base(new MyComparer())
         {
             foreach (string key in orderedMap)
             {
@@ -337,7 +353,7 @@ namespace Ego.PDF.PHP
         /// </param>
         /// <returns>A new NameObjectCollection object containing the elements specified in the parameters parameter.</returns>
         public OrderedMap(params object[] args)
-            : base(null, new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture))
+            : base(new MyComparer())
         {
             int keyIndex = 0, maxIndex = int.MinValue;
             bool useMaxIndex = false;
@@ -345,11 +361,11 @@ namespace Ego.PDF.PHP
             {
                 if (args[index] is object[])
                 {
-                    object theKey = ((object[]) args[index])[0];
-                    object theValue = ((object[]) args[index])[1];
+                    object theKey = ((object[])args[index])[0];
+                    object theValue = ((object[])args[index])[1];
                     if (OrderedMap.IsKeyInteger(theKey.ToString()))
                     {
-                        int intKey = theKey is int ? (int) theKey : System.Convert.ToInt32(theKey);
+                        int intKey = theKey is int ? (int)theKey : System.Convert.ToInt32(theKey);
                         if (intKey > maxIndex)
                         {
                             maxIndex = intKey;
@@ -538,10 +554,10 @@ namespace Ego.PDF.PHP
             {
                 DictionaryEntry entry = this.GetEntryAt(this._index);
                 each = new OrderedMap(
-                    new object[] {1, entry.Value},
-                    new object[] {"value", entry.Value},
-                    new object[] {0, entry.Key},
-                    new object[] {"key", entry.Key});
+                    new object[] { 1, entry.Value },
+                    new object[] { "value", entry.Value },
+                    new object[] { 0, entry.Key },
+                    new object[] { "key", entry.Key });
 
                 this._index++;
             }
@@ -847,16 +863,16 @@ namespace Ego.PDF.PHP
                     bool equals = false;
                     //for predefined value types, the equality operator (==) returns true if the values of its operands are equal, false otherwise.
                     if (currentValue is bool)
-                        equals = (bool) currentValue == (bool) theValue;
+                        equals = (bool)currentValue == (bool)theValue;
                     else if (currentValue is int || currentValue is float || currentValue is double)
-                        equals = (int) currentValue == (int) theValue;
+                        equals = (int)currentValue == (int)theValue;
                     else if (currentValue is string)
                         //for the string type, == compares the values of the strings.
-                        equals = (string) currentValue == (string) theValue;
+                        equals = (string)currentValue == (string)theValue;
                     else if (currentValue is OrderedMap)
                         //for the OrderedMap type, the values of the OrderedMaps are compared.
-                        equals = ((OrderedMap) currentValue).ToStringContents() ==
-                                 ((OrderedMap) theValue).ToStringContents();
+                        equals = ((OrderedMap)currentValue).ToStringContents() ==
+                                 ((OrderedMap)theValue).ToStringContents();
                     else
                         //for reference types other than string, == returns true if its two operands refer to the same object
                         equals = currentValue == theValue;
@@ -917,27 +933,27 @@ namespace Ego.PDF.PHP
         public string ToStringContents(ref int indentLevel)
         {
             indentLevel++;
-            string indentSpaces = new string(' ', (indentLevel - 1)*4);
+            string indentSpaces = new string(' ', (indentLevel - 1) * 4);
             string toStringContents = "Array\r\n" + indentSpaces + "(\r\n";
             foreach (string theKey in this.Keys)
             {
                 object theValue = this[theKey];
-                indentSpaces = new string(' ', indentLevel*4);
+                indentSpaces = new string(' ', indentLevel * 4);
                 if (theValue is OrderedMap)
                 {
                     indentLevel++;
                     toStringContents = toStringContents + indentSpaces + "[" + theKey + "] => " +
-                                       ((OrderedMap) theValue).ToStringContents(ref indentLevel);
+                                       ((OrderedMap)theValue).ToStringContents(ref indentLevel);
                     indentLevel--;
                 }
                 else
                 {
-                    string theValueString = theValue is bool ? (bool) theValue ? "1" : "" : theValue.ToString();
+                    string theValueString = theValue is bool ? (bool)theValue ? "1" : "" : theValue.ToString();
                     toStringContents = toStringContents + indentSpaces + "[" + theKey + "] => " + theValueString +
                                        "\r\n";
                 }
             }
-            indentSpaces = new string(' ', (indentLevel - 1)*4);
+            indentSpaces = new string(' ', (indentLevel - 1) * 4);
             indentLevel--;
             toStringContents = toStringContents + indentSpaces + ")\r\n\r\n";
             return toStringContents;
@@ -958,13 +974,13 @@ namespace Ego.PDF.PHP
                 try
                 {
                     System.Type theType = instance.GetType();
-                    System.Reflection.MethodInfo callbackMethod = theType.GetMethod(methodName);
+                    System.Reflection.MethodInfo callbackMethod = theType.GetTypeInfo().GetMethod(methodName);
 
                     foreach (string theKey in this.Keys)
                     {
                         object[] parameters = data == null
-                                                  ? new object[] {this[theKey], theKey}
-                                                  : new object[] {this[theKey], theKey, data};
+                                                  ? new object[] { this[theKey], theKey }
+                                                  : new object[] { this[theKey], theKey, data };
                         callbackMethod.Invoke(instance, parameters);
                     }
                     result = true;
@@ -1028,7 +1044,7 @@ namespace Ego.PDF.PHP
                         }
                         else if (index == args.Length - 2)
                         {
-                            newValue = this._ReplaceCharAt((string) currentOrderedMap[theKey], (int) args[index + 1],
+                            newValue = this._ReplaceCharAt((string)currentOrderedMap[theKey], (int)args[index + 1],
                                                            args[0].ToString()[0]);
                         }
                         else
@@ -1052,7 +1068,7 @@ namespace Ego.PDF.PHP
                 }
 
                 //move to next dimension, current element is an OrderedMap (either a new or an existing one).
-                currentOrderedMap = (OrderedMap) currentOrderedMap[theKey];
+                currentOrderedMap = (OrderedMap)currentOrderedMap[theKey];
             } //end for
 
             //current OrderedMap represents the last dimension, set a new entry in the current OrderedMap,
@@ -1079,7 +1095,7 @@ namespace Ego.PDF.PHP
                         if (index == args.Length - 2)
                         {
                             //arr[0][1]: where arr[0] is a string, the second indexer (1) is actually a string indexer.
-                            return ((string) currentOrderedMap[args[index]]).Substring((int) args[index + 1], 1);
+                            return ((string)currentOrderedMap[args[index]]).Substring((int)args[index + 1], 1);
                         }
                         else
                         {
@@ -1090,7 +1106,7 @@ namespace Ego.PDF.PHP
                     else
                     {
                         //move to next dimension (current element is an OrderedMap).
-                        currentOrderedMap = (OrderedMap) currentOrderedMap[args[index]];
+                        currentOrderedMap = (OrderedMap)currentOrderedMap[args[index]];
                     }
                 }
                 else
@@ -1199,22 +1215,22 @@ namespace Ego.PDF.PHP
             if (input != null && input.Count > 0)
             {
                 newOrderedMap = new OrderedMap();
-                int totalChunks = input.Count/size;
-                totalChunks += (input.Count%size) > 0 ? 1 : 0;
+                int totalChunks = input.Count / size;
+                totalChunks += (input.Count % size) > 0 ? 1 : 0;
                 for (int index = 0; index < totalChunks; index++)
                 {
                     OrderedMap theChunk = new OrderedMap();
                     for (int chunkIndex = 0; chunkIndex < size; chunkIndex++)
                     {
-                        if ((index*size) + chunkIndex < input.Count)
+                        if ((index * size) + chunkIndex < input.Count)
                         {
                             string key = "";
                             if (preserveKeys)
-                                key = input.GetKeyAt((index*size) + chunkIndex);
+                                key = input.GetKeyAt((index * size) + chunkIndex);
                             else
                                 key = chunkIndex.ToString();
 
-                            theChunk[key] = input.GetValueAt((index*size) + chunkIndex);
+                            theChunk[key] = input.GetValueAt((index * size) + chunkIndex);
                         }
                         else
                             break;
@@ -1238,7 +1254,7 @@ namespace Ego.PDF.PHP
             if (variable != null)
             {
                 if (variable is OrderedMap)
-                    count = ((OrderedMap) variable).Count;
+                    count = ((OrderedMap)variable).Count;
                 else if (variable is ICollection)
                     count = (variable as ICollection).Count;
                 else
@@ -1263,7 +1279,7 @@ namespace Ego.PDF.PHP
                 foreach (object theValue in input.Values)
                 {
                     if (newOrderedMap[theValue] != null)
-                        newOrderedMap[theValue] = ((int) newOrderedMap[theValue]) + 1;
+                        newOrderedMap[theValue] = ((int)newOrderedMap[theValue]) + 1;
                     else
                         newOrderedMap[theValue] = 1;
                 }
@@ -1298,14 +1314,14 @@ namespace Ego.PDF.PHP
         public static OrderedMap CreateRange(string lowChar, string highChar)
         {
             OrderedMap newOrderedMap = new OrderedMap();
-            int lowCharInt = (int) lowChar[0], highCharInt = (int) highChar[0];
+            int lowCharInt = (int)lowChar[0], highCharInt = (int)highChar[0];
             bool increment = highCharInt >= lowCharInt ? true : false;
 
             for (int index = lowCharInt;
                  increment ? index <= highCharInt : index >= highCharInt;
                  index += increment ? 1 : -1)
             {
-                newOrderedMap[null] = new string(new char[] {(char) index});
+                newOrderedMap[null] = new string(new char[] { (char)index });
             }
             return newOrderedMap;
         }
@@ -1423,11 +1439,11 @@ namespace Ego.PDF.PHP
                     {
                         newOrderedMap = new OrderedMap();
                         System.Type theType = instance.GetType();
-                        System.Reflection.MethodInfo callbackMethod = theType.GetMethod(methodName);
+                        System.Reflection.MethodInfo callbackMethod = theType.GetTypeInfo().GetMethod(methodName);
 
                         foreach (string theKey in input.Keys)
                         {
-                            if ((bool) callbackMethod.Invoke(instance, new object[] {input[theKey]}))
+                            if ((bool)callbackMethod.Invoke(instance, new object[] { input[theKey] }))
                                 newOrderedMap[theKey] = input[theKey];
                         }
                     }
@@ -1677,12 +1693,12 @@ namespace Ego.PDF.PHP
                 try
                 {
                     System.Type theType = instance.GetType();
-                    System.Reflection.MethodInfo callbackMethod = theType.GetMethod(methodName);
+                    System.Reflection.MethodInfo callbackMethod = theType.GetTypeInfo().GetMethod(methodName);
 
                     if (input != null && input.Count > 0)
                     {
-                        object[] parameters = new object[] {initial, input.GetValueAt(0)};
-                        result = (double) callbackMethod.Invoke(instance, parameters);
+                        object[] parameters = new object[] { initial, input.GetValueAt(0) };
+                        result = (double)callbackMethod.Invoke(instance, parameters);
                         for (int index = 1; index < input.Count; index++)
                         {
                             object theValue = input.GetValueAt(index);
@@ -1691,7 +1707,7 @@ namespace Ego.PDF.PHP
                             {
                                 parameters[0] = result;
                                 parameters[1] = theValue;
-                                result = (double) callbackMethod.Invoke(instance, parameters);
+                                result = (double)callbackMethod.Invoke(instance, parameters);
                             }
                         }
                     }
@@ -1802,7 +1818,7 @@ namespace Ego.PDF.PHP
                 {
                     System.Collections.DictionaryEntry entry = input.GetEntryAt(index);
 
-                    if (OrderedMap.IsKeyInteger((string) entry.Key))
+                    if (OrderedMap.IsKeyInteger((string)entry.Key))
                         newOrderedMap[null] = entry.Value;
                     else
                         newOrderedMap[entry.Key] = entry.Value;
@@ -1847,7 +1863,7 @@ namespace Ego.PDF.PHP
             OrderedMap newOrderedMap = new OrderedMap();
             for (int index = 0; index < sortedOrderedMap.Count; index++)
             {
-                OrderedMapSortItem entry = (OrderedMapSortItem) sortedOrderedMap[index];
+                OrderedMapSortItem entry = (OrderedMapSortItem)sortedOrderedMap[index];
                 if (preserveKeys)
                     newOrderedMap[entry.Key] = entry.Value;
                 else
@@ -1981,7 +1997,7 @@ namespace Ego.PDF.PHP
                 OrderedMap theReplacement = replacement == null
                                                 ? new OrderedMap()
                                                 : (replacement is OrderedMap
-                                                       ? (OrderedMap) replacement
+                                                       ? (OrderedMap)replacement
                                                        : new OrderedMap(replacement));
                 int theOffset = offset, theLength = length;
                 _GetAbsPositions(ref theOffset, ref theLength, input.Count);

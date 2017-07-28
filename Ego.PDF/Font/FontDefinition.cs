@@ -11,7 +11,7 @@ namespace Ego.PDF.Font
     public class FontDefinition
     {
         public string enc = "cp1252";
-        public Dictionary<int, object> uv = new Dictionary<int,object>();
+        public Dictionary<int, object> uv = new Dictionary<int, object>();
         public FontTypeEnum type { get; set; }
         public string name { get; set; }
         public int up { get; set; }

@@ -495,7 +495,6 @@ namespace Ego.PDF
             object map;
             PHP.OrderedMap info = new PHP.OrderedMap();
             string basename;
-            string file;
 
             if (!(System.IO.File.Exists(fontfile) || System.IO.Directory.Exists(fontfile)))
             {
