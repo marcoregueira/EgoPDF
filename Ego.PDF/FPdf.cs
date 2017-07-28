@@ -5,9 +5,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Windows.Media.Imaging;
 using Ionic.Zlib;
 using MiscUtil.Conversion;
 using MiscUtil.IO;
@@ -59,8 +57,8 @@ namespace Ego.PDF
             // Initialization of properties
             Page = 0;
             ObjectCount = 2;
-            Buffer = PrivateEncoding.GetString(new byte[] { });
-            Offsets = new Dictionary<int, int>();
+            Buffer = new StreamWriter(System.IO.File.Create("C:\\temp\\sample2.a.stream.pdf"), PrivateEncoding);
+            Offsets = new Dictionary<int, long>();
             Pages = new Dictionary<int, Page>();
             PageSizes = new Dictionary<int, Dimensions>();
             State = 0;
@@ -189,12 +187,12 @@ namespace Ego.PDF
         /// <summary>
         ///     array of object offsets
         /// </summary>
-        public Dictionary<int, int> Offsets { get; set; }
+        public Dictionary<int, long> Offsets { get; set; }
 
         /// <summary>
         ///     buffer holding in-memory PDF
         /// </summary>
-        public string Buffer { get; set; }
+        public StreamWriter Buffer { get; set; }
 
         /// <summary>
         ///     array containing pages
@@ -2155,7 +2153,8 @@ namespace Ego.PDF
         {
             // Begin a new object
             ObjectCount++;
-            Offsets[ObjectCount] = Buffer.Length;
+            Buffer.Flush();
+            Offsets[ObjectCount] = Buffer.BaseStream.Position;
             Out(ObjectCount.ToString() + " 0 obj");
         }
 
@@ -2217,18 +2216,31 @@ namespace Ego.PDF
                 {
                     foreach (var v in (s as List<byte[]>))
                     {
-                        Buffer += PrivateEncoding.GetString(v);
+                        Buffer.Flush();
+                        var w2 = new BinaryWriter(Buffer.BaseStream);
+                        w2.Write(v.ToArray());
+                        w2.Flush();
+                        //Buffer.Write(v.ToArray());
+                        //Buffer += PrivateEncoding.GetString(v);
                     }
-                    Buffer += "\n";
+                    Buffer.Write("\n");
+                    //Buffer += "\n";
                 }
                 else if (s is byte[])
                 {
-                    Buffer += PrivateEncoding.GetString((byte[])s);
-                    Buffer += "\n";
+                    Buffer.Flush();
+                    var w2 = new BinaryWriter(Buffer.BaseStream);
+                    w2.Write((byte[])s);
+                    w2.Flush();
+                    //Buffer += PrivateEncoding.GetString((byte[])s);
+                    Buffer.Write("\n");
+                    //Buffer += "\n";
                 }
                 else
                 {
-                    Buffer += TypeSupport.ToString(s) + "\n";
+                    Buffer.Write(s);
+                    Buffer.Write("\n");
+                    //Buffer += TypeSupport.ToString(s) + "\n";
                 }
             }
         }
@@ -2318,7 +2330,8 @@ namespace Ego.PDF
                 }
             }
             // Pages root
-            Offsets[1] = Buffer.Length;
+            Buffer.Flush();
+            Offsets[1] = Buffer.BaseStream.Length;
             Out("1 0 obj");
             Out("<</Type /Pages");
             var kids = "/Kids [";
@@ -2666,7 +2679,8 @@ namespace Ego.PDF
             PutFonts();
             PutImages();
             // Resource dictionary
-            Offsets[2] = Buffer.Length;
+            Buffer.Flush();
+            Offsets[2] = Buffer.BaseStream.Length;
             Out("2 0 obj");
             Out("<<");
             PutResourceDictionary();
@@ -2767,7 +2781,8 @@ namespace Ego.PDF
             Out(">>");
             Out("endobj");
             // Cross-ref
-            var o = Buffer.Length;
+            Buffer.Flush();
+            var o = Buffer.BaseStream.Length;
             Out("xref");
             Out("0 " + (ObjectCount + 1).ToString());
             Out("0000000000 65535 f ");

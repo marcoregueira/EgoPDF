@@ -53,18 +53,13 @@ namespace Ego.PDF
 
                 case OutputDevice.SaveToFile:
                     // Save to local file
-                    FileStream f = FileSystemSupport.FileOpen(name, "wb");
-                    if (!TypeSupport.ToBoolean(f))
-                    {
-                        throw new InvalidOperationException( "Unable to create output file: " + name);
-                    }
-                    var writer = new StreamWriter(f, FPdf.PrivateEncoding);
-                    writer.Write(document.Buffer);
-                    writer.Close();
+
+                    document.Buffer.Close();
                     break;
 
                 case OutputDevice.ReturnAsString:
-                    return document.Buffer;
+                    return "";
+                    //return document.Buffer;
 
                 default:
                     throw new InvalidOperationException("Incorrect output destination: " + destination);
