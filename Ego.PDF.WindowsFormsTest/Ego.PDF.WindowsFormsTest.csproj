@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ego.PDF.WindowsFormsTest</RootNamespace>
     <AssemblyName>Ego.PDF.WindowsFormsTest</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -40,6 +40,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RuntimeIdentifiers>win7-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -85,7 +88,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -123,9 +128,9 @@
       <Project>{770011E2-1F6D-401C-BF89-EF1A6FC7F145}</Project>
       <Name>Ego.PDF.Samples</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Ego.PDF\Ego.PDF.csproj">
-      <Project>{240623D2-377D-4F2A-9E89-B69BD063484F}</Project>
-      <Name>Ego.PDF</Name>
+    <ProjectReference Include="..\Ego.PDF\Ego.PdfCore.csproj">
+      <Project>{b220bdd1-c995-4d6f-9706-7a3cf199cc88}</Project>
+      <Name>Ego.PdfCore</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

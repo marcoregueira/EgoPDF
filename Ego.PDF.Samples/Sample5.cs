@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Ego.PDF;
 using Ego.PDF.Data;
 
 namespace Ego.PDF.Samples
 {
     public class Sample5 : FPdf
     {
-        private int col = 0;
-        private double y0;
+        public Sample5()
+        {
+        }
+
         public string LocalPath { get; set; }
         private List<string[]> Data { get; set; }
 
@@ -44,9 +44,9 @@ namespace Ego.PDF.Samples
             while (!reader.EndOfStream)
             {
                 string line = reader.ReadLine();
-                Data.Add(line.Split(new[] { ';' }));
+                if (line != null) Data.Add(line.Split(new[] { ';' }));
             }
-            reader.Close();
+            reader.Dispose();
         }
 
         public void BasicTable(IList<string> headers)

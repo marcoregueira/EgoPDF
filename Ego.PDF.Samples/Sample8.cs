@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using Ego.PDF;
 using Ego.PDF.Data;
+using Microsoft.Xna.Framework;
 
 namespace Ego.PDF.Samples
 {
@@ -28,10 +29,10 @@ namespace Ego.PDF.Samples
             var rowHeader = new TableRow(22, 120)
                                                     .SetBorder("0")
                                                     .SetCellHeight(5);
-            //pdf.PaintRow(rowHeader, "", @"Strada General Traian Moșoiu 24, <<--- characted not supported 
+            //pdf.PrintRow(rowHeader, "", @"Strada General Traian Moșoiu 24, <<--- characted not supported 
             pdf.Ln(3);
             pdf.SetFontSize(10);
-            pdf.PaintRow(rowHeader, "", @"Strada General Traian Mosoiu 24, 
+            pdf.PrintRow(rowHeader, "", @"Strada General Traian Mosoiu 24, 
 Bran 507025, 
 Romania");
 
@@ -40,7 +41,7 @@ Romania");
 
             var alignRight = new TableRow(pdf.CurrentPageSize.Width - pdf.LeftMargin - pdf.RightMargin).SetBorder("");
             alignRight.Cells.Last().Align = AlignEnum.Right;
-            pdf.PaintRow(alignRight, "INVOICE");
+            pdf.PrintRow(alignRight, "INVOICE");
 
             pdf.SetY(50);
             pdf.SetFontSize(25);
@@ -56,13 +57,13 @@ Romania");
 
             pdf.SetY(50);
             var clientRow = new TableRow(100, 50).SetBorder();
-            pdf.PaintRow(clientRow, "", "CLIENT");
-            pdf.PaintRow(clientRow, "", "Jonathan Harker");
+            pdf.PrintRow(clientRow, "", "CLIENT");
+            pdf.PrintRow(clientRow, "", "Jonathan Harker");
             clientRow.CellHeight = 4;
-            pdf.PaintRow(clientRow, "", "Lyndhurst Rd");
-            pdf.PaintRow(clientRow, "", "Exeter");
-            pdf.PaintRow(clientRow, "", "EX2 4PA");
-            pdf.PaintRow(clientRow, "", "UK");
+            pdf.PrintRow(clientRow, "", "Lyndhurst Rd");
+            pdf.PrintRow(clientRow, "", "Exeter");
+            pdf.PrintRow(clientRow, "", "EX2 4PA");
+            pdf.PrintRow(clientRow, "", "UK");
 
 
 
@@ -79,16 +80,16 @@ Romania");
             row.Cells[1].Align = AlignEnum.Justified;
 
             row.NormalizeWidths(pdf.CurrentPageSize.Width - pdf.LeftMargin - pdf.RightMargin);
-            pdf.PaintRow(row, "CODE", "DESCRIPTION", "QTY", "UNIT PRICE", "PRICE");
-            pdf.PaintRow(row, "00002", "Journey to the Center of the Earth", "2", "$7.95", "$15.90");
-            pdf.PaintRow(row, "00002", "Around the World in 80 Days", "1", "$7.95", "$7.95");
-            pdf.PaintRow(row, "00002", "The Misterious Island", "1", "$7.95", "$7.95");
+            pdf.PrintRow(row, "CODE", "DESCRIPTION", "QTY", "UNIT PRICE", "PRICE");
+            pdf.PrintRow(row, "00002", "Journey to the Center of the Earth", "2", "$7.95", "$15.90");
+            pdf.PrintRow(row, "00002", "Around the World in 80 Days", "1", "$7.95", "$7.95");
+            pdf.PrintRow(row, "00002", "The Misterious Island", "1", "$7.95", "$7.95");
 
 
 
             for (int i = 0; i < 10; i++)
             {
-                pdf.PaintRow(row);
+                pdf.PrintRow(row);
 
             }
 
@@ -99,9 +100,9 @@ Romania");
             totalsRow.Cells[1].Border = "0";
             totalsRow.Cells[1].Align = AlignEnum.Left;
 
-            pdf.PaintRow(totalsRow, "", "Invoiced amount", "", "$100.00");
-            pdf.PaintRow(totalsRow, "", "Vat", "20%", "$20.00");
-            pdf.PaintRow(totalsRow, "", "Due amount", "", "$120.00");
+            pdf.PrintRow(totalsRow, "", "Invoiced amount", "", "$100.00");
+            pdf.PrintRow(totalsRow, "", "Vat", "20%", "$20.00");
+            pdf.PrintRow(totalsRow, "", "Due amount", "", "$120.00");
 
 
             pdf.Ln(16);
@@ -152,7 +153,7 @@ Romania");
             decorator.Cells[1].Background = Color.Green;
             decorator.Cells[2].Background = Color.Orange;
             decorator.Cells[3].Background = Color.YellowGreen;
-            pdf.PaintRow(decorator, "", "", "", "", "");
+            pdf.PrintRow(decorator, "", "", "", "", "");
             pdf.Ln(5);
         }
 
