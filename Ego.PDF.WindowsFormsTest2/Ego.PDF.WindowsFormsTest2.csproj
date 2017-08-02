@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputType>winexe</OutputType>
+    <OutputType>exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup>
     <TargetFramework>net47</TargetFramework>
     <ApplicationIcon />
-    <OutputTypeEx>winexe</OutputTypeEx>
+    <OutputTypeEx>exe</OutputTypeEx>
     <StartupObject>Ego.PDF.WindowsFormsTest.Program</StartupObject>
   </PropertyGroup>
 
