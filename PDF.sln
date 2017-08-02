@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibrary1", "ClassLibra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1", "WebApplication1\WebApplication1.csproj", "{DE5C75FD-4D87-4EAD-AED0-C808292D0CF4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApp2", "WindowsFormsApp2\WindowsFormsApp2.csproj", "{B33CAF2D-F611-440D-A3B6-125A54ACC808}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,18 @@ Global
 		{DE5C75FD-4D87-4EAD-AED0-C808292D0CF4}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{DE5C75FD-4D87-4EAD-AED0-C808292D0CF4}.Release|x86.ActiveCfg = Release|Any CPU
 		{DE5C75FD-4D87-4EAD-AED0-C808292D0CF4}.Release|x86.Build.0 = Release|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Debug|x86.Build.0 = Debug|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Release|x86.ActiveCfg = Release|Any CPU
+		{B33CAF2D-F611-440D-A3B6-125A54ACC808}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
