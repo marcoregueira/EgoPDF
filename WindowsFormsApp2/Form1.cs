@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Ego.PDF;
 
 namespace WindowsFormsApp2
 {
@@ -15,6 +16,11 @@ namespace WindowsFormsApp2
         public Form1()
         {
             InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var t = new FPdf();
         }
     }
 }
