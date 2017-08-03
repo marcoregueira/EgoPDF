@@ -15,9 +15,13 @@ namespace Ego.PDF.Samples
     {
         private readonly Dictionary<string, int> _tagCount = new Dictionary<string, int>();
 
-        public static FPdf GetSample(string path)
+        private Sample8(string file) : base(file)
         {
-            var pdf = new Sample8();
+        }
+
+        public static FPdf GetSample(string file, string path)
+        {
+            var pdf = new Sample8(file);
 
             pdf.AddPage();
 

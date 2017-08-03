@@ -11,13 +11,17 @@ namespace Ego.PDF.Samples
     public class Sample4 : FPdf
     {
         private int col;
+
+        private Sample4(string file) : base(file)
+        {
+        }
+
         public string LocalPath { get; set; }
 
-        public static FPdf GetSample(string path)
+        public static FPdf GetSample(string file, string path)
         {
-            var pdf = new Sample4();
+            var pdf = new Sample4(file) { LocalPath = path };
 
-            pdf.LocalPath = path;
             pdf.AliasNbPages();
             pdf.SetTitle("20000 Leagues Under the Seas");
             pdf.SetAuthor("Jules Verne");
@@ -32,7 +36,7 @@ namespace Ego.PDF.Samples
             string title = "20000 Leagues Under the Seas";
             SetFont("Arial", "B", 15);
             var w = GetStringWidth(title) + 6;
-            SetX((210 - w)/2);
+            SetX((210 - w) / 2);
             SetDrawColor(0, 80, 180);
             SetFillColor(230, 230, 0);
             SetTextColor(220, 50, 50);
@@ -56,7 +60,7 @@ namespace Ego.PDF.Samples
         public void SetCol(int col)
         {
             this.col = col;
-            int x = 10 + col*65;
+            int x = 10 + col * 65;
             SetLeftMargin(x);
             SetX(x);
         }

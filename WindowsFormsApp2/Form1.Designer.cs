@@ -28,25 +28,49 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
+            this.BtnMakeFont = new System.Windows.Forms.Button();
+            this.BtnParseFont = new System.Windows.Forms.Button();
+            this.BtnRunSamples = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // button1
+            // BtnMakeFont
             // 
-            this.button1.Location = new System.Drawing.Point(299, 148);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.BtnMakeFont.Location = new System.Drawing.Point(401, 121);
+            this.BtnMakeFont.Name = "BtnMakeFont";
+            this.BtnMakeFont.Size = new System.Drawing.Size(117, 34);
+            this.BtnMakeFont.TabIndex = 5;
+            this.BtnMakeFont.Text = "Parse font";
+            this.BtnMakeFont.UseVisualStyleBackColor = true;
+            this.BtnMakeFont.Click += new System.EventHandler(this.BtnMakeFont_Click);
+            // 
+            // BtnParseFont
+            // 
+            this.BtnParseFont.Location = new System.Drawing.Point(401, 81);
+            this.BtnParseFont.Name = "BtnParseFont";
+            this.BtnParseFont.Size = new System.Drawing.Size(117, 34);
+            this.BtnParseFont.TabIndex = 4;
+            this.BtnParseFont.Text = "Parse font";
+            this.BtnParseFont.UseVisualStyleBackColor = true;
+            this.BtnParseFont.Click += new System.EventHandler(this.BtnParseFont_Click);
+            // 
+            // BtnRunSamples
+            // 
+            this.BtnRunSamples.Location = new System.Drawing.Point(401, 12);
+            this.BtnRunSamples.Name = "BtnRunSamples";
+            this.BtnRunSamples.Size = new System.Drawing.Size(117, 34);
+            this.BtnRunSamples.TabIndex = 3;
+            this.BtnRunSamples.Text = "Run samples";
+            this.BtnRunSamples.UseVisualStyleBackColor = true;
+            this.BtnRunSamples.Click += new System.EventHandler(this.BtnRunSamples_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(530, 270);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.BtnMakeFont);
+            this.Controls.Add(this.BtnParseFont);
+            this.Controls.Add(this.BtnRunSamples);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -54,8 +78,9 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button BtnMakeFont;
+        private System.Windows.Forms.Button BtnParseFont;
+        private System.Windows.Forms.Button BtnRunSamples;
     }
 }
 

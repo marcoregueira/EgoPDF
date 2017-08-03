@@ -8,7 +8,7 @@ namespace Ego.PDF.Samples
 {
     public class Sample5 : FPdf
     {
-        public Sample5()
+        public Sample5(string file) : base(file)
         {
         }
 
@@ -16,9 +16,9 @@ namespace Ego.PDF.Samples
         private List<string[]> Data { get; set; }
 
 
-        public static FPdf GetSample(string path)
+        public static FPdf GetSample(string file, string path)
         {
-            var pdf = new Sample5();
+            var pdf = new Sample5(file);
             string[] header = { "Country", "Capital", "Area (sq km)", "Pop. (thousands)" };
             pdf.LocalPath = path;
 

@@ -9,12 +9,15 @@ namespace Ego.PDF.Samples
 {
     public class Sample2 : FPdf
     {
+        private Sample2(string filePath) : base(filePath)
+        {
+        }
+
         private string ImageFile { get; set; }
 
-        public static FPdf GetSample(string imagefile)
+        public static FPdf GetSample(string filePath, string imagefile)
         {
-            var p = new Sample2();
-            p.ImageFile = imagefile;
+            var p = new Sample2(filePath) { ImageFile = imagefile };
             p.AliasNbPages();
             p.AddPage();
             p.SetFont("Times", "", 12);

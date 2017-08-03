@@ -16,61 +16,58 @@ namespace Ego.PDF.WindowsFormsTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-           
+
         }
 
         public void DoSample1()
         {
-            var pdf = Sample1.GetSample( );
+            var pdf = Sample1.GetSample();
             //pdf.Output("sample1.pdf", OutputDevice.SaveToFile);
         }
 
         public void DoSample2()
         {
             {
-                var pdf = Sample2.GetSample("logo.png");
-               // pdf.Output("sample2.a.pdf", OutputDevice.SaveToFile);
+                var pdf = Sample2.GetSample("sample2.a.pdf", "logo.png");
+                // pdf.Output("sample2.a.pdf", OutputDevice.SaveToFile);
             }
             {
-//                var pdf = Sample2.GetSample("gift.jpg");
-  //              pdf.Output("sample2.b.pdf", OutputDevice.SaveToFile);
+                //                var pdf = Sample2.GetSample("gift.jpg");
+                //              pdf.Output("sample2.b.pdf", OutputDevice.SaveToFile);
             }
         }
 
-       
+
         public void DoSample3()
         {
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var pdf = Sample3.GetSample(path);
-            //pdf.Output("sample3.pdf", OutputDevice.SaveToFile);
+            var pdf = Sample3.GetSample("sample3.pdf", path);
         }
 
         public void DoSample4()
         {
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var pdf = Sample4.GetSample(path);
-           // pdf.Output("sample4.pdf", OutputDevice.SaveToFile);
+            var pdf = Sample4.GetSample("sample4.pdf", path);
         }
 
         public void DoSample5()
         {
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var pdf = Sample5.GetSample(path);
-          //  pdf.Output("sample5.pdf", OutputDevice.SaveToFile);
+            var pdf = Sample5.GetSample("sample5.pdf", path);
+
+            //  pdf.Output(, OutputDevice.SaveToFile);
         }
 
         public void DoSample6()
         {
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var pdf = Sample6.GetSample(path);
-          //  pdf.Output("sample6.pdf", OutputDevice.SaveToFile);
+            var pdf = Sample6.GetSample("sample6.pdf", path);
         }
 
         public void DoSample8()
         {
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var pdf = Sample8.GetSample(path);
-          //  pdf.Output("sample8.pdf", OutputDevice.SaveToFile);
+            var pdf = Sample8.GetSample("sample8.pdf", path);
         }
 
 
