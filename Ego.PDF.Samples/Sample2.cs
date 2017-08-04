@@ -25,7 +25,7 @@ namespace Ego.PDF.Samples
             {
                 p.Cell(0, 10, "Printing line number " + i, "0", 1);
             }
-            return p;
+            return p.Close();
         }
 
         public override void Header()

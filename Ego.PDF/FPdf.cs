@@ -41,7 +41,7 @@ namespace Ego.PDF
 {
     public class FPdf : IDisposable
     {
-        public static readonly Encoding PrivateEncoding = Encoding.GetEncoding(1252);
+        public static readonly Encoding PrivateEncoding = CodePagesEncodingProvider.Instance.GetEncoding(1252);
         public readonly string FpdfVersion = "1.7";
         public bool ColorFlag;
         public LayoutEnum LayoutMode;
@@ -75,6 +75,7 @@ namespace Ego.PDF
             if (string.IsNullOrWhiteSpace(filePath))
             {
                 Buffer = new StreamWriter(new MemoryStream(), PrivateEncoding);
+                Buffer.AutoFlush = true;
             }
             else
             {
@@ -528,11 +529,11 @@ namespace Ego.PDF
         /// <summary>
         ///     Terminate document
         /// </summary>
-        public virtual void Close()
+        public virtual FPdf Close()
         {
             if (State == 3)
             {
-                return;
+                return this;
             }
             if (Page == 0)
             {
@@ -546,6 +547,7 @@ namespace Ego.PDF
             EndPage();
             // Close document
             EndDoc();
+            return this;
         }
 
         public virtual void AddPage()
@@ -1595,7 +1597,7 @@ namespace Ego.PDF
             LinkData link)
         {
             var holew = w;
-            var holey =h;// ?? 0;
+            var holey = h;// ?? 0;
 
             // Put an image on the page
             ImageInfo imageInfo;

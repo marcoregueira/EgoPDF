@@ -11,20 +11,16 @@ namespace Ego.PDF.Samples
 {
     public class Sample6 : FPdf
     {
-        private Dictionary<string, int> TagCount = new Dictionary<string, int>();
-        public string href;
+        private readonly Dictionary<string, int> _tagCount = new Dictionary<string, int>();
 
         private Sample6(string file) : base(file)
         {
-            throw new NotImplementedException();
         }
-
-        private string Path { get; set; }
 
         public static FPdf GetSample(string file, string path)
         {
             var pdf = new Sample6(file);
-            string html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
+            var html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
                     <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
 
@@ -43,7 +39,7 @@ namespace Ego.PDF.Samples
             pdf.SetLeftMargin(45);
             pdf.SetFontSize(14);
             pdf.WriteHtml(html);
-            return pdf;
+            return pdf.Close();
         }
 
         public void WriteHtml(string html)
@@ -114,17 +110,17 @@ namespace Ego.PDF.Samples
         public void SetStyle(string tag, bool enable)
         {
             tag = tag.ToUpper();
-            if (!TagCount.ContainsKey(tag))
+            if (!_tagCount.ContainsKey(tag))
             {
-                TagCount[tag] = 0;
+                _tagCount[tag] = 0;
             }
 
-            TagCount[tag] = TagCount[tag] + (enable ? 1 : -1);
+            _tagCount[tag] = _tagCount[tag] + (enable ? 1 : -1);
             string style = string.Empty;
 
             foreach (var token in new[] { "B", "I", "U" })
             {
-                if (TagCount.ContainsKey(token) && TagCount[token] > 0)
+                if (_tagCount.ContainsKey(token) && _tagCount[token] > 0)
                 {
                     style += token;
                 }

@@ -10,7 +10,7 @@ namespace Ego.PDF.Samples
 {
     public class Sample4 : FPdf
     {
-        private int col;
+        private int _col;
 
         private Sample4(string file) : base(file)
         {
@@ -27,7 +27,7 @@ namespace Ego.PDF.Samples
             pdf.SetAuthor("Jules Verne");
             pdf.PrintChapter(1, "A RUNAWAY REEF", "20k_c1.txt");
             pdf.PrintChapter(2, "THE PROS AND CONS", "20k_c2.txt");
-            return pdf;
+            return pdf.Close();
         }
 
         public override void Header()
@@ -59,7 +59,7 @@ namespace Ego.PDF.Samples
 
         public void SetCol(int col)
         {
-            this.col = col;
+            this._col = col;
             int x = 10 + col * 65;
             SetLeftMargin(x);
             SetX(x);
@@ -67,9 +67,9 @@ namespace Ego.PDF.Samples
 
         public override bool AcceptPageBreak()
         {
-            if (col < 2)
+            if (_col < 2)
             {
-                SetCol(col + 1);
+                SetCol(_col + 1);
                 SetY(BelowHeaderY);
                 return false;
             }

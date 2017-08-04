@@ -132,19 +132,30 @@ Romania");
             pdf.SetDrawColor(Color.Green);
             pdf.DrawArea(Color.Green, 0.00, points);
 
+            pdf.SavePos();
+
             pdf.SetFontSize(24);
             pdf.WriteHtml("<b>Thank</b>", 6);
             pdf.WriteHtml("<b><i>you!</i></b>", 18);
 
+            pdf.Y -= 20;
             pdf.X = pdf.LeftMargin + 70;
             pdf.SetTextColor(Color.White);
             pdf.SetFontSize(25);
             pdf.Cell(100, 40, "45,000.00", "", 0, AlignEnum.Right);
+            pdf.Ln(10);
+            pdf.SetFontSize(12);
+            pdf.X = pdf.LeftMargin + 70;
+            pdf.Cell(100, 40, "Pay by transfer to ES00 0300 0303 00303 03030", "", 0, AlignEnum.Right);
+            pdf.Ln(6);
+            pdf.SetFontSize(12);
+            pdf.X = pdf.LeftMargin + 70;
+            pdf.Cell(100, 40, "SWIFT ESW-123453", "", 0, AlignEnum.Right);
 
             pdf.SetY(270);
             DecoratorLine(pdf);
 
-            return pdf;
+            return pdf.Close();
         }
 
         private static void DecoratorLine(Sample8 pdf)

@@ -10,7 +10,7 @@ namespace Ego.PDF.Samples
             pdf.AddPage(PageSizeEnum.A4);
             pdf.SetFont("Arial", "", 16);
             pdf.Cell(40, 10, "Hello World!");
-            return pdf;
+            return pdf.Close();
         }
     }
 }

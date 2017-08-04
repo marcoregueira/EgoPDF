@@ -30,7 +30,7 @@ namespace Ego.PDF.Samples
             pdf.ImprovedTable(header);
             pdf.AddPage();
             pdf.FancyTable(header);
-            return pdf;
+            return pdf.Close();
         }
 
         public void LoadData(string file)
