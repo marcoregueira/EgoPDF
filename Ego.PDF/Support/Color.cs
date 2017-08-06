@@ -5,8 +5,6 @@
 using System;
 using System.Text;
 using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.Serialization;
 using Ego.PdfCore.Support;
 
 namespace Microsoft.Xna.Framework
