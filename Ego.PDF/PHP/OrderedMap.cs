@@ -8,6 +8,13 @@ namespace Ego.PDF.PHP
     {
         public new bool Equals(object x, object y)
         {
+            if (x == null || y == null) return x == null && y == null;
+
+            if (x is string || x is int || x is long || x is uint || x is ulong)
+            {
+                return Convert.ToString(x) == Convert.ToString(y);
+            }
+
             return x == y;
         }
 
