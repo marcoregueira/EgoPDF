@@ -46,10 +46,10 @@ namespace Ego.PDF
                 //CONVERSION_WARNING: Method 'explode' was converted to 'System.String.Split' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/explode.htm 
                 var e = new PHP.OrderedMap(PHP.TypeSupport.ToString(line).TrimEnd(new char[] { ' ', '\t', '\n', '\r', '0' }).Split(" ".ToCharArray()));
                 //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                var c = System.Convert.ToInt32(e[0].ToString().Substring(1), 16);
+                var c = System.Convert.ToInt32(e.Values[0].ToString().Substring(1), 16);
                 //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
-                var uv = System.Convert.ToInt32(e[1].ToString().Substring(2), 16);
-                var name = PHP.TypeSupport.ToString(e[2]);
+                var uv = System.Convert.ToInt32(e.Values[1].ToString().Substring(2), 16);
+                var name = PHP.TypeSupport.ToString(e.Values[2]);
                 map[c] = new PHP.OrderedMap(new object[] { "uv", uv }, new object[] { "name", name });
             }
 
@@ -58,14 +58,12 @@ namespace Ego.PDF
         public virtual PHP.OrderedMap GetInfoFromTrueType(string file, bool embed, PHP.OrderedMap map)
         {
             // Return informations from a TrueType font
-            TtfParser ttf;
-            PHP.OrderedMap info = new PHP.OrderedMap();
+            var info = new PHP.OrderedMap();
             double k;
-            PHP.OrderedMap widths = new PHP.OrderedMap();
             int c;
             int uv;
             int w;
-            ttf = new TtfParser();
+            var ttf = new TtfParser();
             ttf.Parse(file);
             if (embed)
             {
@@ -89,7 +87,7 @@ namespace Ego.PDF
             info["FontBBox"] = new PHP.OrderedMap(System.Math.Round(k * ttf.xMin), System.Math.Round(k * ttf.yMin), System.Math.Round(k * ttf.xMax), System.Math.Round(k * ttf.yMax));
             info["CapHeight"] = System.Math.Round(k * ttf.capHeight);
             info["MissingWidth"] = System.Math.Round(k * PHP.TypeSupport.ToDouble(ttf.widths[0]));
-            widths = PHP.OrderedMap.Fill(0, 256, info["MissingWidth"]);
+            var widths = PHP.OrderedMap.Fill(0, 256, info["MissingWidth"]);
             for (c = 0; c <= 255; c++)
             {
                 if (PHP.TypeSupport.ToString(map.GetValue(c, "name")) != ".notdef")

@@ -12,6 +12,7 @@
 //%>
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using MiscUtil.Conversion;
@@ -22,7 +23,7 @@ namespace Ego.PDF
     public class TtfParser
     {
         private EndianBinaryReader f;
-        public PHP.OrderedMap tables = new PHP.OrderedMap();
+        public Dictionary<string, UInt64> Tables = new Dictionary<string, ulong>();
         public uint unitsPerEm;
         public int xMin;
         public int yMin;
@@ -85,7 +86,7 @@ namespace Ego.PDF
             }
             numTables = this.ReadUShort();
             this.Skip(3 * 2); // searchRange, entrySelector, rangeShift
-            this.tables = new PHP.OrderedMap();
+            this.Tables = new Dictionary<string, ulong>();
             //CONVERSION_ISSUE: Incrementing/decrementing only supported on numerical types, '++' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
             for (i = 0; i.CompareTo(numTables) < 0; i++)
             {
@@ -93,7 +94,7 @@ namespace Ego.PDF
                 this.Skip(4); // checkSum
                 offset = this.ReadULong();
                 this.Skip(4); // length
-                this.tables[tag] = offset;
+                this.Tables[tag] = offset;
             }
         }
 
@@ -175,16 +176,31 @@ namespace Ego.PDF
             this.Skip(2); // version
             numTables = this.ReadUShort();
             offset31 = 0;
-            //CONVERSION_ISSUE: Incrementing/decrementing only supported on numerical types, '++' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
+
+            //https://www.microsoft.com/typography/otspec/name.htm#encLangIDs_platID0
             for (i = 0; i.CompareTo(numTables) < 0; i++)
             {
                 platformID = this.ReadUShort();
                 encodingID = this.ReadUShort();
-                //TODO MARCO
-                //offset = this.ReadULong();
+
+                /*
+                 Platform ID  | Platform name | Platform-specific encoding IDs  | Language IDs
+                 -------------|---------------|---------------------------------|--------------
+                 0            | Unicode       | Various                         | Various 
+                 1            | Macintosh     | Script manager code             | Various
+                 2            | ISO [deprec]  | ISO encoding [deprecated]       | None 
+                 3            | Windows       | Windows encoding                | Various 
+                 4            | Custom        | Custom                          | None
+                 */
+
                 offset = this.ReadLong();
-                if (PHP.TypeSupport.ToInt32(platformID) == 3 && PHP.TypeSupport.ToInt32(encodingID) == 1)
+                if (PHP.TypeSupport.ToInt32(platformID) == 3 && PHP.TypeSupport.ToInt32(encodingID) == 1) //windows encoding, Unicode BMP (UCS-2)
                 {
+                    //When building a Unicode font for Windows, the platform ID should be 3 and the encoding ID should be 1, 
+                    //and the referenced string data must be encoded in UTF-16BE. When building a symbol font for Windows, 
+                    //the platform ID should be 3 and the encoding ID should be 0, and the referenced string data must be encoded 
+                    //in UTF-16BE. When building a font that will be used on the Macintosh, 
+                    //the platform ID should be 1 and the encoding ID should be 0.
                     offset31 = offset;
                 }
             }
@@ -200,7 +216,7 @@ namespace Ego.PDF
             this.chars = new PHP.OrderedMap();
             //CONVERSION_WARNING: Method 'fseek' was converted to 'System.IO.FileStream.Seek' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fseek.htm 
 
-            f.BaseStream.Seek(Convert.ToInt32(this.tables["cmap"]) + (int)offset31, SeekOrigin.Begin);
+            f.BaseStream.Seek(Convert.ToInt32(this.Tables["cmap"]) + (int)offset31, SeekOrigin.Begin);
             format = this.ReadUShort();
             if (PHP.TypeSupport.ToInt32(format) != 4)
             {
@@ -362,12 +378,12 @@ namespace Ego.PDF
         public virtual void Seek(string tag)
         {
             //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
-            if (!(this.tables[tag] != null))
+            if (!Tables.ContainsKey(tag))
             {
                 this.Error("Table not found: " + tag);
             }
             //CONVERSION_WARNING: Method 'fseek' was converted to 'System.IO.FileStream.Seek' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fseek.htm 
-            this.f.BaseStream.Seek(Convert.ToInt32(this.tables[tag]), System.IO.SeekOrigin.Begin);
+            this.f.BaseStream.Seek(Convert.ToInt32(this.Tables[tag]), System.IO.SeekOrigin.Begin);
         }
 
         public virtual void Skip(int n)
