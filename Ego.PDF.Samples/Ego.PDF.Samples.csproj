@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ego.PDF\Ego.PdfCore.csproj" />
+    <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

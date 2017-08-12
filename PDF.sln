@@ -14,7 +14,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.PDF.Samples", "Ego.PDF.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.PDF.WebTestCore", "Ego.PDF.WebTestCore\Ego.PDF.WebTestCore.csproj", "{12021ECA-8399-4E56-8CA9-4BBEE67A692C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.PdfCore", "Ego.PDF\Ego.PdfCore.csproj", "{B220BDD1-C995-4D6F-9706-7A3CF199CC88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.PdfCore", "Ego.PdfCore\Ego.PdfCore.csproj", "{B220BDD1-C995-4D6F-9706-7A3CF199CC88}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApp2", "WindowsFormsApp2\WindowsFormsApp2.csproj", "{B33CAF2D-F611-440D-A3B6-125A54ACC808}"
 EndProject

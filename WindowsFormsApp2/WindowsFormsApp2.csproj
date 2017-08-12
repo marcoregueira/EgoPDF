@@ -169,7 +169,7 @@
       <Project>{770011e2-1f6d-401c-bf89-ef1a6fc7f145}</Project>
       <Name>Ego.PDF.Samples</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Ego.PDF\Ego.PdfCore.csproj">
+    <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj">
       <Project>{b220bdd1-c995-4d6f-9706-7a3cf199cc88}</Project>
       <Name>Ego.PdfCore</Name>
     </ProjectReference>
