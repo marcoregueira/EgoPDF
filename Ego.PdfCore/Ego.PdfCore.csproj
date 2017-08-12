@@ -9,6 +9,15 @@
     <ApplicationIcon />
     <OutputTypeEx>library</OutputTypeEx>
     <StartupObject />
+        
+    <PackageId>EgoPDF.MarcoRegueira</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>Marco Regueira</Authors>
+    <Description>PDF tool. Automated port of FPDF with some changes and fixes.  </Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>First release</PackageReleaseNotes>
+    <Copyright>Copyright 2017 (c) Marco Antonio Regueira.</Copyright>
+    <PackageTags>PDF</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
