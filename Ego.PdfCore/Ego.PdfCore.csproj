@@ -11,7 +11,7 @@
     <StartupObject />
         
     <PackageId>EgoPDF.MarcoRegueira</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>1.0.0-alpha</PackageVersion>
     <Authors>Marco Regueira</Authors>
     <Description>PDF tool. Automated port of FPDF with some changes and fixes.  </Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
