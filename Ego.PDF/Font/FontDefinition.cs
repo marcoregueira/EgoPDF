@@ -46,7 +46,7 @@ namespace Ego.PDF.Font
 
         public void RegisterWidths()
         {
-            foreach (string par in cw.Keys)
+            foreach (var par in cw.Keys)
             {
                 int width = Convert.ToInt32(cw[par]);
                 this.Widths[par] = width;

@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using Ego.PDF.Data;
+using Ego.PDF.Font;
 using Ego.PDF.PHP;
 
 namespace Ego.PDF
@@ -31,11 +35,14 @@ namespace Ego.PDF
         }
         public virtual PHP.OrderedMap LoadMap(string enc)
         {
-            //TODO INTEGRATE THIS PROPERLY
-            var path = "C:\\Users\\MarcoAntonio\\Downloads\\fpdf18\\makefont";
-            var file = Path.Combine(path, enc.ToLower() + ".map");
-            //CONVERSION_WARNING: Method 'file' was converted to 'PHP.FileSystemSupport.FileToArray' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/file.htm 
-            var a = PHP.FileSystemSupport.FileToArray(file);
+            var file = enc.ToLower() + ".map";
+
+            OrderedMap a;
+            using (Stream stream = this.GetType().GetTypeInfo().Assembly.GetManifestResourceStream(file))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                a = PHP.FileSystemSupport.FileToArray(reader);
+            }
             if (PHP.VariableSupport.Empty(a))
             {
                 Error("Encoding not found: " + enc);
@@ -43,11 +50,8 @@ namespace Ego.PDF
             var map = PHP.OrderedMap.Fill(0, 256, new PHP.OrderedMap(new object[] { "uv", -1 }, new object[] { "name", ".notdef" }));
             foreach (object line in a.Values)
             {
-                //CONVERSION_WARNING: Method 'explode' was converted to 'System.String.Split' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/explode.htm 
                 var e = new PHP.OrderedMap(PHP.TypeSupport.ToString(line).TrimEnd(new char[] { ' ', '\t', '\n', '\r', '0' }).Split(" ".ToCharArray()));
-                //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
                 var c = System.Convert.ToInt32(e.Values[0].ToString().Substring(1), 16);
-                //CONVERSION_WARNING: Method 'substr' was converted to 'System.String.Substring' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/substr.htm 
                 var uv = System.Convert.ToInt32(e.Values[1].ToString().Substring(2), 16);
                 var name = PHP.TypeSupport.ToString(e.Values[2]);
                 map[c] = new PHP.OrderedMap(new object[] { "uv", uv }, new object[] { "name", name });
@@ -382,19 +386,16 @@ namespace Ego.PDF
         public virtual string MakeFontEncoding(PHP.OrderedMap map)
         {
             // Build differences from reference encoding
-            PHP.OrderedMap ref_Renamed;
             string s;
             int last;
-            ref_Renamed = LoadMap("cp1252");
+            var refRenamed = LoadMap("cp1252");
             s = "";
             last = 0;
-            //CONVERSION_ISSUE: Incrementing/decrementing only supported on numerical types, '++' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
             for (var c = 32; c <= 255; c++)
             {
-                //CONVERSION_WARNING: Converted Operator might not behave as expected. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1009.htm 
-                if (map.GetValue(c, "name") != ref_Renamed.GetValue(c, "name"))
+                if (map.GetValue(c, "name") != refRenamed.GetValue(c, "name"))
                 {
-                    if (PHP.TypeSupport.ToInt32(c) != PHP.TypeSupport.ToDouble(last) + 1)
+                    if (c != last + 1)
                     {
                         s += c + " ";
                     }
@@ -402,7 +403,7 @@ namespace Ego.PDF
                     s += "/" + PHP.TypeSupport.ToString(map.GetValue(c, "name")) + " ";
                 }
             }
-            return s.TrimEnd(new char[] { ' ', '\t', '\n', '\r', '0' });
+            return s.TrimEnd(' ', '\t', '\n', '\r');
         }
         public virtual void SaveToFile(string file, string s, string mode)
         {

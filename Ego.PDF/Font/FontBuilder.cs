@@ -30,7 +30,8 @@ namespace Ego.PDF.Font
                 font.up = -100;
                 font.ut = 50;
                 for (int i = 0; i <= 255; i++)
-                    font.cw[Convert.ToString((char)i)] = 600;
+                    font.cw[((char)i).ToString()] = 600;
+
                 Fonts.Add("courier", font);
             }
             {
@@ -40,7 +41,8 @@ namespace Ego.PDF.Font
                 font.up = -100;
                 font.ut = 50;
                 for (int i = 0; i <= 255; i++)
-                    font.cw[Convert.ToString((char)i)] = 600;
+                    font.cw[((char)i).ToString()] = 600;
+
                 Fonts.Add("courierb", font);
             }
             {
@@ -50,7 +52,7 @@ namespace Ego.PDF.Font
                 font.up = -100;
                 font.ut = 50;
                 for (int i = 0; i <= 255; i++)
-                    font.cw[Convert.ToString((char)i)] = 600;
+                    font.cw[((char)i).ToString()] = 600;
 
                 Fonts.Add("courierbi", font);
             }
@@ -61,7 +63,7 @@ namespace Ego.PDF.Font
                 font.up = -100;
                 font.ut = 50;
                 for (int i = 0; i <= 255; i++)
-                    font.cw[Convert.ToString((char)i)] = 600;
+                    font.cw[((char)i).ToString()] = 600;
 
                 Fonts.Add("courieri", font);
             }

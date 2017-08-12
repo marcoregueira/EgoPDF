@@ -12,6 +12,52 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="makefont\cp1250.map" />
+    <None Remove="makefont\cp1251.map" />
+    <None Remove="makefont\cp1252.map" />
+    <None Remove="makefont\cp1253.map" />
+    <None Remove="makefont\cp1254.map" />
+    <None Remove="makefont\cp1255.map" />
+    <None Remove="makefont\cp1257.map" />
+    <None Remove="makefont\cp1258.map" />
+    <None Remove="makefont\cp874.map" />
+    <None Remove="makefont\iso-8859-1.map" />
+    <None Remove="makefont\iso-8859-11.map" />
+    <None Remove="makefont\iso-8859-15.map" />
+    <None Remove="makefont\iso-8859-16.map" />
+    <None Remove="makefont\iso-8859-2.map" />
+    <None Remove="makefont\iso-8859-4.map" />
+    <None Remove="makefont\iso-8859-5.map" />
+    <None Remove="makefont\iso-8859-7.map" />
+    <None Remove="makefont\iso-8859-9.map" />
+    <None Remove="makefont\koi8-r.map" />
+    <None Remove="makefont\koi8-u.map" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="makefont\cp1250.map" />
+    <EmbeddedResource Include="makefont\cp1251.map" />
+    <EmbeddedResource Include="makefont\cp1252.map" />
+    <EmbeddedResource Include="makefont\cp1253.map" />
+    <EmbeddedResource Include="makefont\cp1254.map" />
+    <EmbeddedResource Include="makefont\cp1255.map" />
+    <EmbeddedResource Include="makefont\cp1257.map" />
+    <EmbeddedResource Include="makefont\cp1258.map" />
+    <EmbeddedResource Include="makefont\cp874.map" />
+    <EmbeddedResource Include="makefont\iso-8859-1.map" />
+    <EmbeddedResource Include="makefont\iso-8859-11.map" />
+    <EmbeddedResource Include="makefont\iso-8859-15.map" />
+    <EmbeddedResource Include="makefont\iso-8859-16.map" />
+    <EmbeddedResource Include="makefont\iso-8859-2.map" />
+    <EmbeddedResource Include="makefont\iso-8859-4.map" />
+    <EmbeddedResource Include="makefont\iso-8859-5.map" />
+    <EmbeddedResource Include="makefont\iso-8859-7.map" />
+    <EmbeddedResource Include="makefont\iso-8859-9.map" />
+    <EmbeddedResource Include="makefont\koi8-r.map" />
+    <EmbeddedResource Include="makefont\koi8-u.map" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
 
@@ -22,12 +68,6 @@
     <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="System.Runtime.Serialization">
-      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7\System.Runtime.Serialization.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

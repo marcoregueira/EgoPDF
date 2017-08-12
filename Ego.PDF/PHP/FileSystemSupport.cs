@@ -292,6 +292,18 @@ namespace Ego.PDF.PHP
             return result;
         }
 
+        public static OrderedMap FileToArray(StreamReader reader)
+        {
+            var result = new OrderedMap();
+            var line = reader.ReadLine();
+            while (line != null)
+            {
+                result[line] = line;
+                line = reader.ReadLine();
+            }
+            return result;
+        }
+
         /// <summary>
         /// Closes the specified FileStream object.
         /// </summary>

@@ -753,7 +753,7 @@ namespace Ego.PDF
             double w = 0;
             var l = TypeSupport.ToString(s).Length;
             for (i = 0; i < l; i++)
-                w = w + TypeSupport.ToDouble(CurrentFont.Widths[s[i].ToString()]);
+                w = w + CurrentFont.Widths[s[i].ToString()];
             return w * FontSize / 1000;
         }
 
@@ -1210,7 +1210,7 @@ namespace Ego.PDF
             string newBorder;
             string b2 = string.Empty;
             int wordSeparator;
-            double l;
+            int l;
             int ns;
             int nl;
             double ls = 0;
@@ -1287,7 +1287,7 @@ namespace Ego.PDF
                     ls = l;
                     ns++;
                 }
-                l = l + TypeSupport.ToDouble(cw.Widths[nextChar]);
+                l = l + cw.Widths[nextChar[0].ToString()];
                 if (l > wmax)
                 {
                     // Automatic line break
@@ -1393,8 +1393,7 @@ namespace Ego.PDF
                 {
                     wordSeparator = currentPosition;
                 }
-                //l = l + TypeSupport.ToDouble(cw.Widths[nextChar]);
-                l += cw.Widths[nextChar];
+                l += cw.Widths[nextChar[0].ToString()];
                 if (l > wmax)
                 {
                     // Automatic line break
@@ -1501,7 +1500,7 @@ namespace Ego.PDF
                 {
                     sep = i;
                 }
-                l = l + cw.Widths[c];
+                l = l + cw.Widths[c[0].ToString()];
                 if (l > wmax)
                 {
                     // Automatic line break
@@ -2626,7 +2625,7 @@ namespace Ego.PDF
                             s = "<</Type /FontDescriptor /FontName /" + TypeSupport.ToString(name);
                             foreach (string k1 in font1.desc.Keys)
                             {
-                                string v = font1.desc[k1];
+                                var v = Convert.ToString(font1.desc[k1], CultureInfo.InvariantCulture);
                                 s += " /" + k1 + " " + v; // TypeSupport.ToString(v);
                             }
 
