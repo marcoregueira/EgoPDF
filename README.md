@@ -5,8 +5,11 @@ fpdf.net
 
 Port of FPDF to C# and utility library
 
-Note that this is a port made using an automated tool with some fixes, mostly for fun purposes.
+1. This is an automated port of FPF for PHP, mostly for fun purposes. Some parts have been recoded but many others are still as given.
 
+2. This is not a full fledged tool, it is intendend to be used as last resource. If everything else fails or is too heavy and you have some time to spend, then, maybe this is for you.
+
+3. Should you use it? Probably not. It's maintained just for fun. But if you like the DIY approach, then maybe it will suit you.
 
 Original license
 ================
@@ -18,5 +21,5 @@ of this software to use, copy, modify, distribute, sublicense, and/or sell
 copies of the software, and to permit persons to whom the software is furnished
 to do so.
 
-For any substantial changes introduced by me, MIT license will apply.
+For any substantial changes introduced by me, Apache 2.0 license will apply.
 
