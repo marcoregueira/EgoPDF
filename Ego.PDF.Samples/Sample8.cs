@@ -142,7 +142,7 @@ Romania");
             pdf.X = pdf.LeftMargin + 70;
             pdf.SetTextColor(Color.White);
             pdf.SetFontSize(25);
-            pdf.Cell(100, 40, "45,000.00", "", 0, AlignEnum.Right);
+            pdf.Cell(100, 40, "45,000.00 " + (char)128, "", 0, AlignEnum.Right);
             pdf.Ln(10);
             pdf.SetFontSize(12);
             pdf.X = pdf.LeftMargin + 70;
