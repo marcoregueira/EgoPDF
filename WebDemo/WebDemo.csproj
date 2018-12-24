@@ -28,6 +28,12 @@
     <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="App_Data\CopyAlways.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
     <!-- Ensure Node.js is installed -->
     <Exec Command="node --version" ContinueOnError="true">
