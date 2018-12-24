@@ -1599,12 +1599,20 @@ namespace Ego.PDF
             ImageInfo imageInfo;
             if (!Images.ContainsKey(file))
             {
+
                 // First use of this image, get info
                 if (type == ImageTypeEnum.Default)
                 {
-                    if (!Enum.TryParse(Path.GetExtension(file).Replace(".", string.Empty), true, out type))
+                    var format = SixLabors.ImageSharp.Image.DetectFormat(file);
+
+                    var imageType =
+                        format.Name == "jpg" ? ImageTypeEnum.Jpg :
+                        format.Name == "png" ? ImageTypeEnum.Png :
+                        format.Name == "gif" ? ImageTypeEnum.Gif : ImageTypeEnum.Default;
+
+                    if (type == ImageTypeEnum.Default)
                     {
-                        Error("Image file has no extension and no type was specified: " + file);
+                        Error("Unable to detect image type: " + file);
                     }
                 }
 
@@ -1622,7 +1630,7 @@ namespace Ego.PDF
                         break;
                     case ImageTypeEnum.Default:
                     default:
-                        Error("Image file has no extension and no type was specified or unsupported type (" + file + ")");
+                        Error("Unable to detect image type (" + file + ")");
                         break;
                 }
                 imageInfo = imageData;
@@ -2162,7 +2170,18 @@ namespace Ego.PDF
 
         internal virtual ImageInfo ParseGif(string file)
         {
-            throw new NotImplementedException();
+            using (var f = PHP.FileSystemSupport.FileOpen("php://temp", "rb"))
+            {
+                var format = SixLabors.ImageSharp.Image.Identify(f);
+                return new ImageInfo()
+                {
+                    w = format.Width,
+                    h = format.Height,
+                };
+
+                //format.PixelType.BitsPerPixel;
+            }
+
             /*
             // Extract info from a GIF file (via PNG conversion)
             int im;
