@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-fetch-data',
@@ -8,10 +8,34 @@ import { HttpClient } from '@angular/common/http';
 export class FetchDataComponent {
   public forecasts: WeatherForecast[];
 
-  constructor(http: HttpClient, @Inject('BASE_URL') baseUrl: string) {
+  constructor(
+    private http: HttpClient,
+    @Inject('BASE_URL') private baseUrl: string) {
+
     http.get<WeatherForecast[]>(baseUrl + 'api/SampleData/WeatherForecasts').subscribe(result => {
       this.forecasts = result;
     }, error => console.error(error));
+  }
+
+  download($event: MouseEvent) {
+    let target = $event.target as HTMLElement;
+    let url = <string>target.attributes['href'];
+    let name = url.split('/').reverse()[0];
+    const headers = new HttpHeaders();
+    this.http.get(url, { headers, responseType: 'blob' as 'json' }).subscribe(
+      (response: any) => {
+        let dataType = response.type;
+        let binaryData = [];
+        binaryData.push(response);
+        let downloadLink = document.createElement('a');
+        downloadLink.href = window.URL.createObjectURL(new Blob(binaryData, { type: dataType }));
+        if (name)
+          downloadLink.setAttribute('download', name);
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.parentNode.removeChild(downloadLink);
+      }
+    )
   }
 }
 
