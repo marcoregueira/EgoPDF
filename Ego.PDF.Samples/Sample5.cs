@@ -18,19 +18,21 @@ namespace Ego.PDF.Samples
 
         public static FPdf GetSample(string file, string path)
         {
-            var pdf = new Sample5(file);
-            string[] header = { "Country", "Capital", "Area (sq km)", "Pop. (thousands)" };
-            pdf.LocalPath = path;
+            using (var pdf = new Sample5(file))
+            {
+                string[] header = { "Country", "Capital", "Area (sq km)", "Pop. (thousands)" };
+                pdf.LocalPath = path;
 
-            pdf.LoadData("countries.txt");
-            pdf.SetFont("Arial", string.Empty, 14);
-            pdf.AddPage();
-            pdf.BasicTable(header);
-            pdf.AddPage();
-            pdf.ImprovedTable(header);
-            pdf.AddPage();
-            pdf.FancyTable(header);
-            return pdf.Close();
+                pdf.LoadData("countries.txt");
+                pdf.SetFont("Arial", string.Empty, 14);
+                pdf.AddPage();
+                pdf.BasicTable(header);
+                pdf.AddPage();
+                pdf.ImprovedTable(header);
+                pdf.AddPage();
+                pdf.FancyTable(header);
+                return pdf.Close();
+            }
         }
 
         public void LoadData(string file)

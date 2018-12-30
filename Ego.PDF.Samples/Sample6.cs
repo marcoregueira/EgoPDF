@@ -19,27 +19,30 @@ namespace Ego.PDF.Samples
 
         public static FPdf GetSample(string file, string path)
         {
-            var pdf = new Sample6(file);
-            var html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
+            using (var pdf = new Sample6(file))
+            {
+
+                var html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
                     <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
 
-            // First page
-            pdf.AddPage();
-            pdf.SetFont("Arial", "", 20);
-            pdf.Write(5, "To find out what's new in this tutorial, click ");
-            pdf.SetFont("", "U");
-            var link = pdf.AddLink();
-            pdf.Write(5, "here", link.InternalLink);
-            pdf.SetFont(string.Empty);
-            // Second page
-            pdf.AddPage();
-            pdf.SetLink(link);
-            pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
-            pdf.SetLeftMargin(45);
-            pdf.SetFontSize(14);
-            pdf.WriteHtml(html);
-            return pdf.Close();
+                // First page
+                pdf.AddPage();
+                pdf.SetFont("Arial", "", 20);
+                pdf.Write(5, "To find out what's new in this tutorial, click ");
+                pdf.SetFont("", "U");
+                var link = pdf.AddLink();
+                pdf.Write(5, "here", link.InternalLink);
+                pdf.SetFont(string.Empty);
+                // Second page
+                pdf.AddPage();
+                pdf.SetLink(link);
+                pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
+                pdf.SetLeftMargin(45);
+                pdf.SetFontSize(14);
+                pdf.WriteHtml(html);
+                return pdf.Close();
+            }
         }
 
         public void WriteHtml(string html)

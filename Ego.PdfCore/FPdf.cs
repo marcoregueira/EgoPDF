@@ -1605,10 +1605,10 @@ namespace Ego.PDF
                 {
                     var format = SixLabors.ImageSharp.Image.DetectFormat(file);
 
-                    var imageType =
-                        format.Name == "jpg" ? ImageTypeEnum.Jpg :
-                        format.Name == "png" ? ImageTypeEnum.Png :
-                        format.Name == "gif" ? ImageTypeEnum.Gif : ImageTypeEnum.Default;
+                    type =
+                        format.Name == "JPG" ? ImageTypeEnum.Jpg :
+                        format.Name == "PNG" ? ImageTypeEnum.Png :
+                        format.Name == "GIF" ? ImageTypeEnum.Gif : ImageTypeEnum.Default;
 
                     if (type == ImageTypeEnum.Default)
                     {
@@ -2933,7 +2933,17 @@ namespace Ego.PDF
 
         public virtual string DeflateString(byte[] value)
         {
-            byte[] uncompressedArray = Deflate(value);
+
+            byte[] uncompressedArray;
+
+            try
+            {
+                uncompressedArray = Deflate(value);
+            }
+            catch
+            {
+                uncompressedArray = GzUncompress(value);
+            }
             string result = PrivateEncoding.GetString(uncompressedArray);
             return result;
         }

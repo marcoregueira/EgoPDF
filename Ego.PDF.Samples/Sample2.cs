@@ -17,15 +17,17 @@ namespace Ego.PDF.Samples
 
         public static FPdf GetSample(string filePath, string imagefile)
         {
-            var p = new Sample2(filePath) { ImageFile = imagefile };
-            p.AliasNbPages();
-            p.AddPage();
-            p.SetFont("Times", "", 12);
-            for (var i = 1; i <= 40; i++)
+            using (var p = new Sample2(filePath) { ImageFile = imagefile })
             {
-                p.Cell(0, 10, "Printing line number " + i, "0", 1);
+                p.AliasNbPages();
+                p.AddPage();
+                p.SetFont("Times", "", 12);
+                for (var i = 1; i <= 40; i++)
+                {
+                    p.Cell(0, 10, "Printing line number " + i, "0", 1);
+                }
+                return p.Close();
             }
-            return p.Close();
         }
 
         public override void Header()

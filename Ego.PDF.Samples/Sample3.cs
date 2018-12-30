@@ -18,13 +18,15 @@ namespace Ego.PDF.Samples
 
         public static FPdf GetSample(string file, string path)
         {
-            var pdf = new Sample3(file) { LocalPath = path };
-            pdf.AliasNbPages()
-               .SetTitle("20000 Leagues Under the Seas")
-               .SetAuthor("Jules Verne");
-            pdf.PrintChapter(1, "A RUNAWAY REEF", "20k_c1.txt");
-            pdf.PrintChapter(2, "THE PROS AND CONS", "20k_c2.txt");
-            return pdf.Close();
+            using (var pdf = new Sample3(file) { LocalPath = path })
+            {
+                pdf.AliasNbPages()
+                   .SetTitle("20000 Leagues Under the Seas")
+                   .SetAuthor("Jules Verne");
+                pdf.PrintChapter(1, "A RUNAWAY REEF", "20k_c1.txt");
+                pdf.PrintChapter(2, "THE PROS AND CONS", "20k_c2.txt");
+                return pdf.Close();
+            }
         }
 
         public override void Header()
