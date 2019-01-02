@@ -799,7 +799,6 @@ namespace Ego.PDF
             family = family.ToLower();
             if (file == "")
             {
-                //CONVERSION_WARNING: Method 'str_replace' was converted to 'PHP.StringSupport.StringReplace' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/str_replace.htm 
                 file = TypeSupport.ToString(family.Replace(" ", "")) + style.ToLower();
             }
             style = style.ToUpper();

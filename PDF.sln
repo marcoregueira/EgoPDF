@@ -16,7 +16,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.PdfCore", "Ego.PdfCore\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebDemo", "WebDemo\WebDemo.csproj", "{6FCC7EEE-BEAC-41AB-95ED-8C03DBD7DCA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.Pdf.Test", "Ego.Pdf.Test\Ego.Pdf.Test.csproj", "{B08C74F7-F3DD-413B-92F7-F09045B01A14}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.Pdf.Test", "Ego.Pdf.Test\Ego.Pdf.Test.csproj", "{B08C74F7-F3DD-413B-92F7-F09045B01A14}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Support", "Support", "{1B35AB50-FF34-4C63-917E-66AE6CDE7855}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontImport", "Support\FontImport\FontImport.csproj", "{FCBCBA88-B861-4DA3-B779-904638CC82B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,9 +78,24 @@ Global
 		{B08C74F7-F3DD-413B-92F7-F09045B01A14}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B08C74F7-F3DD-413B-92F7-F09045B01A14}.Release|x86.ActiveCfg = Release|Any CPU
 		{B08C74F7-F3DD-413B-92F7-F09045B01A14}.Release|x86.Build.0 = Release|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Debug|x86.Build.0 = Debug|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Release|x86.ActiveCfg = Release|Any CPU
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FCBCBA88-B861-4DA3-B779-904638CC82B0} = {1B35AB50-FF34-4C63-917E-66AE6CDE7855}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {37ED3D79-D045-4801-B947-E0ACFB4465D4}
