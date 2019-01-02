@@ -6,15 +6,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   templateUrl: './fetch-data.component.html'
 })
 export class FetchDataComponent {
-  public forecasts: WeatherForecast[];
 
   constructor(
     private http: HttpClient,
     @Inject('BASE_URL') private baseUrl: string) {
-
-    http.get<WeatherForecast[]>(baseUrl + 'api/SampleData/WeatherForecasts').subscribe(result => {
-      this.forecasts = result;
-    }, error => console.error(error));
   }
 
   download($event: MouseEvent) {
@@ -23,7 +18,7 @@ export class FetchDataComponent {
     $event.preventDefault();
 
     let target = $event.target as HTMLElement;
-    let url = <string>target.attributes['href'].value;
+    let url = <string>target.attributes['href'];
     let name = url.split('/').reverse()[0];
     const headers = new HttpHeaders();
     this.http.get(url, { headers, responseType: 'blob' as 'json' }).subscribe(
@@ -41,11 +36,4 @@ export class FetchDataComponent {
       }
     )
   }
-}
-
-interface WeatherForecast {
-  dateFormatted: string;
-  temperatureC: number;
-  temperatureF: number;
-  summary: string;
 }
