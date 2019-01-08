@@ -102,7 +102,7 @@ namespace Ego.PDF
             Ws = 0;
             // Font path
             //TODO: SET A DEFAULT FONT PATH
-            FpdfFontpath = "C:/";
+            FpdfFontpath = "";
             Fontpath = FpdfFontpath;
 
             // Core fonts
@@ -813,7 +813,7 @@ namespace Ego.PDF
                 return;
             }
 
-            FontDefinition fontInfo = LoadFont(file);
+            FontDefinition fontInfo = GetFontDefinition(fontkey);
             fontInfo.i = OrderedMap.CountElements(Fonts) + 1;
 
             if (fontInfo.diff != null)
@@ -828,22 +828,27 @@ namespace Ego.PDF
                 fontInfo.diffn = n;
             }
 
-            if (!string.IsNullOrEmpty(fontInfo.file))
+            if (!string.IsNullOrEmpty(fontInfo.FontFile))
             {
                 // Embedded font
-                if (fontInfo.type == FontTypeEnum.TrueType)
+                // TODO ? SHOULD WE ASSIGN THE SAME FONT OBJECT INSTEAD OF CREATING A COPY?
+                if (fontInfo.FontType == FontTypeEnum.TrueType)
                 {
-                    FontFiles[fontInfo.file] = new FontDefinition
+                    FontFiles[fontInfo.Name] = new FontDefinition
                     {
-                        length1 = fontInfo.originalsize
+                        length1 = fontInfo.originalsize,
+                        Name = fontInfo.Name,
+                        FontFile = fontInfo.FontFile
                     };
                 }
                 else
                 {
-                    FontFiles[fontInfo.file] = new FontDefinition
+                    FontFiles[fontInfo.Name] = new FontDefinition
                     {
                         length1 = fontInfo.size1,
-                        length2 = fontInfo.size2
+                        length2 = fontInfo.size2,
+                        Name = fontInfo.Name,
+                        FontFile = fontInfo.FontFile
                     };
                 }
             }
@@ -1206,10 +1211,10 @@ namespace Ego.PDF
             string newBorder;
             string b2 = string.Empty;
             int wordSeparator;
-            int l;
+            double l;
             int ns;
             int nl;
-            double ls = 0;
+            double ls = 0; //MARCO. IT WAS AN INTEGER
             FontDefinition cw = CurrentFont;
             if (cellWidth == 0)
             {
@@ -1469,7 +1474,7 @@ namespace Ego.PDF
             var sep = -1;
             var i = 0;
             var j = 0;
-            var l = 0;
+            double l = 0;
             var nl = 1;
             while (i < nb)
             {
@@ -1869,13 +1874,14 @@ namespace Ego.PDF
             State = 1;
         }
 
-        internal virtual FontDefinition LoadFont(string font)
+        internal virtual FontDefinition GetFontDefinition(string font)
         {
             // Load a font definition file from the font directory
             FontDefinition fontData;
             FontBuilder.Fonts.TryGetValue(font, out fontData);
-            if (string.IsNullOrEmpty(fontData?.name))
+            if (string.IsNullOrEmpty(fontData?.Name))
             {
+                Error("Font metrics not found. You need to include the font details in your project or wait for Core 3.0");
                 Error("Could not include font definition file");
             }
             return fontData;
@@ -2467,68 +2473,74 @@ namespace Ego.PDF
                 }
             }
             var result = new StringBuilder();
-            var s =
-                "/CIDInit /ProcSet findresource begin\n";
-            s += "12 dict begin\n";
-            s += "begincmap\n";
-            s += "/CIDSystemInfo\n";
-            s += "<</Registry (Adobe)\n";
-            s += "/Ordering (UCS)\n";
-            s += "/Supplement 0\n";
-            s += ">> def\n";
-            s += "/CMapName /Adobe-Identity-UCS def\n";
-            s += "/CMapType 2 def\n";
-            s += "1 begincodespacerange\n";
-            s += "<00> <FF>\n";
-            s += "endcodespacerange\n";
+            result.Append(
+                        "/CIDInit /ProcSet findresource begin\n"
+                        + "12 dict begin\n"
+                        + "begincmap\n"
+                        + "/CIDSystemInfo\n"
+                        + "<</Registry (Adobe)\n"
+                        + "/Ordering (UCS)\n"
+                        + "/Supplement 0\n"
+                        + ">> def\n"
+                        + "/CMapName /Adobe-Identity-UCS def\n"
+                        + "/CMapType 2 def\n"
+                        + "1 begincodespacerange\n"
+                        + "<00> <FF>\n"
+                        + "endcodespacerange\n");
+
             if (nbr > 0)
             {
-                s += $"{nbr} beginbfrange\n";
-                s += ranges.ToString();
-                s += "endbfrange\n";
+                result.Append($"{nbr} beginbfrange\n");
+                result.Append(ranges.ToString());
+                result.Append("endbfrange\n");
             }
+
             if (nbc > 0)
             {
-                s += $"{nbc} beginbfchar\n";
-                s += chars;
-                s += "endbfchar\n";
+                result.Append($"{nbc} beginbfchar\n");
+                result.Append(chars);
+                result.Append("endbfchar\n");
             }
-            s += "endcmap\n";
-            s += "CMapName currentdict /CMap defineresource pop\n";
-            s += "end\n";
-            s += "end";
-            return s;
+
+            result.Append(
+               "endcmap\n"
+             + "CMapName currentdict /CMap defineresource pop\n"
+             + "end\n"
+             + "end");
+            return result.ToString();
         }
 
         internal virtual void PutFonts()
         {
-
-
-            foreach (var file in FontFiles.Keys)
+            foreach (var info in FontFiles.Values)
             {
-                FontDefinition info = Fonts[file];
                 // Font file embedding
                 NewObject();
                 info.n = ObjectCount;
                 //file_get_contents' returns a string 
-                var font = FileSystemSupport.ReadContents(Fontpath + file);
-                if (string.IsNullOrWhiteSpace(font))
+                var font = FileSystemSupport.ReadContentBytes(Fontpath + info.FontFile);
+                if (!font.Any())
                 {
-                    Error("Font file not found: " + file);
+                    Error("Font file not found: " + info.FontFile);
                 }
-                var extension = Path.GetExtension(file);
-                var compressed = (extension == ".z");
+                
+                /*
+                all fonts will be compressed
                 if (!compressed && info.length2 > 0)
                 {
                     font = TypeSupport.ToString(font).Substring(6, info.length1)
                            + TypeSupport.ToString(font).Substring(6 + info.length1 + 6, info.length2);
-                }
+                }*/
+
                 Out("<</Length " + font.Length);
-                if (compressed)
+                if (true /* compressed */)
                 {
+                    font = GzCompress(font);
                     Out("/Filter /FlateDecode");
                 }
-                Out("/Length1 " + TypeSupport.ToString(info.length1));
+
+                //Out("/Length1 " + TypeSupport.ToString(info.length1));
+                Out("/Length1 " + TypeSupport.ToString(font.Count()));
                 if (info.length2 != 0)
                 {
                     Out("/Length2 " + TypeSupport.ToString(info.length2) + " /Length3 0");
@@ -2567,7 +2579,7 @@ namespace Ego.PDF
                     }
                     else
                     {
-                        cmapkey = font1.name;
+                        cmapkey = font1.Name;
                     }
 
                     if (!CMaps.KeyExists(cmapkey))
@@ -2580,11 +2592,11 @@ namespace Ego.PDF
 
                 // Font objects
                 Fonts[fontKey].n = ObjectCount + 1;
-                var type = font1.type;
-                var name = font1.name;
-                if (font1.Subsetted)
+                var type = font1.FontType;
+                var name = font1.Name;
+                if (font1.Subsetted || true)
                 {
-                    name = "AAAAAA" + name;
+                    name = "AAAAAA+" + name;
                 }
 
                 switch (type)
@@ -2628,28 +2640,36 @@ namespace Ego.PDF
                             Out("endobj");
                             // Widths
                             NewObject();
-                            var cw = TypeSupport.ToArray(font1.cw);
-                            string s = "[";
+                            StringBuilder s = new StringBuilder("[");
                             int i;
+
+                            //TODO: MARCO: AQUÍ LAS FUENTES ESTABAN EN ENTEROS, AHORA TIENEN DECIMALES
                             for (i = 32; i <= 255; i++)
-                                s += TypeSupport.ToString(cw[Convert.ToString((char)i)]) + " ";
-                            Out(s + "]");
+                            {
+                                font1.Widths.TryGetValue(Convert.ToString((char)i), out var t);
+                                s.Append(Convert.ToString(t, CultureInfo.InvariantCulture) + " ");
+                            }
+
+                            s.Append("]");
+                            Out(s.ToString());
                             Out("endobj");
                             // Descriptor
                             NewObject();
-                            s = "<</Type /FontDescriptor /FontName /" + TypeSupport.ToString(name);
+                            s.Clear();
+                            s.Append("<</Type /FontDescriptor /FontName /" + TypeSupport.ToString(name));
                             foreach (string k1 in font1.desc.Keys)
                             {
                                 var v = Convert.ToString(font1.desc[k1], CultureInfo.InvariantCulture);
-                                s += " /" + k1 + " " + v; // TypeSupport.ToString(v);
+                                s.Append(" /" + k1 + " " + v); // TypeSupport.ToString(v);
                             }
 
-                            if (!string.IsNullOrEmpty(font1.file))
+                            if (!string.IsNullOrEmpty(font1.FontFile))
                             {
-                                s += " /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " +
-                                     TypeSupport.ToString(Fonts[font1.file].n) + " 0 R";
+                                s.Append(" /FontFile" + (type == FontTypeEnum.Type1 ? "" : "2") + " " +
+                                     TypeSupport.ToString(Fonts[font1.Name].n) + " 0 R");
                             }
-                            Out(s + ">>");
+                            Out(s);
+                            Out(">>");
                             Out("endobj");
                         }
                         break;

@@ -58,7 +58,6 @@ namespace Ego.PDF.Samples
                 Cell(40, 7, header, "1");
             }
             Ln();
-            Data[0][0] += " loren tal y pas\ncuasld lde duarte";
             foreach (var row in Data)
             {
                 var height = row.Max(x => CellMeasure(40, 6, x));

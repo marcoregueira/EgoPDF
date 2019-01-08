@@ -59,10 +59,19 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Ego.PDF.Samples\Ego.PDF.Samples.csproj">
+      <Project>{770011E2-1F6D-401C-BF89-EF1A6FC7F145}</Project>
+      <Name>Ego.PDF.Samples</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Ego.PdfCore\Ego.PdfCore.csproj">
       <Project>{B220BDD1-C995-4D6F-9706-7A3CF199CC88}</Project>
       <Name>Ego.PdfCore</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="calligra.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

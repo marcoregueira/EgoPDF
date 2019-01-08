@@ -221,6 +221,10 @@ namespace Ego.PDF.PHP
                 {
                     result = "Array";
                 }
+                else if (objectValue is Enum)
+                {
+                    result = ((Enum)objectValue).ToString();
+                }
                 else
                 {
                     result = "Object";

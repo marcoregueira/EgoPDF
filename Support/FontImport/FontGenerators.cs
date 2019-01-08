@@ -1,15 +1,13 @@
-﻿using Ego.PDF.Data;
-using Ego.PdfCore.NewFont;
+﻿using Ego.PDF;
+using Ego.PDF.Data;
+using Ego.PDF.Font;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using System.Windows.Media;
 using Xunit;
-using static Ego.PdfCore.NewFont.FontData;
 
 namespace FontImport
 {
@@ -19,32 +17,43 @@ namespace FontImport
         [Fact]
         public void GenerateArial()
         {
-            var font = LoadFont("file:///C:\\WINDOWS\\Fonts\\cour.ttf");
-            var font2 = LoadFont("file:///C:\\WINDOWS\\Fonts\\arial.ttf");
-            var fontData = JsonConvert.SerializeObject(font2, Formatting.Indented);
-            File.WriteAllText("font.ttf.json",fontData);
+            var font2 = LoadFont("Calligrapher", Path.Combine(GetPath(), "CALLIGRA.TTF"));
+            using (var pdf = new FPdf("samplefont.pdf"))
+            {
+                pdf.AddPage(PageSizeEnum.A4);
+                //pdf.SetFont("Arial", "", 16);
+                pdf.AddFont("Calligrapher", "", "file:///" + font2.FontFile);
+                //pdf.SetFont("AR HERMANN", "", 16);
+                pdf.Cell(40, 10, "Enjoy new fonts with FPDF!");
+                pdf.Close();
+            }
         }
 
-        public FontData LoadFont(string path)
+        private string GetPath()
         {
-            GlyphTypeface font = new GlyphTypeface(new Uri(path));
-            var fontData = new FontData
+            var codeBase = Assembly.GetExecutingAssembly().CodeBase.Replace("file:///","");
+            return Path.GetDirectoryName(codeBase);
+        }
+
+        public FontDefinition LoadFont(string name, string path)
+        {
+            var font = new GlyphTypeface(new Uri("file:///" + path));
+            var fontData = new FontDefinition
             {
-                Name = font.FamilyNames.FirstOrDefault().Value,
+                FontType = FontTypeEnum.TrueType,
+                FontFile = path,
+                Name = font.FamilyNames.FirstOrDefault().Value.ToLower(),
             };
 
             foreach (var advance in font.AdvanceWidths)
             {
                 var leftBearing = font.LeftSideBearings[advance.Key];
                 var rightBearing = font.RightSideBearings[advance.Key];
-                fontData.FontWidths[advance.Key] = new AdvanceWidth
-                {
-                    Point = advance.Key,
-                    LeftBearing = leftBearing,
-                    RightBearing = rightBearing,
-                    Advance = advance.Value
-                };
+                fontData.Widths[Convert.ToChar(advance.Key).ToString()] = advance.Value * 1000;
             }
+
+            FontBuilder.Fonts[name.ToLower()] = fontData;
+
             return fontData;
         }
     }
