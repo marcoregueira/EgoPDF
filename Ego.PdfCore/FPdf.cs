@@ -1890,7 +1890,9 @@ namespace Ego.PDF
             FontBuilder.Fonts.TryGetValue(font, out fontData);
             if (string.IsNullOrEmpty(fontData?.Name))
             {
-                Error("Font metrics not found. You need to include the font details in your project or wait for Core 3.0");
+                Error($"Font metrics not found for {font}." +
+                    $" You need to include the font details in your project or wait for Core 3.0" +
+                    $"Included fonts are: {string.Join(",", FontBuilder.Fonts.Select(x => x.Key))}");
                 Error("Could not include font definition file");
             }
             return fontData;
