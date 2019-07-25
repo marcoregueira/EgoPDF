@@ -1394,7 +1394,16 @@ namespace Ego.PDF
                 {
                     wordSeparator = currentPosition;
                 }
-                l += cw.Widths[nextChar[0].ToString()];
+
+                if (cw.Widths.ContainsKey(nextChar))
+                {
+                    l += cw.Widths[nextChar[0].ToString()];
+                }
+                else
+                {
+                    l += cw.Widths["A"];
+                }
+
                 if (l > wmax)
                 {
                     // Automatic line break
@@ -2523,7 +2532,7 @@ namespace Ego.PDF
                 {
                     Error("Font file not found: " + info.FontFile);
                 }
-                
+
                 /*
                 all fonts will be compressed
                 if (!compressed && info.length2 > 0)
