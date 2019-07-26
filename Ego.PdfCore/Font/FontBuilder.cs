@@ -10,7 +10,7 @@ namespace Ego.PDF.Font
 
         static void AddFont(string name, int up, int ut, FontTypeEnum type = FontTypeEnum.TrueType)
         {
-            FontBuilder.Fonts[name] = new FontDefinition()
+            FontBuilder.Fonts[name.ToLower()] = new FontDefinition()
             {
                 FontType = type,
                 Name = name.ToLower(),
