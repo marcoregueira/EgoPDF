@@ -103,10 +103,10 @@ namespace Ego.PDF.Data
                 var text = texts[pos]?.Invoke(col);
 
                 string oldStyle = null;
-                if (col.Bold && !pdf.FontStyle.Contains("B"))
+                if (col.Bold && !pdf.FontStyle.Contains("b"))
                 {
                     oldStyle = pdf.FontStyle;
-                    pdf.SetFont("", pdf.FontStyle + "B");
+                    pdf.SetFont("", pdf.FontStyle + "b");
                 }
 
                 var height = pdf.CellMeasure(col.Width, col.CellHeight ?? row.CellHeight, text);
@@ -127,10 +127,10 @@ namespace Ego.PDF.Data
                 var text = texts[pos]?.Invoke(col);
                 pdf.GoBack();
                 string oldStyle = null;
-                if (col.Bold && !pdf.FontStyle.Contains("B"))
+                if (col.Bold && !pdf.FontStyle.Contains("b"))
                 {
                     oldStyle = pdf.FontStyle;
-                    pdf.SetFont("", pdf.FontStyle + "B");
+                    pdf.SetFont("", pdf.FontStyle + "b");
                 }
                 pdf.BoxedText(col.Width, col.CellHeight ?? row.CellHeight, maxHeight, text, row.Border ?? col.Border, 0, col.Align, col.Fill);
                 if (oldStyle != null)
@@ -165,10 +165,10 @@ namespace Ego.PDF.Data
             {
                 var col = row.Cells[pos];
                 string oldStyle = null;
-                if (col.Bold && !pdf.FontStyle.Contains("B"))
+                if (col.Bold && !pdf.FontStyle.Contains("b"))
                 {
                     oldStyle = pdf.FontStyle;
-                    pdf.SetFont("", pdf.FontStyle + "B");
+                    pdf.SetFont("", pdf.FontStyle + "b");
                 }
                 var height = pdf.CellMeasure(col.Width, row.CellHeight, texts[pos]);
                 if (maxHeight < height) maxHeight = height;
@@ -182,10 +182,10 @@ namespace Ego.PDF.Data
             {
                 var col = row.Cells[pos];
                 string oldStyle = null;
-                if (col.Bold && !pdf.FontStyle.Contains("B"))
+                if (col.Bold && !pdf.FontStyle.Contains("b"))
                 {
                     oldStyle = pdf.FontStyle;
-                    pdf.SetFont("", pdf.FontStyle + "B");
+                    pdf.SetFont("", pdf.FontStyle + "b");
                 }
                 if (col.Fill) pdf.SetFillColor(col.Background);
                 pdf.BoxedText(col.Width, row.CellHeight, maxHeight, texts[pos], row.Border ?? col.Border, 0, col.Align, col.Fill);
@@ -206,7 +206,6 @@ namespace Ego.PDF.Data
             return pdf;
         }
     }
-
 
 
 
