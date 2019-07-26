@@ -1288,7 +1288,14 @@ namespace Ego.PDF
                     ls = l;
                     ns++;
                 }
-                l = l + cw.Widths[nextChar[0].ToString()];
+                if (cw.Widths.ContainsKey(nextChar[0].ToString()))
+                {
+                    l = l + cw.Widths[nextChar[0].ToString()];
+                }
+                else
+                {
+                    l = l + cw.Widths["A"];
+                }
                 if (l > wmax)
                 {
                     // Automatic line break
@@ -1510,7 +1517,16 @@ namespace Ego.PDF
                 {
                     sep = i;
                 }
-                l = l + cw.Widths[c[0].ToString()];
+                
+                if (cw.Widths.ContainsKey(c[0].ToString()))
+                {
+                    l = l + cw.Widths[c[0].ToString()];
+                }
+                else
+                {
+                    l = l + cw.Widths["A"];
+                }
+
                 if (l > wmax)
                 {
                     // Automatic line break
