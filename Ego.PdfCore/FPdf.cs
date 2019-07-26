@@ -1887,7 +1887,7 @@ namespace Ego.PDF
         {
             // Load a font definition file from the font directory
             FontDefinition fontData;
-            FontBuilder.Fonts.TryGetValue(font, out fontData);
+            FontBuilder.Fonts.TryGetValue(font.ToLower(), out fontData);
             if (string.IsNullOrEmpty(fontData?.Name))
             {
                 Error($"Font metrics not found for {font}." +
