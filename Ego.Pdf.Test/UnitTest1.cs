@@ -25,6 +25,18 @@ namespace Ego.Pdf.Test
         {
             Sample2.GetSample("sample2b.pdf", imagefile: "3d_down.png");
         }
+        
+        [Fact]
+        public void DoSample2jpg()
+        {
+            Sample2.GetSample("sample2jpg.pdf", imagefile: "v3v.jpg");
+        }
+        
+        [Fact]
+        public void DoSample2png()
+        {
+            Sample2.GetSample("sample2png.pdf", imagefile: "v3v.png");
+        }
 
         [Fact]
         public void DoSample3()

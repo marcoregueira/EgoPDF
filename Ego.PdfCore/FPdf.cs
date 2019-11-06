@@ -1636,6 +1636,7 @@ namespace Ego.PDF
 
                     type =
                         format.Name == "JPG" ? ImageTypeEnum.Jpg :
+                        format.Name == "JPEG" ? ImageTypeEnum.Jpg :
                         format.Name == "PNG" ? ImageTypeEnum.Png :
                         format.Name == "GIF" ? ImageTypeEnum.Gif : ImageTypeEnum.Default;
 
