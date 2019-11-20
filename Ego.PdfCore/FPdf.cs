@@ -2622,7 +2622,7 @@ namespace Ego.PDF
                 Fonts[fontKey].n = ObjectCount + 1;
                 var type = font1.FontType;
                 var name = font1.Name;
-                if (font1.Subsetted || true)
+                if (font1.Subsetted)
                 {
                     name = "AAAAAA+" + name;
                 }
