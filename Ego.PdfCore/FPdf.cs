@@ -182,7 +182,7 @@ namespace Ego.PDF
             // Enable compression
 
             //TODO: PONER TRUE
-            SetCompression(false);
+            SetCompression(true);
             // Set default PDF version number
             PdfVersion = "1.3";
 
@@ -1517,7 +1517,7 @@ namespace Ego.PDF
                 {
                     sep = i;
                 }
-                
+
                 if (cw.Widths.ContainsKey(c[0].ToString()))
                 {
                     l = l + cw.Widths[c[0].ToString()];

@@ -15,7 +15,7 @@
     <Authors>Marco Regueira</Authors>
     <Description>PDF tool. Automated port of FPDF with some changes and fixes.  </Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>First release</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
     <Copyright>Copyright 2017 (c) Marco Antonio Regueira.</Copyright>
     <PackageTags>PDF</PackageTags>
     <AssemblyVersion>1.0.0.1</AssemblyVersion>
