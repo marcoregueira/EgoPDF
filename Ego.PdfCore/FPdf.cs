@@ -182,7 +182,7 @@ namespace Ego.PDF
             // Enable compression
 
             //TODO: PONER TRUE
-            SetCompression(true);
+            SetCompression(false);
             // Set default PDF version number
             PdfVersion = "1.3";
 
