@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using Ego.PDF.Data;
 using HtmlAgilityPack;
-using Ego.PDF;
-using Ego.PDF.Data;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Ego.PDF.Samples
 {
@@ -17,11 +15,10 @@ namespace Ego.PDF.Samples
         {
         }
 
-        public static FPdf GetSample(string file, string path)
+        public static Stream GetSample(string file, string path)
         {
             using (var pdf = new Sample6(file))
             {
-
                 var html = @"You can now easily print text mixing different styles: <b>bold</b>, <i>italic</i>,
                     <u>underlined</u>, or <b><i><u>all at once</u></i></b>!<br><br>You can also insert links on
                     text, such as <a href='http://www.fpdf.org'>www.fpdf.org</a>, or on an image: click on the logo.";
@@ -41,7 +38,8 @@ namespace Ego.PDF.Samples
                 pdf.SetLeftMargin(45);
                 pdf.SetFontSize(14);
                 pdf.WriteHtml(html);
-                return pdf.Close();
+                pdf.Close();
+                return pdf.Buffer.BaseStream;
             }
         }
 

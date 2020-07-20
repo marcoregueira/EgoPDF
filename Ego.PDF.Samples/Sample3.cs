@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Ego.PDF.Data;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Ego.PDF;
-using Ego.PDF.Data;
 
 namespace Ego.PDF.Samples
 {
@@ -16,16 +14,17 @@ namespace Ego.PDF.Samples
 
         public string LocalPath { get; set; }
 
-        public static FPdf GetSample(string file, string path)
+        public static Stream GetSample(string file, string path)
         {
-            using (var pdf = new Sample3(file) { LocalPath = path })
+            using (var pdf = new Sample3(null) { LocalPath = path })
             {
                 pdf.AliasNbPages()
                    .SetTitle("20000 Leagues Under the Seas")
                    .SetAuthor("Jules Verne");
                 pdf.PrintChapter(1, "A RUNAWAY REEF", "20k_c1.txt");
                 pdf.PrintChapter(2, "THE PROS AND CONS", "20k_c2.txt");
-                return pdf.Close();
+                pdf.Close();
+                return pdf.Buffer.BaseStream;
             }
         }
 

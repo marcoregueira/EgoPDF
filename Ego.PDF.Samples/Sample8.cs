@@ -8,6 +8,7 @@ using HtmlAgilityPack;
 using Ego.PDF;
 using Ego.PDF.Data;
 using Microsoft.Xna.Framework;
+using System.IO;
 
 namespace Ego.PDF.Samples
 {
@@ -19,7 +20,7 @@ namespace Ego.PDF.Samples
         {
         }
 
-        public static FPdf GetSample(string file, string path)
+        public static Stream GetSample(string file, string path)
         {
             using (var pdf = new Sample8(file))
             {
@@ -156,7 +157,8 @@ Romania");
                 pdf.SetY(270);
                 DecoratorLine(pdf);
 
-                return pdf.Close();
+                pdf.Close();
+                return pdf.Buffer.BaseStream;
             }
         }
 

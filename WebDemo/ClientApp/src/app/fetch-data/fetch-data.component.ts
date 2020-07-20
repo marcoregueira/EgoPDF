@@ -18,7 +18,7 @@ export class FetchDataComponent {
     $event.preventDefault();
 
     let target = $event.target as HTMLElement;
-    let url = <string>target.attributes['href'];
+    let url = target.attributes['href'].value;
     let name = url.split('/').reverse()[0];
     const headers = new HttpHeaders();
     this.http.get(url, { headers, responseType: 'blob' as 'json' }).subscribe(

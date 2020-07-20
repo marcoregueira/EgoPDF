@@ -69,14 +69,20 @@ namespace Ego.PDF
             // Initialization of properties
             Page = 0;
             ObjectCount = 2;
+
+            if (Directory.Exists(filePath))
+            {
+                filePath = Path.Combine(filePath, Guid.NewGuid().ToString() + ".pdf");
+            }
+
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                Buffer = new StreamWriter(new MemoryStream(), PrivateEncoding);
+                Buffer = new StreamWriter(new MemoryStream(), PrivateEncoding, 2048, true);
                 Buffer.AutoFlush = true;
             }
             else
             {
-                Buffer = new StreamWriter(System.IO.File.Create(filePath), PrivateEncoding);
+                Buffer = new StreamWriter(File.Create(filePath), PrivateEncoding);
             }
 
             Offsets = new Dictionary<int, long>();
@@ -656,9 +662,13 @@ namespace Ego.PDF
             // To be implemented in your own inherited class
         }
 
+
+        public Action OnFooter { get; set; }
+
         public virtual void Footer()
         {
-            // To be implemented in your own inherited class
+            // To be extended in your own inherited class
+            this.OnFooter?.Invoke();
         }
 
         public virtual int PageNo()

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Ego.PDF.Data;
+using System;
+using System.IO;
 using System.Linq;
-using System.Text;
-using Ego.PDF;
-using Ego.PDF.Data;
 
 namespace Ego.PDF.Samples
 {
@@ -15,7 +13,7 @@ namespace Ego.PDF.Samples
 
         private string ImageFile { get; set; }
 
-        public static FPdf GetSample(string filePath, string imagefile)
+        public static Stream GetSample(string filePath, string imagefile)
         {
             using (var p = new Sample2(filePath) { ImageFile = imagefile })
             {
@@ -26,7 +24,8 @@ namespace Ego.PDF.Samples
                 {
                     p.Cell(0, 10, "Printing line number " + i, "0", 1);
                 }
-                return p.Close();
+                p.Close();
+                return p.Buffer.BaseStream;
             }
         }
 

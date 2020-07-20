@@ -16,7 +16,7 @@ namespace Ego.PDF.Samples
         private List<string[]> Data { get; set; }
 
 
-        public static FPdf GetSample(string file, string path)
+        public static Stream GetSample(string file, string path)
         {
             using (var pdf = new Sample5(file))
             {
@@ -31,7 +31,8 @@ namespace Ego.PDF.Samples
                 pdf.ImprovedTable(header);
                 pdf.AddPage();
                 pdf.FancyTable(header);
-                return pdf.Close();
+                pdf.Close();
+                return pdf.Buffer.BaseStream;
             }
         }
 
