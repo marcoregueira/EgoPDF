@@ -1,4 +1,4 @@
-﻿using SixLabors.ImageSharp;
+﻿using SkiaSharp;
 using System;
 using System.IO;
 using System.Linq;
@@ -18,8 +18,12 @@ namespace Ego.PDF.Support
 
         public static Dimensions GetJpegDimensions(Stream fs)
         {
-            var info = Image.Identify(fs);
-            return new Dimensions(info.Width, info.Height);
+            using (var codec = SKCodec.Create(fs))
+            {
+                var format = codec.EncodedFormat;
+                var dimensions = codec.GetScaledDimensions(1);
+                return new Dimensions(dimensions.Width, dimensions.Height);
+            }
         }
 
         public class Dimensions
