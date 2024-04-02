@@ -17,6 +17,7 @@ using Ego.PDF.Support;
 
 using Microsoft.Xna.Framework;
 using static Ego.PDF.Printf.SprintfTools;
+using SkiaSharp;
 
 /*******************************************************************************
 * FPDF                                                                         *
@@ -1642,17 +1643,20 @@ namespace Ego.PDF
                 // First use of this image, get info
                 if (type == ImageTypeEnum.Default)
                 {
-                    var format = SixLabors.ImageSharp.Image.DetectFormat(file);
-
-                    type =
-                        format.Name == "JPG" ? ImageTypeEnum.Jpg :
-                        format.Name == "JPEG" ? ImageTypeEnum.Jpg :
-                        format.Name == "PNG" ? ImageTypeEnum.Png :
-                        format.Name == "GIF" ? ImageTypeEnum.Gif : ImageTypeEnum.Default;
-
-                    if (type == ImageTypeEnum.Default)
+                    using (var codec = SKCodec.Create(file))
                     {
-                        Error("Unable to detect image type: " + file);
+                        var format = codec.EncodedFormat;
+                        var dimensions = codec.GetScaledDimensions(1);
+
+                        type =
+                            format == SKEncodedImageFormat.Jpeg ? ImageTypeEnum.Jpg :
+                            format == SKEncodedImageFormat.Png ? ImageTypeEnum.Png :
+                            format == SKEncodedImageFormat.Gif ? ImageTypeEnum.Gif : ImageTypeEnum.Default;
+
+                        if (type == ImageTypeEnum.Default)
+                        {
+                            Error("Unable to detect image type: " + file);
+                        }
                     }
                 }
 
@@ -2213,83 +2217,8 @@ namespace Ego.PDF
 
         internal virtual ImageInfo ParseGif(string file)
         {
-            using (var f = PHP.FileSystemSupport.FileOpen("php://temp", "rb"))
-            {
-                var format = SixLabors.ImageSharp.Image.Identify(f);
-                return new ImageInfo()
-                {
-                    w = format.Width,
-                    h = format.Height,
-                };
-
-                //format.PixelType.BitsPerPixel;
-            }
-
-            /*
-            // Extract info from a GIF file (via PNG conversion)
-            int im;
-            System.IO.FileStream f;
-            string data;
-            PHP.OrderedMap info;
-            string tmp;
-            if (!(this.GetType().GetMethod("imagepng") != null))
-            {
-                this.Error("GD extension is required for GIF support");
-            }
-            if (!(this.GetType().GetMethod("imagecreatefromgif") != null))
-            {
-                this.Error("GD has no GIF read support");
-            }
-            im = imagecreatefromgif(file);
-            if (!System.Convert.ToBoolean(im))
-            {
-                this.Error("Missing or incorrect image file: " + file);
-            }
-            imageinterlace(im, 0);
-            try
-            {
-                //CONVERSION_WARNING: Method 'fopen' was converted to 'PHP.FileSystemSupport.FileOpen' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fopen.htm 
-                f = PHP.FileSystemSupport.FileOpen("php://temp", "rb+");
-            }
-            catch (System.Exception)
-            {
-            }
-            if (PHP.TypeSupport.ToBoolean(f))
-            {
-                // Perform conversion in memory
-                ob_start();
-                imagepng(im);
-                data = ob_get_clean() ? "1" : "";
-                imagedestroy(im);
-                //CONVERSION_WARNING: Method 'fwrite' was converted to 'PHPFileSystemSupport.Write' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fwrite.htm 
-                PHP.FileSystemSupport.Write(f, data, -1);
-                //CONVERSION_WARNING: Method 'rewind' was converted to 'PHPFileSystemSupport.Rewind' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/rewind.htm 
-                PHP.FileSystemSupport.Rewind(f);
-                info = this._parsepngstream(f, file);
-                //CONVERSION_WARNING: Method 'fclose' was converted to 'PHP.FileSystemSupport.Close' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fclose.htm 
-                PHP.FileSystemSupport.Close(f);
-            }
-            else
-            {
-                // Use temporary file
-                //CONVERSION_WARNING: Method 'tempnam' was converted to 'System.IO.Path.GetTempFileName' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/tempnam.htm 
-                tmp = System.IO.Path.GetTempFileName();
-                if (!PHP.TypeSupport.ToBoolean(tmp))
-                {
-                    this.Error("Unable to create a temporary file");
-                }
-                if (!System.Convert.ToBoolean(imagepng(im, tmp)))
-                {
-                    this.Error("Error while saving to temporary file");
-                }
-                imagedestroy(im);
-                info = this._parsepng(tmp);
-                //CONVERSION_WARNING: Method 'unlink' was converted to 'System.IO.File.Delete' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/unlink.htm 
-                System.IO.File.Delete(tmp);
-            }
-            return info;
-
-             */
+            var jpeg = JpgParser.GetJpegDimensions(file);
+            return new ImageInfo() { w = jpeg.Width, h = jpeg.Height, };
         }
 
         internal virtual void NewObject()

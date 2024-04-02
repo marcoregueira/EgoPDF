@@ -1,9 +1,7 @@
 ﻿using Ego.PDF;
 using Ego.PDF.Data;
 using Ego.PDF.Font;
-using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Xunit;
 

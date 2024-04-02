@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using HtmlAgilityPack;
-using Ego.PDF;
 using Ego.PDF.Data;
 using Microsoft.Xna.Framework;
 using System.IO;
