@@ -1,7 +1,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Drawing;
 using Ego.PDF;
 using Ego.PDF.Data;
 using Ego.PDF.PHP;
@@ -35,6 +35,13 @@ namespace Ego.PDF.Font
         public Dictionary<string, double> Widths { get; set; }
         public Dictionary<string, string> desc { get; set; }
         public bool Subsetted { get; set; }
+        public Rectangle FontBBox { get; set; }
+        public int Flags { get; set; }
+        public float ItalicAngle { get; set; }
+        public float Ascent { get; set; }
+        public float Descent { get; set; }
+        public int StemV { get; set; }
+        public float CapHeight { get; set; }
 
         public FontDefinition()
         {

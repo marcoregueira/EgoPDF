@@ -110,15 +110,15 @@ Romania");
 
                 var points = new[]
                 {
-                new DrawingPoint(0, 0),
-                new DrawingPoint(5, -5),
-                new DrawingPoint(5, -15),
-                new DrawingPoint(120, -15),
-                new DrawingPoint(120, 15),
-                new DrawingPoint(5, 15),
-                new DrawingPoint(5, 5),
-                new DrawingPoint(0, 0)
-            };
+                    new DrawingPoint(0, 0),
+                    new DrawingPoint(5, -5),
+                    new DrawingPoint(5, -15),
+                    new DrawingPoint(120, -15),
+                    new DrawingPoint(120, 15),
+                    new DrawingPoint(5, 15),
+                    new DrawingPoint(5, 5),
+                    new DrawingPoint(0, 0)
+                };
 
                 foreach (var drawingPoint in points)
                 {
