@@ -1,7 +1,7 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData[ "Title" ] = "Home page";
 }
 
 <div class="text-center">
@@ -133,7 +133,8 @@
                         Tutorial 7
                     </td>
                     <td>
-                        Tutorial 7. The font reader/parser is not implemented yet.
+                        <a (click)="download($event)" href="/api/SampleData/GetSample7">Tutorial 7</a>
+                        <i class="icon-list-alt sampleSource link_out" data-sample="7"></i>
                     </td>
                 </tr>
             </tbody>

@@ -8,8 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Xunit;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FontImport
 {
@@ -30,7 +28,7 @@ namespace FontImport
             LoadFont("Ceviche", Path.Combine(GetPath(), "Ceviche/CevicheOne-Regular.ttf"));
             LoadFont("Roboto", Path.Combine(GetPath(), "Roboto/RobotoSlab-VariableFont_wght.ttf"));
             LoadFont("mytype", Path.Combine(GetPath(), "mytype/mytype.ttf"));
-            
+
             using var pdf = new FPdf(DateTime.Now.Ticks + ".samplefont.pdf");
             pdf.AddPage(PageSizeEnum.A4);
             //pdf.SetFont("Times", "", 16);
@@ -49,7 +47,11 @@ namespace FontImport
 
         public FontDefinition LoadFont(string name, string path)
         {
-            var chars = FontBuilder.Fonts.OrderBy(x => x.Value.Widths.Count).SelectMany(x => x.Value.Widths.Keys).Distinct().ToArray();
+            var chars = FontBuilder.Fonts
+                .OrderBy(x => x.Value.Widths.Count)
+                .SelectMany(x => x.Value.Widths.Keys)
+                .Distinct()
+                .ToArray();
 
             var fontFace = GetTypeface(path);
             var fontData = new FontDefinition
@@ -62,7 +64,6 @@ namespace FontImport
             };
 
             var font = new SKFont(fontFace, 10);
-            var paint = new SKPaint(font);
             var lineSpacing = font.GetFontMetrics(out var metrics);
             fontData.Flags = 32;
             fontData.FontBBox = new Rectangle(0, 0, 0, 0);
@@ -84,8 +85,8 @@ namespace FontImport
 
             foreach (var ch in chars)
             {
-                var advance = paint.MeasureText(ch) * 100;
-                fontData.Widths[ch] = advance;
+                var advance = font.MeasureText(ch) * 100;
+                fontData.Widths[ ch ] = advance;
             }
 
             //var gg = font.GetGlyphs("asa".AsSpan());
@@ -107,7 +108,7 @@ namespace FontImport
             //    fontData.Widths[Convert.ToChar(advance.Key).ToString()] = advance.Value * 1000;
             //}
 
-            FontBuilder.Fonts[name.ToLower()] = fontData;
+            FontBuilder.Fonts[ name.ToLower() ] = fontData;
 
             return fontData;
         }

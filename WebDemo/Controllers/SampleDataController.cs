@@ -5,7 +5,7 @@ namespace WebDemo.Controllers
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
-    public class SampleDataController : Controller
+    public class SampleDataController: Controller
     {
 
         public SampleDataController()
@@ -92,6 +92,16 @@ namespace WebDemo.Controllers
             var result = new FileStreamResult(buffer, "application/pdf");
             return result;
         }
+
+        [HttpGet()]
+        public FileStreamResult GetSample7()
+        {
+            var buffer = Sample7.GetSample(null);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
 
         [HttpGet()]
         public FileStreamResult GetSample8()
