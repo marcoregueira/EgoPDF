@@ -1,5 +1,6 @@
 using Ego.PDF.Samples;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 
 namespace WebDemo.Controllers
 {
@@ -97,6 +98,16 @@ namespace WebDemo.Controllers
         public FileStreamResult GetSample8()
         {
             var buffer = Sample8.GetSample(null, CurrentPath);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
+        [HttpGet()]
+        public FileStreamResult GetSampleZebra()
+        {
+            
+            var buffer = SampleZebra.GetSample(null, AppDomain.CurrentDomain.BaseDirectory);
             buffer.Seek(0, SeekOrigin.Begin);
             var result = new FileStreamResult(buffer, "application/pdf");
             return result;

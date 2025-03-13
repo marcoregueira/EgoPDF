@@ -25,13 +25,13 @@ namespace Ego.Pdf.Test
         {
             Sample2.GetSample("sample2b.pdf", imagefile: "3d_down.png");
         }
-        
+
         [Fact]
         public void DoSample2jpg()
         {
             Sample2.GetSample("sample2jpg.pdf", imagefile: "v3v.jpg");
         }
-        
+
         [Fact]
         public void DoSample2png()
         {
@@ -68,10 +68,19 @@ namespace Ego.Pdf.Test
             Sample8.GetSample("sample8.pdf", GetPath());
         }
 
+        [Fact]
+        public void DoZebra()
+        {
+            //SampleZebra.GetSample("sample_codebar.pdf");
+        }
+
+
+        #region Auxiliary methods
         private string GetPath()
         {
             var codeBase = Assembly.GetExecutingAssembly().Location;
             return Path.GetDirectoryName(codeBase);
         }
+        #endregion
     }
 }

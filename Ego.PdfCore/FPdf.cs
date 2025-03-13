@@ -127,26 +127,7 @@ namespace Ego.PDF
                 new PageSize("letter", 612, 1008),
             };
 
-            if (unit == UnitEnum.Point)
-            {
-                k = 1;
-            }
-            else if (unit == UnitEnum.Milimeter)
-            {
-                k = 72 / 25.4;
-            }
-            else if (unit == UnitEnum.Centimeter)
-            {
-                k = 72 / 2.54;
-            }
-            else if (unit == UnitEnum.Inch)
-            {
-                k = 72;
-            }
-            else
-            {
-                Error("Incorrect unit: " + unit);
-            }
+            SetUnitConverionFactor(unit);
 
             Dimensions size = GetPageSize(pageSize);
             DefPageSize = size;
@@ -197,9 +178,37 @@ namespace Ego.PDF
             PageNumberFormat = "d";
         }
 
+        public void SetUnitConverionFactor(UnitEnum unit, double v = 72)
+        {
+            this.Unit = unit;
+            if (unit == UnitEnum.Point)
+            {
+                k = 1;
+            }
+            else if (unit == UnitEnum.Milimeter)
+            {
+                k = 72 / 25.4;
+            }
+            else if (unit == UnitEnum.Centimeter)
+            {
+                k = 72 / 2.54;
+            }
+            else if (unit == UnitEnum.Inch)
+            {
+                k = 72;
+            }
+            else
+            {
+                Error("Incorrect unit: " + unit);
+            }
+
+            k = 72 / v;
+        }
+
         public FPdf(string path) : this(PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4, path)
         {
         }
+
 
         /// <summary>
         /// Current page number
@@ -665,6 +674,7 @@ namespace Ego.PDF
 
 
         public Action OnFooter { get; set; }
+        public UnitEnum Unit { get; private set; }
 
         public virtual void Footer()
         {
