@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ego.Pdf.Zpl\Ego.Pdf.Zpl.csproj" />
     <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj" />
   </ItemGroup>
 
@@ -36,6 +37,18 @@
     </None>
     <None Update="logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="App_Data\Roboto\LICENSE.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="App_Data\Roboto\README.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="App_Data\Roboto\RobotoMono-VariableFont_wght.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="App_Data\Roboto\RobotoSlab-VariableFont_wght.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="v3v.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
