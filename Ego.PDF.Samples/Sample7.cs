@@ -45,6 +45,19 @@ public class Sample7
         pdf.SetFont("Calligrapher", "", 16);
         pdf.Cell(190, 10, "Enjoy new fonts with FPDF!");
 
+        pdf.Ln(20); 
+        FontName(pdf, "Roboto (doble height)");
+        pdf.Ln(3); 
+        pdf.SetFont("Roboto", "", 16, FontScale.DoubleHeight);
+        pdf.Cell(190, 10, "Enjoy new fonts with FPDF!");
+
+        pdf.Ln(15);
+        FontName(pdf, "Roboto (doble width)");
+        pdf.SetFont("Roboto", "", 16, FontScale.DoubleWidth);
+        pdf.Cell(190, 10, "Enjoy new fonts with FPDF!");
+        pdf.Ln(15);
+
+
         pdf.Close();
         return pdf.Buffer.BaseStream;
     }

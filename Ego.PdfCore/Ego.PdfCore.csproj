@@ -9,7 +9,7 @@
     <ApplicationIcon />
     <OutputTypeEx>library</OutputTypeEx>
     <StartupObject />
-        
+	<LangVersion>latest</LangVersion>
     <PackageId>EgoPDF.Generator</PackageId>
     <PackageVersion>1.0.0-alpha</PackageVersion>
     <Authors>Marco Regueira</Authors>
