@@ -111,5 +111,14 @@ namespace WebDemo.Controllers
             var result = new FileStreamResult(buffer, "application/pdf");
             return result;
         }
+
+        [HttpGet()]
+        public FileStreamResult GetSample9()
+        {
+            var buffer = Sample9.GetSample(null, CurrentPath);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
     }
 }
