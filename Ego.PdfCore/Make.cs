@@ -12,7 +12,6 @@ namespace Ego.PDF
     {
         public virtual void Message(object txt, bool severity)
         {
-
             if (severity)
             {
                 Console.Write(severity + ": ");

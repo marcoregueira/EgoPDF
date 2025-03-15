@@ -45,7 +45,7 @@ namespace FontImport
             return result;
         }
 
-        public FontDefinition LoadFont(string name, string path)
+        public FontDefinition LoadFont(string name, string path, string variants)
         {
             var chars = FontBuilder.Fonts
                 .OrderBy(x => x.Value.Widths.Count)
@@ -73,6 +73,14 @@ namespace FontImport
             fontData.StemV = 0;
             fontData.CapHeight = metrics.CapHeight * 100;
 
+
+            foreach (var ch in chars)
+            {
+                var advance = font.MeasureText(ch) * 100;
+                fontData.Widths[ ch ] = advance;
+            }
+
+
             //fontData.Flags = 32;
             //fontData.FontBBox = new Rectangle(0, 0, 0, 0);
             //fontData.ItalicAngle = 0;
@@ -81,14 +89,6 @@ namespace FontImport
             //fontData.StemV = 0;
             //fontData.CapHeight = 0;
             /// FontFile2 17 0 R
-
-
-            foreach (var ch in chars)
-            {
-                var advance = font.MeasureText(ch) * 100;
-                fontData.Widths[ ch ] = advance;
-            }
-
             //var gg = font.GetGlyphs("asa".AsSpan());
 
             var tables = fontFace.TableCount;

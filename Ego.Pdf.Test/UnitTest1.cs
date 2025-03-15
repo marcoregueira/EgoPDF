@@ -68,6 +68,12 @@ namespace Ego.Pdf.Test
             Sample8.GetSample("sample8.pdf", GetPath());
         }
 
+        [Fact]
+        public void DoSample9()
+        {
+            Sample9.GetSample("sample9.pdf", GetPath());
+        }
+
         private string GetPath()
         {
             var codeBase = Assembly.GetExecutingAssembly().Location;
