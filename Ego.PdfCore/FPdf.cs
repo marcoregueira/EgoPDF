@@ -175,24 +175,29 @@ public class FPdf: IDisposable
 
         WPt = W * k;
         HPt = H * k;
+    
         // Page margins (1 cm)
         double margin = 28.35 / k;
         SetMargins(margin, margin);
+        
         // Interior cell margin (1 mm)
         CMargin = margin / 10;
+        
         // Line width (0.2 mm)
         LineWidth = .567 / k;
+        
         // Automatic page break
         SetAutoPageBreak(true, 2 * margin);
+        
         // Default display mode
         SetDisplayMode(ZoomEnum.Default, LayoutEnum.Default);
+        
         // Enable compression
-
         //TODO: PONER TRUE
         SetCompression(false);
+        
         // Set default PDF version number
         PdfVersion = "1.3";
-
         DefaultCulture = CultureInfo.InvariantCulture;
         PageNumberFormat = "d";
     }
@@ -345,7 +350,6 @@ public class FPdf: IDisposable
     public string Creator { get; set; }
     public string AliasNbPagesRenamed { get; set; }
     public string PdfVersion { get; set; }
-
     public string FpdfFontpath { get; set; }
 
     public CultureInfo DefaultCulture { get; set; }

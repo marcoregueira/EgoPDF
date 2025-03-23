@@ -79,9 +79,9 @@ namespace Ego.PDF.PHP
             try
             {
                 pathInfo = new OrderedMap();
-                pathInfo["dirname"] = System.IO.Path.GetDirectoryName(path);
-                pathInfo["basename"] = System.IO.Path.GetFileName(path);
-                pathInfo["extension"] = System.IO.Path.GetExtension(path);
+                pathInfo[ "dirname" ] = System.IO.Path.GetDirectoryName(path);
+                pathInfo[ "basename" ] = System.IO.Path.GetFileName(path);
+                pathInfo[ "extension" ] = System.IO.Path.GetExtension(path);
             }
             catch
             {
@@ -175,11 +175,11 @@ namespace Ego.PDF.PHP
         /// <returns>Returns the string representation of the read block of bytes.</returns>
         public static string Read(System.IO.BinaryReader stream, long length)
         {
-            int theLength = (int)length;
+            int theLength = (int) length;
             string result = null;
             try
             {
-                byte[] bytes = new byte[length];
+                byte[] bytes = new byte[ length ];
                 int readBytes = stream.Read(bytes, 0, theLength);
                 if (readBytes > 0)
                     result = System.Text.Encoding.ASCII.GetString(bytes, 0, readBytes);
@@ -198,11 +198,11 @@ namespace Ego.PDF.PHP
         /// <returns>Returns the string representation of the read block of bytes.</returns>
         public static string Read(MiscUtil.IO.EndianBinaryReader stream, long length)
         {
-            int theLength = (int)length;
+            int theLength = (int) length;
             string result = null;
             try
             {
-                byte[] bytes = new byte[length];
+                byte[] bytes = new byte[ length ];
                 int readBytes = stream.Read(bytes, 0, theLength);
                 if (readBytes > 0)
                     result = System.Text.Encoding.ASCII.GetString(bytes, 0, readBytes);
@@ -221,33 +221,20 @@ namespace Ego.PDF.PHP
         public static string ReadContents(string fileName)
         {
             string result = null;
-            try
-            {
-                using (var file = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    var reader = new StreamReader(file);
-                    string contents = reader.ReadToEnd();
-                    reader.Dispose();
-                    result = contents;
-                }
-            }
-            catch
-            {
-            }
+            using var file = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(file);
+            string contents = reader.ReadToEnd();
+            result = contents;
             return result;
         }
 
         public static byte[] ReadContentBytes(string fileName)
         {
-            using (System.IO.FileStream file = new System.IO.FileStream(fileName, System.IO.FileMode.Open,
-                System.IO.FileAccess.Read, System.IO.FileShare.Read))
-            {
-                System.IO.BinaryReader reader = new System.IO.BinaryReader(file);
-                int size = Convert.ToInt32(file.Length);
-                var result = reader.ReadBytes(size);
-                reader.Dispose();
-                return result;
-            }
+            using var file = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var reader = new BinaryReader(file);
+            var size = Convert.ToInt32(file.Length);
+            var result = reader.ReadBytes(size);
+            return result;
         }
 
         /// <summary>
@@ -255,16 +242,9 @@ namespace Ego.PDF.PHP
         /// </summary>
         /// <param name="stream">The file stream to read from.</param>
         /// <returns>Returns the string representation of the read byte.</returns>
-        public static string ReadByte(System.IO.FileStream stream)
+        public static string ReadByte(FileStream stream)
         {
-            string result = null;
-            try
-            {
-                result = System.Text.Encoding.ASCII.GetString(new byte[] { (byte)stream.ReadByte() });
-            }
-            catch
-            {
-            }
+            var result = System.Text.Encoding.ASCII.GetString(new byte[] { (byte) stream.ReadByte() });
             return result;
         }
 
@@ -284,7 +264,7 @@ namespace Ego.PDF.PHP
                 string line = reader.ReadLine();
                 while (line != null)
                 {
-                    result[line] = line;
+                    result[ line ] = line;
                     line = reader.ReadLine();
                 }
             }
@@ -298,7 +278,7 @@ namespace Ego.PDF.PHP
             var line = reader.ReadLine();
             while (line != null)
             {
-                result[line] = line;
+                result[ line ] = line;
                 line = reader.ReadLine();
             }
             return result;
@@ -309,20 +289,7 @@ namespace Ego.PDF.PHP
         /// </summary>
         /// <param name="stream">The FileStream object to close.</param>
         /// <returns>Returns a boolean value that indicates whether the stream was successfully closed (true) or not (false).</returns>
-        public static bool Close(System.IO.FileStream stream)
-        {
-            bool result;
-            try
-            {
-                if (stream != null) stream.Dispose();
-                result = true;
-            }
-            catch
-            {
-                result = false;
-            }
-            return result;
-        }
+        public static void Close(FileStream stream) => stream?.Dispose();
 
         /// <summary>
         /// Writes the specified data in the specified FileStream object.
@@ -331,20 +298,17 @@ namespace Ego.PDF.PHP
         /// <param name="data">The data to be written to the stream.</param>
         /// <param name="length">The lenght of the data to be written.</param>
         /// <returns>Returns the number of bytes written.</returns>
-        public static int Write(System.IO.FileStream stream, string data, int length)
+        public static int Write(FileStream stream, string data, int length)
         {
-            int resultLength = -1;
-            try
+            var resultLength = -1;
+            if (length > 0 && length < data.Length)
             {
-                if (length > 0 && length < data.Length) data = data.Substring(0, length);
-                System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
-                byte[] bytes = encoding.GetBytes(data);
-                stream.Write(bytes, 0, bytes.Length);
-                resultLength = (int)bytes.Length;
+                data = data.Substring(0, length);
             }
-            catch
-            {
-            }
+            var encoding = new System.Text.ASCIIEncoding();
+            var bytes = encoding.GetBytes(data);
+            stream.Write(bytes, 0, bytes.Length);
+            resultLength = (int) bytes.Length;
             return resultLength;
         }
 
@@ -498,11 +462,11 @@ namespace Ego.PDF.PHP
                         //	a carriage return (hexadecimal 0x000d)
                         //	a line feed (hexadecimal 0x000a)
                         //	or carriage return + line feed (hexadecimal 0x000d 0x000a)
-                        byte theByte = (byte)stream.ReadByte();
-                        if (theByte == (byte)0x0d || theByte == (byte)0x0a)
+                        byte theByte = (byte) stream.ReadByte();
+                        if (theByte == (byte) 0x0d || theByte == (byte) 0x0a)
                         {
-                            byte nextByte = (byte)stream.ReadByte();
-                            if (nextByte != (byte)0x0a)
+                            byte nextByte = (byte) stream.ReadByte();
+                            if (nextByte != (byte) 0x0a)
                                 stream.Position--; //if line ends with 0x000d 0x000a, then consume 0x000a.
                             endOfLine = true;
                         }
@@ -534,10 +498,11 @@ namespace Ego.PDF.PHP
                 string line = ReadLine(stream, length);
                 if (line != null)
                 {
-                    if (delimiter == null || delimiter == string.Empty) delimiter = ",";
-                    string[] fields = line.Split(delimiter[0]);
+                    if (delimiter == null || delimiter == string.Empty)
+                        delimiter = ",";
+                    string[] fields = line.Split(delimiter[ 0 ]);
                     for (int index = 0; index < fields.Length; index++)
-                        fields[index] = fields[index].Trim();
+                        fields[ index ] = fields[ index ].Trim();
 
                     newOrderedMap = new OrderedMap(fields, false);
                 }
