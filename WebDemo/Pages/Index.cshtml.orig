@@ -168,21 +168,19 @@
                 </tr>
                 <tr>
                     <td>
-                        <b>Sample 2</b>.  Barcodes. Requires 
-                    </td>
-                    <td>Tutorial 9.</td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample9">Barcodes</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
+<<<<<<< HEAD
                         <b>Sample 1</b>. Tutorial 8. Zebra
                     </td>
                     <td></td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSampleZebra">Invoice</a>
+=======
+                        <b>Sample 2</b>.  Barcodes. Requires 
+                    </td>
+                    <td>Tutorial 9.</td>
+                    <td>
+                        <a (click)="download($event)" href="/api/SampleData/GetSample9">Barcodes</a>
+>>>>>>> master
                         <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
                     </td>
                 </tr>

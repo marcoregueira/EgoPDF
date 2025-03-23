@@ -69,19 +69,21 @@ namespace Ego.Pdf.Test
         }
 
         [Fact]
+<<<<<<< HEAD
         public void DoZebra()
         {
             //SampleZebra.GetSample("sample_codebar.pdf");
         }
 
+
+        #region Auxiliary methods
+=======
         public void DoSample9()
         {
-            //SampleZebra.GetSample("sample_codebar.pdf");
             Sample9.GetSample("sample9.pdf", GetPath());
         }
 
-
-        #region Auxiliary methods
+>>>>>>> master
         private string GetPath()
         {
             var codeBase = Assembly.GetExecutingAssembly().Location;
