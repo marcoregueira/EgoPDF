@@ -1,0 +1,68 @@
+# Azure DevOps pipeline: build EgoPDF WebDemo and deploy to Azure Web App on
+# every commit to master.
+
+trigger:
+  branches:
+    include:
+      - master
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '8.0.x'
+  webProject: 'WebDemo/WebDemo.csproj'
+  solution: 'PDF.sln'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK $(dotnetVersion)'
+    inputs:
+      packageType: sdk
+      version: $(dotnetVersion)
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore
+    inputs:
+      command: restore
+      projects: '$(solution)'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      command: build
+      projects: '$(solution)'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    inputs:
+      command: test
+      projects: 'Ego.Pdf.Test/Ego.Pdf.Test.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
+      publishTestResults: true
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish WebDemo (portable, framework-dependent)'
+    inputs:
+      command: publish
+      publishWebProjects: false
+      projects: '$(webProject)'
+      arguments: >-
+        --configuration $(buildConfiguration)
+        --output $(Build.ArtifactStagingDirectory)/webdemo
+      zipAfterPublish: true
+      modifyOutputPath: false
+
+  - task: AzureWebApp@1
+    displayName: 'Deploy WebDemo to EgoPdf'
+    inputs:
+      azureSubscription: 'Pay-As-You-Go(f9c40bdd-6a93-4c17-8f14-2b0a704db1bd)'
+      appType: 'webApp'
+      appName: 'EgoPdf'
+      deployToSlotOrASE: true
+      resourceGroupName: 'EgoPdf'
+      package: '$(Build.ArtifactStagingDirectory)/webdemo/*.zip'
