@@ -1,0 +1,85 @@
+# Azure DevOps pipeline: pack EgoPDF.Generator + EgoPDF.Zpl y los publica
+# juntos en nuget.org. Disparo manual desde la UI ("Run pipeline").
+#
+# Requisitos:
+#   - Variable secreta `NUGET_API_KEY` definida en el pipeline (UI: Edit
+#     pipeline -> Variables -> +) con la clave de nuget.org marcada como
+#     secret. NO escribirla en el YAML.
+#   - El <Version> de cada .csproj se incrementa manualmente antes de lanzar
+#     el pipeline (nuget.org rechaza re-publicar la misma versión salvo que
+#     marques skipDuplicate=true al ejecutarlo).
+
+trigger: none          # solo manual; cambia a tag/rama si quieres auto
+pr: none
+
+parameters:
+  - name: packOnly
+    displayName: 'Solo empaquetar (sin push)'
+    type: boolean
+    default: false
+  - name: skipDuplicate
+    displayName: 'Saltar versiones ya publicadas (no falla si la versión existe)'
+    type: boolean
+    default: false
+
+pool:
+  vmImage: 'windows-latest'      # PowerShell + dotnet preinstalados; Linux también vale
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '8.0.x'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK $(dotnetVersion)'
+    inputs:
+      packageType: sdk
+      version: $(dotnetVersion)
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore
+    inputs:
+      command: restore
+      projects: 'PDF.sln'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      command: build
+      projects: 'PDF.sln'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    inputs:
+      command: test
+      projects: 'Ego.Pdf.Test/Ego.Pdf.Test.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
+      publishTestResults: true
+
+  - task: PowerShell@2
+    displayName: 'Pack & push ambos paquetes (publish.ps1)'
+    env:
+      # publish.ps1 lee la clave de $env:NUGET_API_KEY y nunca la imprime.
+      NUGET_API_KEY: $(NUGET_API_KEY)
+      PACK_ONLY: ${{ parameters.packOnly }}
+      SKIP_DUPLICATE: ${{ parameters.skipDuplicate }}
+    inputs:
+      pwsh: true
+      targetType: inline
+      # Sin -Generator/-Zpl: publish.ps1 empaqueta y empuja los dos paquetes
+      # (Generator primero, Zpl después con el pin de versión exacta).
+      script: |
+        $arguments = @()
+        if ($env:PACK_ONLY -eq 'True')      { $arguments += '-PackOnly' }
+        if ($env:SKIP_DUPLICATE -eq 'True') { $arguments += '-SkipDuplicate' }
+        & "$(Build.SourcesDirectory)/publish.ps1" @arguments
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publicar .nupkg / .snupkg como artefacto'
+    condition: always()
+    inputs:
+      targetPath: 'artifacts'
+      artifact: nuget-packages
+      publishLocation: pipeline
