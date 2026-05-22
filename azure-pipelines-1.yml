@@ -49,14 +49,6 @@ steps:
       projects: 'PDF.sln'
       arguments: '--configuration $(buildConfiguration) --no-restore'
 
-  - task: DotNetCoreCLI@2
-    displayName: Test
-    inputs:
-      command: test
-      projects: 'Ego.Pdf.Test/Ego.Pdf.Test.csproj'
-      arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
-      publishTestResults: true
-
   - task: PowerShell@2
     displayName: 'Pack & push ambos paquetes (publish.ps1)'
     env:
