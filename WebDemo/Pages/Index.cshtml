@@ -176,6 +176,21 @@
                         <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
                     </td>
                 </tr>
+                <tr>
+                    <td>
+                        <b>Sample 3</b>. Zebra Emulation
+                    </td>
+                    <td></td>
+                    <td>
+                        <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=1">Horizontal shipping (^BC, ^GB, ^FR)</a>
+                        <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
+                        <br />
+                        <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=2">Vertical shipping (rotated, ^GFA, ^B2)</a>
+                        <br />
+                        <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=3">Barcode catalogue (^BC / ^B3 / ^B2 / ^BK / ^BE / ^B8 / ^BU / ^BM / ^BQ / ^BX / ^B7 / ^BO)</a>
+                        <br />
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

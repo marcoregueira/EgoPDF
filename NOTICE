@@ -1,0 +1,26 @@
+EgoPDF
+======
+
+Copyright (c) 2017-2026 Marco Antonio Regueira
+Licensed under the MIT License (see LICENSE).
+
+The EgoPDF.Generator package is an evolution of an automated C# port
+of FPDF, originally written by Olivier Plathey:
+
+    FPDF
+    http://www.fpdf.org/
+    Copyright (c) Olivier Plathey
+
+    FPDF is freeware. There is no usage restriction. You may embed it
+    freely in your application (commercial or not), with or without
+    modifications. Reference to FPDF in the resulting PDF is not
+    mandatory.
+
+This acknowledgment is included for transparency; FPDF's terms do not
+require attribution. Substantial portions of EgoPDF.Generator have
+been rewritten (Skia-based font embedding, font descriptor
+correctness, modern target frameworks, packaging) and are subject to
+the MIT License above.
+
+The EgoPDF.Zpl package is original work by Marco Antonio Regueira and
+contains no FPDF-derived code.

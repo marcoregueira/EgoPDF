@@ -25,13 +25,13 @@ namespace Ego.Pdf.Test
         {
             Sample2.GetSample("sample2b.pdf", imagefile: "3d_down.png");
         }
-        
+
         [Fact]
         public void DoSample2jpg()
         {
             Sample2.GetSample("sample2jpg.pdf", imagefile: "v3v.jpg");
         }
-        
+
         [Fact]
         public void DoSample2png()
         {
@@ -63,10 +63,75 @@ namespace Ego.Pdf.Test
         }
 
         [Fact]
+        public void DoSample7()
+        {
+            Sample7.GetSample("sample7.pdf");
+        }
+
+        [Fact]
         public void DoSample8()
         {
             Sample8.GetSample("sample8.pdf", GetPath());
         }
+
+        // --------------------------------------------------------------
+        // Zebra "tests" (visual smoke tests, not assertions)
+        //
+        // These [Fact]s drive the ZPL → PDF pipeline end-to-end and drop
+        // the resulting PDF next to the test binaries so a human can open
+        // them and eyeball the result. They pass as long as the code runs
+        // without throwing — there's no automatic comparison.
+        //
+        // Outputs land in:
+        //   Ego.Pdf.Test/bin/{Debug|Release}/net8.0/sample_zebra_*.pdf
+        //
+        // To compare against Labelary, paste the ZPL emitted by each
+        // sample into the Labelary viewer (https://labelary.com/viewer.html)
+        // and drop the resulting PDF beside the generated one.
+        // --------------------------------------------------------------
+
+        /// <summary>
+        /// Horizontal shipping label demo (ACME Logistics, generic data).
+        /// Adapted from the classic Intershipping ZPL shipped with the
+        /// Zebra documentation, with all real-looking values replaced by
+        /// placeholders. Uses ^CF / ^GB / ^FR / ^BC.
+        ///
+        /// Output: sample_zebra_horizontal.pdf
+        /// </summary>
+        [Fact]
+        public void DoZebraHorizontalShipping()
+        {
+            SampleZebra.GetSampleHorizontalShipping("sample_zebra_horizontal.pdf", GetPath());
+        }
+
+        /// <summary>
+        /// Catalogue of every ZPL barcode command the engine maps onto a
+        /// ZXing writer: ^BC, ^B3, ^B2, ^BK, ^BE, ^B8, ^BU, ^B9, ^BM,
+        /// ^BQ, ^BX, ^B7 and ^BO. Used to eyeball the rendering — there's
+        /// no automated check, just "did it crash".
+        ///
+        /// Output: sample_zebra_barcodes.pdf
+        /// </summary>
+        [Fact]
+        public void DoZebraBarcodes()
+        {
+            SampleZebra.GetSampleBarcodes("sample_zebra_barcodes.pdf", GetPath());
+        }
+
+        /// <summary>
+        /// Vertical shipping label (ACME Logistics, generic data). Stress
+        /// test for the rotated-text codepath: ^FT bottom-origin, ^A?B
+        /// 90° rotation, ^FB wrap inside narrow boxes, an inline ^GFA
+        /// placeholder logo and a ^B2 Interleaved 2 of 5 barcode.
+        ///
+        /// Output: sample_zebra_vertical1.pdf
+        /// </summary>
+        [Fact]
+        public void DoZebraVertical1()
+        {
+            SampleZebra.GetSampleVertical1("sample_zebra_vertical1.pdf", GetPath());
+        }
+
 
         [Fact]
         public void DoSample9()
@@ -74,10 +139,13 @@ namespace Ego.Pdf.Test
             Sample9.GetSample("sample9.pdf", GetPath());
         }
 
+
+        #region Auxiliary methods
         private string GetPath()
         {
             var codeBase = Assembly.GetExecutingAssembly().Location;
             return Path.GetDirectoryName(codeBase);
         }
+        #endregion
     }
 }

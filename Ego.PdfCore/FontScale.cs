@@ -8,9 +8,8 @@ public class FontScale
     public static FontScale DoubleHeight = new(1, 2);
     public static FontScale DoubleWidth = new(2, 1);
 
-    public double ScaleX { get; private set; } = 1;
-    public double ScaleY { get; private set; } = 1;
-
+    public double ScaleX { get; set; } = 1;
+    public double ScaleY { get; set; } = 1;
 
 
     public FontScale(double scaleX, double scaleY)

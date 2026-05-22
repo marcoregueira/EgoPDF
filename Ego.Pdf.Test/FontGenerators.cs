@@ -26,7 +26,7 @@ namespace FontImport
             //var font2 = LoadFont("Calligrapher", Path.Combine(GetPath(), "Ceviche/CevicheOne-Regular.ttf"));
             LoadFont("Calligrapher", Path.Combine(GetPath(), "calligra.ttf"), "");
             LoadFont("Ceviche", Path.Combine(GetPath(), "Ceviche/CevicheOne-Regular.ttf"), "");
-            LoadFont("Roboto", Path.Combine(GetPath(), "Roboto/RobotoSlab-VariableFont_wght.ttf"), "");
+            LoadFont("Roboto", Path.Combine(GetPath(), "Roboto/Static/RobotoSlab-Regular.ttf"), "");
             LoadFont("mytype", Path.Combine(GetPath(), "mytype/mytype.ttf"), "");
 
             using var pdf = new FPdf(DateTime.Now.Ticks + ".samplefont.pdf");

@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Ego.Pdf.Zpl</RootNamespace>
+    <AssemblyName>Ego.Pdf.Zpl</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;0162;0168;0219;0436;CS8618;CS8625;CS8604;CS0168</NoWarn>
+  </PropertyGroup>
+
+  <!-- NuGet package metadata -->
+  <PropertyGroup>
+    <PackageId>EgoPDF.Zpl</PackageId>
+    <!-- Preview release: the ZPL surface is still settling, expect
+         breaking changes between previews. -->
+    <Version>1.0.0-preview.1</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Authors>Marco Antonio Regueira</Authors>
+    <Company>Marco Antonio Regueira</Company>
+    <Copyright>Copyright (c) 2025-2026 Marco Antonio Regueira</Copyright>
+    <Description>Render Zebra ZPL II labels to PDF on top of EgoPDF.Generator and ZXing.Net. Supports ^XA/^XZ, ^FO/^FT/^FD/^FS, ^A?, ^CF, ^GB/^GC/^GE/^GD, ^GF inline bitmaps, ^XG host graphic recall, ^FB wrap, and the Code 128 / Code 39 / Code 93 / Interleaved 2 of 5 / Codabar / EAN-13 / EAN-8 / UPC-A / UPC-E / MSI / QR Code / Data Matrix / PDF417 / Aztec barcodes. Targets net8.0 and net9.0. Preview release — API and rendering output may change without notice.</Description>
+    <PackageTags>zpl;zpl2;zebra;label;barcode;qr;datamatrix;pdf417;aztec;code128;ean;upc;pdf;preview;net8;net9</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/marcoregueira/egopdf</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>1.0.0-preview.1: first public preview. Renders the common ZPL II label features to PDF via EgoPDF.Generator 2.1.0+. Not affiliated with Zebra Technologies; "Zebra" and "ZPL" are trademarks of Zebra Technologies.</PackageReleaseNotes>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ZXing.Net" Version="0.16.10" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj" />
+  </ItemGroup>
+
+</Project>

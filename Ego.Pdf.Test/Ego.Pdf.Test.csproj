@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>disable</Nullable>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
@@ -46,7 +47,58 @@
 	  <None Update="Roboto\README.txt">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
+	  <None Update="Roboto\RobotoMono-VariableFont_wght.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	  <None Update="Roboto\RobotoSlab-VariableFont_wght.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-Black.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-Bold.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-ExtraBold.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-ExtraLight.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-Light.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-Medium.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-Regular.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-SemiBold.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Roboto\static\RobotoSlab-Thin.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\Roboto_Mono\static\RobotoMono-Regular.ttf" Link="Fonts\Roboto_Mono\Static\RobotoMono-Regular.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\Roboto_Mono\static\RobotoMono-Bold.ttf" Link="Fonts\Roboto_Mono\Static\RobotoMono-Bold.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\Ceviche\CevicheOne-Regular.ttf" Link="Fonts\Ceviche\CevicheOne-Regular.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\calligra.ttf" Link="Fonts\calligra.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\MyType\mytype.ttf" Link="Fonts\mytype\mytype.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\Roboto\RobotoSlab-VariableFont_wght.ttf" Link="Fonts\Roboto\RobotoSlab-VariableFont_wght.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Include="..\WebDemo\Fonts\Poppins\Poppins-ExtraLight.ttf" Link="Fonts\Poppins\Poppins-ExtraLight.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

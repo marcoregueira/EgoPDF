@@ -1,38 +1,56 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputType>Library</OutputType>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <ApplicationIcon />
-    <OutputTypeEx>library</OutputTypeEx>
-    <StartupObject />
-	<LangVersion>latest</LangVersion>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>Ego.PDF</RootNamespace>
+    <AssemblyName>Ego.PdfCore</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;0162;0168;0219;0436;CS8618;CS8625;CS8604;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <!-- NuGet package metadata -->
+  <PropertyGroup>
     <PackageId>EgoPDF.Generator</PackageId>
-    <PackageVersion>1.0.0-alpha</PackageVersion>
-    <Authors>Marco Regueira</Authors>
-    <Description>PDF tool. Automated port of FPDF with some changes and fixes.  </Description>
+    <!-- Last MyGet-built version was 2.0.107, so any locally-published
+         package needs to sort higher. 2.1.0 reflects the multi-target
+         move (net8.0;net9.0, no more netstandard2.0) plus the embedded
+         TrueType descriptor fixes — both are user-visible changes. -->
+    <Version>2.1.0</Version>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <Authors>Marco Antonio Regueira</Authors>
+    <Company>Marco Antonio Regueira</Company>
+    <Copyright>Copyright (c) 2017-2026 Marco Antonio Regueira</Copyright>
+    <Description>FPDF-based PDF generator for .NET. Embeds TrueType fonts with valid PDF descriptors (Acrobat-strict compatible), draws text / lines / rectangles / cells / multi-cell / images, and exposes the classic FPDF API on net8.0 and net9.0. Pair with EgoPDF.Zpl to render Zebra ZPL II labels.</Description>
+    <PackageTags>pdf;fpdf;generator;portable;net8;net9</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/marcoregueira/egopdf</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <Copyright>Copyright 2017 (c) Marco Antonio Regueira.</Copyright>
-    <PackageTags>PDF</PackageTags>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
+    <PackageReleaseNotes>2.0.0: drop netstandard2.0, target net8.0/net9.0. Embedded TrueType fonts now produce valid PDF descriptors. SkiaSharp-driven metrics replace the old PHP-side font generator.</PackageReleaseNotes>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    <!-- NOTICE acknowledges FPDF; only shipped with the Generator
+         package because the Zpl package contains no FPDF-derived code. -->
+    <None Include="..\NOTICE"  Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SkiaSharp" Version="3.116.1" />
-    <PackageReference Include="System.Collections" Version="4.3.0" />
-    <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
-    <PackageReference Include="System.Collections.Specialized" Version="4.3.0" />
-    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.3" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

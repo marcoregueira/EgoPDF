@@ -113,6 +113,19 @@ namespace WebDemo.Controllers
         }
 
         [HttpGet()]
+        public FileStreamResult GetSampleZebra([FromQuery] int id)
+        {
+            var buffer =
+                id == 1 ? SampleZebra.GetSampleHorizontalShipping(null, AppDomain.CurrentDomain.BaseDirectory) :
+                id == 2 ? SampleZebra.GetSampleVertical1(null, AppDomain.CurrentDomain.BaseDirectory) :
+                id == 3 ? SampleZebra.GetSampleBarcodes(null, AppDomain.CurrentDomain.BaseDirectory) : null;
+
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
+        [HttpGet()]
         public FileStreamResult GetSample9()
         {
             var buffer = Sample9.GetSample(null, CurrentPath);

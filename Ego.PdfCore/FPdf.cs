@@ -1,4 +1,48 @@
-﻿using System;
+﻿/*
+MIT License
+
+    Copyright (c) 2017-2026 Marco Antonio Regueira
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+NOTICE:
+
+    The EgoPDF.Generator package is an evolution of an automated C# port
+    of FPDF, originally written by Olivier Plathey:
+
+        FPDF
+        http://www.fpdf.org/
+        Copyright (c) Olivier Plathey
+
+        FPDF is freeware. There is no usage restriction. You may embed it
+        freely in your application (commercial or not), with or without
+        modifications. Reference to FPDF in the resulting PDF is not
+        mandatory.
+
+    This acknowledgment is included for transparency; FPDF's terms do not
+    require attribution. Substantial portions of EgoPDF.Generator have
+    been rewritten (Skia-based font embedding, font descriptor
+    correctness, modern target frameworks, packaging) and are subject to
+    the MIT License above.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -6,9 +50,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-
-using MiscUtil.Conversion;
-using MiscUtil.IO;
 
 using Ego.PDF.Data;
 using Ego.PDF.Font;
@@ -18,22 +59,6 @@ using Ego.PDF.Support;
 using Microsoft.Xna.Framework;
 using static Ego.PDF.Printf.SprintfTools;
 using SkiaSharp;
-
-/*******************************************************************************
-* FPDF                                                                         *
-*                                                                              *
-* Version: 1.7                                                                 *
-* Date:    2011-06-18                                                          *
-* Author:  Olivier PLATHEY                                                     *
-*******************************************************************************/
-
-/*******************************************************************************
-* FPDF.net                                                                     *
-* .NET port and adaptation                                                     *
-* Version: 1.0 prealpha                                                        *
-* Date:    2012-09-30                                                          *
-* Author:  Marco Antonio Regueira                                              *
-*******************************************************************************/
 
 namespace Ego.PDF;
 
@@ -127,26 +152,7 @@ public class FPdf: IDisposable
             new PageSize("letter", 612, 1008),
         };
 
-        if (unit == UnitEnum.Point)
-        {
-            k = 1;
-        }
-        else if (unit == UnitEnum.Milimeter)
-        {
-            k = 72 / 25.4;
-        }
-        else if (unit == UnitEnum.Centimeter)
-        {
-            k = 72 / 2.54;
-        }
-        else if (unit == UnitEnum.Inch)
-        {
-            k = 72;
-        }
-        else
-        {
-            Error("Incorrect unit: " + unit);
-        }
+        SetUnitConverionFactor(unit);
 
         Dimensions size = GetPageSize(pageSize);
         DefPageSize = size;
@@ -175,36 +181,64 @@ public class FPdf: IDisposable
 
         WPt = W * k;
         HPt = H * k;
-    
+
         // Page margins (1 cm)
         double margin = 28.35 / k;
         SetMargins(margin, margin);
-        
+
         // Interior cell margin (1 mm)
         CMargin = margin / 10;
-        
+
         // Line width (0.2 mm)
         LineWidth = .567 / k;
-        
+
         // Automatic page break
         SetAutoPageBreak(true, 2 * margin);
-        
+
         // Default display mode
         SetDisplayMode(ZoomEnum.Default, LayoutEnum.Default);
-        
+
         // Enable compression
         //TODO: PONER TRUE
         SetCompression(false);
-        
+
         // Set default PDF version number
         PdfVersion = "1.3";
         DefaultCulture = CultureInfo.InvariantCulture;
         PageNumberFormat = "d";
     }
 
+    public void SetUnitConverionFactor(UnitEnum unit, double v = 72)
+    {
+        this.Unit = unit;
+        if (unit == UnitEnum.Point)
+        {
+            k = 1;
+            k = k / (v / 72);
+        }
+        else if (unit == UnitEnum.Milimeter)
+        {
+            k = 72 / 25.4;
+        }
+        else if (unit == UnitEnum.Centimeter)
+        {
+            k = 72 / 2.54;
+        }
+        else if (unit == UnitEnum.Inch)
+        {
+            k = 72;
+        }
+        else
+        {
+            Error("Incorrect unit: " + unit);
+        }
+
+    }
+
     public FPdf(string path) : this(PageOrientation.Portrait, UnitEnum.Milimeter, PageSizeEnum.A4, path)
     {
     }
+
 
     /// <summary>
     /// Current page number
@@ -288,10 +322,13 @@ public class FPdf: IDisposable
     public double HPt { get; set; }
 
     /// <summary>
-    ///     dimensions of current page in user unit
+    /// Page width in user units
     /// </summary>
     public double W { get; set; }
 
+    /// <summary>
+    /// Page height in user units
+    /// </summary>
     public double H { get; set; }
 
     /// <summary>
@@ -360,7 +397,8 @@ public class FPdf: IDisposable
 
     /// <summary>
     ///     El margen derecho es igual al izquierdo
-    ///     <param name="top"></param>
+    /// <param name="left"></param>
+    /// <param name="top"></param>
     /// </summary>
     public virtual void SetMargins(double left, double top)
     {
@@ -670,6 +708,7 @@ public class FPdf: IDisposable
         // To be implemented in your own inherited class
     }
 
+    public UnitEnum Unit { get; private set; }
     public virtual void Footer()
     {
         // To be extended in your own inherited class
@@ -1021,7 +1060,7 @@ public class FPdf: IDisposable
     public virtual void Text(double x, double y, string txt)
     {
         // Output a string
-        object s;
+        string s;
         if (FontScale.HasScale())
         {
             s = sprintf($"BT {FontScale}%.2F %.2F Tm (%s) Tj ET", x * k, (H - y) * k, Escape(txt));
@@ -1040,6 +1079,60 @@ public class FPdf: IDisposable
         }
         Out(s);
     }
+
+    private string BuildTextMatrix(double sx, double sy, double thetaDegrees, double x, double y)
+    {
+        var radians = thetaDegrees * Math.PI / 180.0f;
+
+        var a = sx * Math.Cos(radians);
+        var b = sx * Math.Sin(radians);
+        var c = -sy * Math.Sin(radians);
+        var d = sy * Math.Cos(radians);
+        var e = x;
+        var f = y;
+
+        return sprintf("%.2f %.2f %.2f %.2f %.2f %.2f Tm", a, b, c, d, e, f);
+    }
+
+
+    public void WriteRotatedText(double x, double y, double lineHeight, string rotation, string txt)
+    {
+        WriteRotatedText(x, y, lineHeight, rotation, txt, 0);
+    }
+
+    /// <param name="tracking">Extra inter-character advance, in PDF user units. 0 = font-native.</param>
+    public void WriteRotatedText(double x, double y, double lineHeight, string rotation, string txt, double tracking)
+    {
+        // ZPL ^FO places the top-left of the text box at (x, y); the PDF text
+        // matrix places the baseline. Shift down by lineHeight (≈ font ascent)
+        // so glyphs descend from the FO point instead of extending above it.
+        string result = rotation switch
+        {
+            "N" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 0, x * k, (H - y - lineHeight) * k),// Normal
+            "B" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 90, (x + lineHeight) * k, (H - y) * k),// Bottom Up
+            "I" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 180, x * k + lineHeight * k, (H - y) * k + lineHeight * k),// Rotación de 180 grados
+            "R" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 270, x * k + lineHeight * k, (H - y) * k),// Rotación de 270 grados en sentido horario
+            _ => throw new ArgumentException("Código de rotación no válido."),
+        };
+
+        // Tc adds extra character spacing in unscaled text-space units (≈ user
+        // units when the text matrix has scale 1). Always reset it at the end
+        // so the state doesn't leak to the next text segment.
+        var tcPrefix = tracking > 0 ? sprintf("%.3f Tc ", tracking * k) : "";
+        var tcSuffix = tracking > 0 ? " 0 Tc" : "";
+        var s = sprintf($"BT {tcPrefix}{result} (%s) Tj{tcSuffix} ET", Escape(txt));
+        if (Underline && TypeSupport.ToString(txt) != "")
+        {
+            s = TypeSupport.ToString(s) + " " + DoUnderline(x, y, txt);
+        }
+        if (ColorFlag)
+        {
+            s = "q " + TypeSupport.ToString(TextColor) + " " + TypeSupport.ToString(s) + " Q";
+        }
+        Out(s);
+    }
+
+
 
     public virtual bool AcceptPageBreak()
     {
@@ -1061,7 +1154,7 @@ public class FPdf: IDisposable
     {
         Cell(cellWidth, cellHeight, text, "0", 0, AlignEnum.Default, false, null);
     }
-    
+
     public virtual void Cell(double cellWidth, double? cellHeight, string text, AlignEnum align)
     {
         Cell(cellWidth, cellHeight, text, "0", 0, align, false, null);
@@ -1986,315 +2079,11 @@ public class FPdf: IDisposable
             (-ut) / (double) 1000 * FontSizePt);
     }
 
-    internal virtual ImageInfo ParseJpg(string file)
-    {
-        // Extract info from a JPEG file
+    internal virtual ImageInfo ParseJpg(string file) => ImageParser.ParseJpg(file);
 
-        var bi = JpgParser.GetJpegDimensions(file);
+    internal virtual ImageInfo ParsePng(string file) => ImageParser.ParsePng(file);
 
-        const string colspace = "DeviceRGB";
-
-        //TODO: GET THIS PROPERLY
-        var bpc = 8;// bi.Format.BitsPerPixel;
-        var data = new List<byte[]> { FileSystemSupport.ReadContentBytes(file) };
-        return new ImageInfo
-        {
-            w = bi.Width,
-            h = bi.Height,
-            cs = colspace,
-            bpc = bpc,
-            f = "DCTDecode",
-            data = data
-        };
-    }
-
-    /// <summary>
-    /// Extract info from a PNG file
-    /// </summary>
-    /// <param name="file"></param>
-    /// <returns></returns>
-    internal virtual ImageInfo ParsePng(string file)
-    {
-        var f = FileSystemSupport.FileOpen(file, "rb");
-        if (!TypeSupport.ToBoolean(f))
-        {
-            Error("Can\'t open image file: " + file);
-        }
-
-        EndianBitConverter converter = new BigEndianBitConverter();
-        var reader = new EndianBinaryReader(converter, f, Encoding.ASCII);
-        var info = ParsePngStream(f, reader, file);
-        reader.Close();
-        return info;
-    }
-
-    internal virtual ImageInfo ParsePngStream(FileStream f, EndianBinaryReader reader, string file)
-    {
-        int pos;
-        var signature = ReadStream(reader, 8);
-        if (!signature.Contains("PNG"))
-        {
-            Error("Not a PNG file: " + file);
-        }
-
-        // Read header chunk
-        ReadStream(reader, 4);
-
-        var subType = ReadStream(reader, 4);
-        if (subType == "IHDR")
-        {
-            // ok
-        }
-        else if (subType == PngConstants.PLTE)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.IDAT)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.tRNS)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.PLTE)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.cHRM)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.sRGB)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.pHYs)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.gAMA)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else if (subType == PngConstants.iCCP)
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-        else
-        {
-            Error("Incorrect PNG file: " + file);
-        }
-
-        var width = reader.ReadInt32();
-        var height = reader.ReadInt32();
-        var bpc = (int) ReadStream(reader, 1)[ 0 ];
-        if (bpc > 8)
-        {
-            Error("16-bit depth not supported: " + file);
-        }
-        int ct = ReadStream(reader, 1)[ 0 ];
-        var colspace = "DeviceRGB";
-
-        switch (ct)
-        {
-            case 4:
-            case 0:
-                colspace = "DeviceGray";
-                break;
-            case 6:
-            case 2:
-                colspace = "DeviceRGB";
-                break;
-            case 3:
-                colspace = "Indexed";
-                break;
-            default:
-                Error("Unknown color type: " + file);
-                break;
-        }
-
-        var compressionType = ReadStream(reader, 1)[ 0 ];
-        if (compressionType != 0)
-        {
-            Error("Unknown compression method: " + file);
-        }
-        if (ReadStream(reader, 1)[ 0 ] != 0)
-        {
-            Error("Unknown filter method: " + file);
-        }
-        if (ReadStream(reader, 1)[ 0 ] != 0)
-        {
-            Error("Interlacing not supported: " + file);
-        }
-        ReadStream(reader, 4);
-        var dp = "/Predictor 15 /Colors " + ((colspace == "DeviceRGB") ? 3 : 1) + " /BitsPerComponent " +
-                 bpc + " /Columns " + width;
-
-        // Scan chunks looking for palette, transparency and image data
-        var pal = new byte[] { };
-        var trns = new int[] { };
-        var data = new byte[] { };
-        var chunkLength = 0;
-        do
-        {
-            chunkLength = reader.ReadInt32();
-            var type = ReadStream(reader, 4);
-            switch (type)
-            {
-                case "PLTE":
-                    pal = ReadStreamBytes(reader, chunkLength);
-                    ReadStream(reader, 4);
-                    break;
-                case "tRNS":
-                {
-                    // Read transparency info
-                    var transparencyLayer = ReadStream(reader, chunkLength);
-                    switch (ct)
-                    {
-                        case 0:
-                            trns = new[] { Convert.ToInt32(transparencyLayer[ 1 ]) };
-                            // new PHP.OrderedMap((int)t.Substring(1, 1)[0]);
-                            break;
-                        case 2:
-                            trns = new[] { Convert.ToInt32(transparencyLayer[ 1 ]), Convert.ToInt32(transparencyLayer[ 3 ]), Convert.ToInt32(transparencyLayer[ 5 ]) };
-                            break;
-                        default:
-                            pos = transparencyLayer.IndexOf(Convert.ToString((char) 0));
-                            if (pos >= 0)
-                            {
-                                trns = new[] { pos };
-                            }
-                            break;
-                    }
-                    ReadStream(reader, 4);
-                }
-                break;
-                case "IDAT":
-                    data = ReadStreamBytes(reader, chunkLength);
-                    ReadStream(reader, 4);
-                    break;
-                case "IEND":
-                    break;
-                default:
-                    ReadStream(reader, chunkLength + 4);
-                    break;
-            }
-        } while (Convert.ToBoolean(chunkLength > 0));
-
-        if (colspace == "Indexed" && VariableSupport.Empty(pal))
-        {
-            Error("Missing palette in " + file);
-        }
-        var info = new ImageInfo
-        {
-            w = width,
-            h = height,
-            cs = colspace,
-            bpc = bpc,
-            f = "FlateDecode",
-            dp = dp,
-            pal = pal,
-            trns = trns
-        };
-
-        if (ct >= 4)
-        {
-            // Extract alpha channel
-            var newData = DeflateString(data);
-            var color = new StringBuilder();
-            var alpha = new StringBuilder();
-            int len;
-            string line;
-            if (ct == 4)
-            {
-                // Gray image
-                len = 2 * width;
-                for (var i = 0; i < height; i++)
-                {
-                    pos = (1 + len) * i;
-                    color.Append(newData[ pos ]);
-                    alpha.Append(newData[ pos ]);
-                    line = newData.Substring(pos + 1, len);
-                    for (var posLinea = 0; posLinea < line.Length; posLinea += 2)
-                    {
-                        color.Append(line[ posLinea ]);
-                        alpha.Append(line[ posLinea + 1 ]);
-                    }
-                }
-            }
-            else
-            {
-                // RGB image
-                len = 4 * width;
-                for (var i = 0; i < height; i++)
-                {
-                    pos = (1 + len) * i;
-                    color.Append(newData[ pos ]);
-                    alpha.Append(newData[ pos ]);
-                    line = newData.Substring(pos + 1, len);
-                    for (var posLinea = 0; posLinea < line.Length; posLinea += 4)
-                    {
-                        color.Append(line.Substring(posLinea, 3));
-                        alpha.Append(line[ posLinea + 3 ]);
-                    }
-                }
-            }
-            data = GzCompressString(color.ToString());
-            info.data.Add(data);
-            info.smask = GzCompressString(alpha.ToString());
-            if (String.Compare(PdfVersion, "1.4", StringComparison.Ordinal) < 0)
-            {
-                PdfVersion = "1.4";
-            }
-        }
-        else
-        {
-            info.data = new List<byte[]> { data };
-        }
-        return info;
-    }
-
-    internal virtual byte[] ReadStreamBytes(EndianBinaryReader br, int n)
-    {
-        byte[] result = br.ReadBytes(n);
-        return result;
-    }
-
-    internal virtual string ReadStream(EndianBinaryReader br, int n)
-    {
-        // Read n bytes from stream
-        string s;
-        string res = "";
-
-        while (n > 0 && !(br.BaseStream.Position >= br.BaseStream.Length))
-        {
-            s = FileSystemSupport.Read(br, n);
-            if (s == null)
-            {
-                Error("Error while reading stream");
-            }
-            n -= s.Length;
-            res += s;
-        }
-        if (n > 0)
-        {
-            Error("Unexpected end of stream");
-        }
-        return res;
-    }
-
-    internal virtual Int32 ReadInt(FileStream f, BinaryReader br)
-    {
-        Int32 a = br.ReadInt32();
-        return a;
-    }
-
-    internal virtual ImageInfo ParseGif(string file)
-    {
-        var jpeg = JpgParser.GetJpegDimensions(file);
-        return new ImageInfo() { w = jpeg.Width, h = jpeg.Height, };
-    }
+    internal virtual ImageInfo ParseGif(string file) => ImageParser.ParseGif(file);
 
     internal virtual void NewObject()
     {
@@ -2794,7 +2583,8 @@ public class FPdf: IDisposable
         //CONVERSION_WARNING: Method 'isset' was converted to '!=' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/isset.htm 
         if (info.smask != null)
         {
-            string dp = "/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns " + TypeSupport.ToString(info.w);
+            // The alpha stream is raw 8-bit grayscale already zlib-deflated by
+            // ImageParser; no PNG predictor is applied so we leave /DecodeParms off.
             var smask = new ImageInfo
             {
                 w = info.w,
@@ -2802,13 +2592,13 @@ public class FPdf: IDisposable
                 cs = "DeviceGray",
                 bpc = 8,
                 f = info.f,
-                dp = dp,
                 data = new List<byte[]> { info.smask }
             };
-            /*
-                smask = new PHP.OrderedMap(... new object[] { "data", info.smask });
-            */
             PutImage(smask);
+            if (string.Compare(PdfVersion, "1.4", StringComparison.Ordinal) < 0)
+            {
+                PdfVersion = "1.4";
+            }
         }
         // Palette
         if (TypeSupport.ToString(info.cs) == "Indexed")
@@ -3091,6 +2881,7 @@ public class FPdf: IDisposable
         {
             drawingPoint.Y = start - drawingPoint.Y;
         }
+
         foreach (var drawingPoint in points)
         {
             pointString.Append(sprintf("%.2F %.2F", drawingPoint.X * k, (drawingPoint.Y) * k));
@@ -3123,30 +2914,53 @@ public class FPdf: IDisposable
         {
             FontType = FontTypeEnum.TrueType,
             FontFile = path,
-            Name = fontFace.FamilyName.ToLower(),
+            // PDF Name objects can't contain whitespace or delimiters, so
+            // collapse "Roboto Slab" into "RobotoSlab" before letting it
+            // anywhere near /BaseFont or /FontName. Acrobat rejects names
+            // with embedded spaces; Chrome's PDF.js silently ignores them
+            // which is why this only shows up in Acrobat.
+            Name = SanitizePdfName(fontFace.FamilyName),
             up = -100,
             ut = 50
         };
 
         var font = new SKFont(fontFace, 10);
         var lineSpacing = font.GetFontMetrics(out var metrics);
-        fontData.Flags = 32;
-        fontData.FontBBox = new System.Drawing.Rectangle(0, 0, 0, 0);
+        // Detect a few descriptor flag bits when we can; default to
+        // Nonsymbolic (bit 6) for Western Unicode fonts.
+        var flags = 32;
+        if (fontFace.IsItalic)
+            flags |= 1 << 6;            // bit 7 = Italic
+        if (fontFace.IsBold)
+            flags |= 1 << 18;           // bit 19 = ForceBold
+        if (fontFace.IsFixedPitch)
+            flags |= 1;             // bit 1 = FixedPitch
+        fontData.Flags = flags;
+        // Build the FontBBox from Skia's font metrics. Skia uses +Y down
+        // while PDF uses +Y up, so the Top (greatest extent above the
+        // baseline) is the most-negative Skia Y and becomes the largest
+        // positive PDF y, and similarly Bottom (greatest descent) becomes
+        // the most negative PDF y. Multiply by 100 because LoadFont sizes
+        // the SKFont at 10 pt and the rest of the descriptor is in the
+        // 1000-unit em space PDF expects.
+        var xMin = (int) Math.Floor(metrics.XMin * 100);
+        var xMax = (int) Math.Ceiling(metrics.XMax * 100);
+        var yMin = (int) Math.Floor(-metrics.Bottom * 100);
+        var yMax = (int) Math.Ceiling(-metrics.Top * 100);
+        // Guard against fonts that don't fill in xMin/xMax — fall back to
+        // an em-sized box so the bbox is never [0 0 0 0].
+        if (xMax <= xMin)
+        { xMin = -200; xMax = 1000; }
+        if (yMax <= yMin)
+        { yMin = -300; yMax = 1000; }
+        fontData.FontBBox = new System.Drawing.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
         fontData.ItalicAngle = 0;
         fontData.Ascent = Math.Abs(metrics.Ascent * 100);
         fontData.Descent = metrics.Descent * 100;
-        fontData.StemV = 0;
+        // StemV = 0 makes some PDF validators (Acrobat in strict mode) fail.
+        // 80 is the conventional default for normal weight, 120 for bold.
+        fontData.StemV = fontFace.IsBold ? 120 : 80;
         fontData.CapHeight = metrics.CapHeight * 100;
-
-        //fontData.Flags = 32;
-        //fontData.FontBBox = new Rectangle(0, 0, 0, 0);
-        //fontData.ItalicAngle = 0;
-        //fontData.Ascent = 920;
-        //fontData.Descent = 230;
-        //fontData.StemV = 0;
-        //fontData.CapHeight = 0;
-        /// FontFile2 17 0 R
-
 
         foreach (var ch in chars)
         {
@@ -3154,28 +2968,45 @@ public class FPdf: IDisposable
             fontData.Widths[ ch ] = advance;
         }
 
-        //var gg = font.GetGlyphs("asa".AsSpan());
-
         var tables = fontFace.TableCount;
-        //var m = font.MeasureText();
-        //foreach (var g in metrics)
-        //{
-        //
-        //    var leftBearing = g.LeftSideBearing;
-        //    var rightBearing = g.RightSideBearing;
-        //    fontData.Widths[g.Character.ToString()] = advance * 1000;
-        //}
-        //
-        //foreach (var advance in fontFace.AdvanceWidths)
-        //{
-        //    var leftBearing = fontFace.LeftSideBearings[advance.Key];
-        //    var rightBearing = fontFace.RightSideBearings[advance.Key];
-        //    fontData.Widths[Convert.ToChar(advance.Key).ToString()] = advance.Value * 1000;
-        //}
-
         FontBuilder.Fonts[ name.ToLower() ] = fontData;
 
         return fontData;
+    }
+
+    /// <summary>
+    /// Strip whitespace and PDF Name delimiters from a font family so it
+    /// can be safely emitted as /BaseFont and /FontName. PDF Name objects
+    /// can't contain whitespace, '(', ')', '&lt;', '&gt;', '[', ']', '{', '}',
+    /// '/', '%' or '#'; PostScript naming convention also omits spaces.
+    /// </summary>
+    private static string SanitizePdfName(string raw)
+    {
+        if (string.IsNullOrEmpty(raw))
+            return "Unnamed";
+        var sb = new StringBuilder(raw.Length);
+        foreach (var c in raw)
+        {
+            if (c <= 0x20 || c >= 0x7F)
+                continue;            // whitespace / non-ASCII
+            switch (c)
+            {
+                case '(':
+                case ')':
+                case '<':
+                case '>':
+                case '[':
+                case ']':
+                case '{':
+                case '}':
+                case '/':
+                case '%':
+                case '#':
+                    continue;
+            }
+            sb.Append(c);
+        }
+        return sb.Length == 0 ? "Unnamed" : sb.ToString();
     }
 
     public static SKTypeface GetTypeface(string fullFontName)

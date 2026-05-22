@@ -17,6 +17,7 @@ public class Sample7
         var font2 = pdf.LoadFont("Calligrapher", Path.Combine(GetPath(), "Fonts/Ceviche/CevicheOne-Regular.ttf"));
         pdf.LoadFont("Calligrapher", Path.Combine(GetPath(), "Fonts/calligra.ttf"));
         pdf.LoadFont("Ceviche", Path.Combine(GetPath(), "Fonts/Ceviche/CevicheOne-Regular.ttf"));
+        //pdf.LoadFont("Roboto", Path.Combine(GetPath(), "Fonts/Roboto/static/RobotoSlab-Regular.ttf"));
         pdf.LoadFont("Roboto", Path.Combine(GetPath(), "Fonts/Roboto/RobotoSlab-VariableFont_wght.ttf"));
         pdf.LoadFont("mytype", Path.Combine(GetPath(), "Fonts/mytype/mytype.ttf"));
         pdf.LoadFont("Poppins", Path.Combine(GetPath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));

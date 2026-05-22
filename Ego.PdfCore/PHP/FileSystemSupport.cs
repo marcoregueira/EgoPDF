@@ -191,29 +191,6 @@ namespace Ego.PDF.PHP
         }
 
         /// <summary>
-        /// Reads a block of bytes from the file stream.
-        /// </summary>
-        /// <param name="stream">The stream to read from.</param>
-        /// <param name="length">The lenght of the data to be read.</param>
-        /// <returns>Returns the string representation of the read block of bytes.</returns>
-        public static string Read(MiscUtil.IO.EndianBinaryReader stream, long length)
-        {
-            int theLength = (int) length;
-            string result = null;
-            try
-            {
-                byte[] bytes = new byte[ length ];
-                int readBytes = stream.Read(bytes, 0, theLength);
-                if (readBytes > 0)
-                    result = System.Text.Encoding.ASCII.GetString(bytes, 0, readBytes);
-            }
-            catch
-            {
-            }
-            return result;
-        }
-
-        /// <summary>
         /// Reads the contents of the specified file.
         /// </summary>
         /// <param name="fileName">The file name of the file to be read.</param>

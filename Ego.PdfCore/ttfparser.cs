@@ -12,17 +12,16 @@
 //%>
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using MiscUtil.Conversion;
-using MiscUtil.IO;
 
 namespace Ego.PDF
 {
     public class TtfParser
     {
-        private EndianBinaryReader f;
+        private BinaryReader f;
         public Dictionary<string, UInt64> Tables = new Dictionary<string, ulong>();
         public uint unitsPerEm;
         public int xMin;
@@ -69,11 +68,11 @@ namespace Ego.PDF
             ulong offset;
             //CONVERSION_WARNING: Method 'fopen' was converted to 'PHP.FileSystemSupport.FileOpen' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/fopen.htm 
             var stream = PHP.FileSystemSupport.FileOpen(file, "rb");
-            this.f = new EndianBinaryReader(new BigEndianBitConverter(), stream);
-            if (!PHP.TypeSupport.ToBoolean(this.f))
+            if (stream is null)
             {
                 this.Error("Can\'t open file: " + file);
             }
+            this.f = new BinaryReader(stream);
 
             version = this.ReadLong();
             if (version == 0x4F54544F) //OTTO
@@ -400,26 +399,44 @@ namespace Ego.PDF
 
         public virtual ushort ReadUShort()
         {
-
-            var i16 = f.ReadUInt16();
-            return i16;
+            Span<byte> buffer = stackalloc byte[2];
+            ReadExactly(buffer);
+            return BinaryPrimitives.ReadUInt16BigEndian(buffer);
         }
 
         public virtual short ReadShort()
         {
-            var v = f.ReadInt16();
-            return v;
+            Span<byte> buffer = stackalloc byte[2];
+            ReadExactly(buffer);
+            return BinaryPrimitives.ReadInt16BigEndian(buffer);
         }
 
         public virtual int ReadLong()
         {
-            var i32 = f.ReadInt32();
-            return i32;
+            Span<byte> buffer = stackalloc byte[4];
+            ReadExactly(buffer);
+            return BinaryPrimitives.ReadInt32BigEndian(buffer);
         }
+
         public virtual uint ReadULong()
         {
-            var i32 = f.ReadUInt32();
-            return i32;
+            Span<byte> buffer = stackalloc byte[4];
+            ReadExactly(buffer);
+            return BinaryPrimitives.ReadUInt32BigEndian(buffer);
+        }
+
+        private void ReadExactly(Span<byte> buffer)
+        {
+            int read = 0;
+            while (read < buffer.Length)
+            {
+                int n = f.BaseStream.Read(buffer.Slice(read));
+                if (n == 0)
+                {
+                    this.Error("Unexpected end of stream while reading TTF table");
+                }
+                read += n;
+            }
         }
     }
 }
