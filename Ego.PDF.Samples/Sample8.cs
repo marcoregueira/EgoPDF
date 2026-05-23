@@ -25,16 +25,16 @@ namespace Ego.PDF.Samples
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetFont("Courier", string.Empty, 14);
 
-                pdf.Image(System.IO.Path.Combine(path, "egopdf-logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "https://www.nuget.org/packages/EgoPDF.Generator/");
+                pdf.Image(System.IO.Path.Combine(path, "egopdf-logo.png"), 10, 8, 30, 0, ImageTypeEnum.Default, "https://www.nuget.org/packages/EgoPDF.Generator/");
 
                 var rowHeader = new TableRow(22, 120)
                                                         .SetBorder("0")
                                                         .SetCellHeight(5);
-                //pdf.PrintRow(rowHeader, "", @"Strada General Traian Moșoiu 24, <<--- characted not supported 
-                pdf.Ln(3);
+                //pdf.PrintRow(rowHeader, "", @"Strada General Traian Moșoiu 24, <<--- characted not supported
+                pdf.SetY(pdf.TopMargin);
                 pdf.SetFontSize(10);
-                pdf.PrintRow(rowHeader, "", @"Strada General Traian Mosoiu 24, 
-Bran 507025, 
+                pdf.PrintRow(rowHeader, "", @"Strada General Traian Mosoiu 24,
+Bran 507025,
 Romania");
 
                 pdf.SetY(pdf.TopMargin);
@@ -44,7 +44,7 @@ Romania");
                 alignRight.Cells.Last().Align = AlignEnum.Right;
                 pdf.PrintRow(alignRight, "INVOICE");
 
-                pdf.SetY(50);
+                pdf.SetY(60);
                 pdf.SetFontSize(25);
                 pdf.WriteHtml("<b>Happy Teeth</b>", 12);
                 pdf.Ln();
@@ -56,7 +56,9 @@ Romania");
                 pdf.Write(6, "VAT number: RO34.123.666-Z");
                 pdf.Ln();
 
-                pdf.SetY(50);
+                var savedLeftMargin = pdf.LeftMargin;
+                pdf.SetLeftMargin(savedLeftMargin + 20);
+                pdf.SetY(60);
                 var clientRow = new TableRow(100, 50).SetBorder();
                 pdf.PrintRow(clientRow, "", "CLIENT");
                 pdf.PrintRow(clientRow, "", "Jonathan Harker");
@@ -65,6 +67,7 @@ Romania");
                 pdf.PrintRow(clientRow, "", "Exeter");
                 pdf.PrintRow(clientRow, "", "EX2 4PA");
                 pdf.PrintRow(clientRow, "", "UK");
+                pdf.SetLeftMargin(savedLeftMargin);
 
 
 
