@@ -1,3 +1,13 @@
+/* Brand palette extracted from the egoPdf logo. */
+:root {
+  --brand-dark: #1a1d26;
+  --brand-dark-soft: #2b303d;
+  --brand-accent: #cc695f;
+  --brand-accent-hover: #b25347;
+  --brand-bg-soft: #f7eeec;
+  --brand-border: #e3d6d3;
+}
+
 html {
   font-size: 14px;
 }
@@ -8,10 +18,6 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
 html {
   position: relative;
   min-height: 100%;
@@ -19,4 +25,127 @@ html {
 
 body {
   margin-bottom: 60px;
+  color: var(--brand-dark);
+}
+
+a {
+  color: var(--brand-accent);
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  color: var(--brand-accent-hover);
+  text-decoration: none;
+}
+
+/* External links inside the main content get a small "open in new tab" glyph.
+   Nav / brand / button anchors are excluded — they already have iconography. */
+main a[target="_blank"]:not(.nav-link):not(.navbar-brand):not(.btn)::after {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.25em;
+  vertical-align: -0.05em;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z'/%3E%3Cpath fill-rule='evenodd' d='M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z'/%3E%3Cpath fill-rule='evenodd' d='M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+          mask-size: contain;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--brand-dark);
+}
+
+/* Bootstrap overrides */
+.btn-primary {
+  color: #fff;
+  background-color: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--brand-accent-hover);
+  border-color: var(--brand-accent-hover);
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem #fff, 0 0 0 0.25rem var(--brand-accent);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+/* Navbar tweaks */
+.navbar.bg-white .navbar-brand,
+.navbar.bg-white .nav-link.text-dark {
+  color: var(--brand-dark) !important;
+}
+
+.navbar.bg-white .nav-link.text-dark:hover,
+.navbar.bg-white .nav-link.text-dark:focus {
+  color: var(--brand-accent) !important;
+}
+
+/* Table styling: subtle brand-tinted header */
+.table > thead {
+  background-color: var(--brand-dark);
+  color: #fff;
+}
+
+.table > thead a {
+  color: var(--brand-bg-soft);
+}
+
+.table > thead a:hover {
+  color: #fff;
+}
+
+.table-bordered {
+  border-color: var(--brand-border);
+}
+
+.table-hover > tbody > tr:hover {
+  background-color: var(--brand-bg-soft);
+}
+
+/* Footer + borders */
+.border-top {
+  border-top: 1px solid var(--brand-border);
+}
+
+.border-bottom {
+  border-bottom: 1px solid var(--brand-border);
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(26, 29, 38, .08);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+  color: var(--brand-dark-soft);
 }

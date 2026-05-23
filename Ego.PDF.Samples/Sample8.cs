@@ -25,7 +25,7 @@ namespace Ego.PDF.Samples
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetFont("Courier", string.Empty, 14);
 
-                pdf.Image(System.IO.Path.Combine(path, "logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "http://www.fpdf.org");
+                pdf.Image(System.IO.Path.Combine(path, "egopdf-logo.png"), 10, 12, 30, 0, ImageTypeEnum.Default, "https://www.nuget.org/packages/EgoPDF.Generator/");
 
                 var rowHeader = new TableRow(22, 120)
                                                         .SetBorder("0")

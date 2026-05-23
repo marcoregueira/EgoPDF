@@ -4,9 +4,8 @@
     ViewData[ "Title" ] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Ego.PDF</h1>
-    <!--<p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>-->
+<div class="text-center my-4">
+    <img src="~/img/logo.png" alt="egoPdf" class="img-fluid" style="max-height: 320px;" />
 </div>
 
 
@@ -33,8 +32,8 @@
             Tutorial
         </h2>
         <p>
-            Currently, Ego.PDF status is work in progress. Fist milestone is recreate all samples
-            in FPDF <a href="http://www.fpdf.org/en/tutorial/index.php">tutorial</a>.
+            Currently, egoPdf status is work in progress. First milestone is to recreate all samples
+            in the FPDF <a href="https://www.fpdf.org/en/tutorial/index.php" target="_blank" rel="noopener">tutorial</a>.
         </p>
         <table class="table table-bordered table-hover">
             <thead>
@@ -45,7 +44,7 @@
                         Original FPDF sample
                     </th>
                     <th>
-                        Ego.PDF implementation & variations
+                        egoPdf implementation & variations
                     </th>
                 </tr>
             </thead>
@@ -55,7 +54,7 @@
                         <b>Sample 1</b>. Minimal example
                     </td>
                     <td>
-                        Tutorial 1
+                        <a href="https://www.fpdf.org/en/tutorial/tuto1.htm" target="_blank" rel="noopener">Tutorial 1</a>
                     </td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSample1">Tutorial 1</a>
@@ -67,14 +66,15 @@
                         <b>Sample 2</b>. Header, footer, page break and image
                     </td>
                     <td>
-                        Tutorial 2
+                        <a href="https://www.fpdf.org/en/tutorial/tuto2.htm" target="_blank" rel="noopener">Tutorial 2</a>
                     </td>
                     <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample2">Tutorial 2 (png image)</a>
+                        <a (click)="download($event)" href="/api/SampleData/GetSample2">PNG image</a>
                         <i class="icon-list-alt sampleSource link_out" data-sample="2"></i>
                         <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSample2b">Tutorial 2 (png image with alpha channel)</a>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample2c">Tutorial 2 (jpg image)</a>
+                        <a (click)="download($event)" href="/api/SampleData/GetSample2b">PNG with alpha channel</a>
+                        <br />
+                        <a (click)="download($event)" href="/api/SampleData/GetSample2c">JPG image</a>
                     </td>
                 </tr>
                 <tr>
@@ -82,7 +82,7 @@
                         <b>Sample 3</b>. Line breaks and colors
                     </td>
                     <td>
-                        Tutorial 3
+                        <a href="https://www.fpdf.org/en/tutorial/tuto3.htm" target="_blank" rel="noopener">Tutorial 3</a>
                     </td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSample3">Tutorial 3</a>
@@ -94,7 +94,7 @@
                         <b>Sample 4</b>. Multi-columns
                     </td>
                     <td>
-                        Tutorial 4
+                        <a href="https://www.fpdf.org/en/tutorial/tuto4.htm" target="_blank" rel="noopener">Tutorial 4</a>
                     </td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSample4">Tutorial 4</a>
@@ -106,7 +106,7 @@
                         <b>Sample 5</b>. Tables
                     </td>
                     <td>
-                        Tutorial 5
+                        <a href="https://www.fpdf.org/en/tutorial/tuto5.htm" target="_blank" rel="noopener">Tutorial 5</a>
                     </td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSample5">Tutorial 5</a>
@@ -118,7 +118,7 @@
                         <b>Sample 6</b>. Links and flowing text
                     </td>
                     <td>
-                        Tutorial 6
+                        <a href="https://www.fpdf.org/en/tutorial/tuto6.htm" target="_blank" rel="noopener">Tutorial 6</a>
                     </td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSample6">Tutorial 6</a>
@@ -130,7 +130,7 @@
                         <b>Sample 7</b>. Adding new fonts and encoding support
                     </td>
                     <td>
-                        Tutorial 7
+                        <a href="https://www.fpdf.org/en/tutorial/tuto7.htm" target="_blank" rel="noopener">Tutorial 7</a>
                     </td>
                     <td>
                         <a (click)="download($event)" href="/api/SampleData/GetSample7">Tutorial 7</a>

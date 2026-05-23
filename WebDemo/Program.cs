@@ -7,7 +7,6 @@ namespace WebDemoCore
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddRazorPages();
             builder.Services.AddControllers();
-            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -22,15 +21,7 @@ namespace WebDemoCore
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json",
-                "Reports API");
-            });
-
             app.UseRouting();
-
             app.UseAuthorization();
 
             app.MapRazorPages();
