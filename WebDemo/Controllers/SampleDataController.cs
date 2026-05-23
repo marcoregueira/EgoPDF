@@ -113,6 +113,24 @@ namespace WebDemo.Controllers
         }
 
         [HttpGet()]
+        public FileStreamResult GetSample8b()
+        {
+            var buffer = Sample8b.GetSample(null, CurrentPath);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
+        [HttpGet()]
+        public FileStreamResult GetSample8c()
+        {
+            var buffer = Sample8c.GetSample(null, CurrentPath);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
+        [HttpGet()]
         public FileStreamResult GetSampleZebra([FromQuery] int id)
         {
             var buffer =

@@ -74,6 +74,18 @@ namespace Ego.Pdf.Test
             Sample8.GetSample("sample8.pdf", GetPath());
         }
 
+        [Fact]
+        public void DoSample8b()
+        {
+            Sample8b.GetSample("sample8b.pdf", GetPath());
+        }
+
+        [Fact]
+        public void DoSample8c()
+        {
+            Sample8c.GetSample("sample8c.pdf", GetPath());
+        }
+
         // --------------------------------------------------------------
         // Zebra "tests" (visual smoke tests, not assertions)
         //
