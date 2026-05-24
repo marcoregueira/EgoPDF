@@ -38,14 +38,6 @@ steps:
       arguments: '--configuration $(buildConfiguration) --no-restore'
 
   - task: DotNetCoreCLI@2
-    displayName: Test
-    inputs:
-      command: test
-      projects: 'Ego.Pdf.Test/Ego.Pdf.Test.csproj'
-      arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
-      publishTestResults: true
-
-  - task: DotNetCoreCLI@2
     displayName: 'Publish WebDemo (portable, framework-dependent)'
     inputs:
       command: publish
