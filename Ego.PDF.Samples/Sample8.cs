@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using HtmlAgilityPack;
 using Ego.PDF.Data;
@@ -27,6 +28,8 @@ namespace Ego.PDF.Samples
             {
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetAutoPageBreak(false, 0);
+                _ = pdf.LoadFont("Poppins", Path.Combine(GetBasePath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));
+                pdf.AddFont("Poppins", "");
                 pdf.AddPage();
 
                 DrawHeaderBand(pdf);
@@ -41,6 +44,11 @@ namespace Ego.PDF.Samples
             }
         }
 
+        private static string GetBasePath()
+        {
+            return Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
         private static void DrawHeaderBand(Sample8 pdf)
         {
             const double bandHeight = 44;
@@ -48,7 +56,7 @@ namespace Ego.PDF.Samples
             pdf.Rect(0, 0, pdf.W, bandHeight, "F");
 
             // Wordmark — "ego" white, "Pdf" coral, mimicking the logo.
-            pdf.SetFont("Helvetica", "B", 28);
+            pdf.SetFont("Poppins", "", 28);
             pdf.SetXY(20, 12);
             pdf.SetTextColor(Color.White);
             var egoW = pdf.GetStringWidth("ego");
@@ -57,7 +65,7 @@ namespace Ego.PDF.Samples
             pdf.Cell(pdf.GetStringWidth("Pdf"), 12, "Pdf");
 
             // INVOICE title, right-aligned inside the band.
-            pdf.SetFont("Helvetica", "", 32);
+            pdf.SetFont("Poppins", "", 32);
             pdf.SetTextColor(Color.White);
             pdf.SetXY(20, 10);
             pdf.Cell(pdf.W - 40, 13, "INVOICE", "0", 0, AlignEnum.Right);

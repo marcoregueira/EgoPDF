@@ -1,3 +1,4 @@
+using System;
 using Ego.PDF.Data;
 using Microsoft.Xna.Framework;
 using System.IO;
@@ -28,6 +29,8 @@ namespace Ego.PDF.Samples
             {
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetAutoPageBreak(false, 0);
+                _ = pdf.LoadFont("Poppins", Path.Combine(GetBasePath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));
+                pdf.AddFont("Poppins", "");
                 pdf.AddPage();
 
                 DrawHeader(pdf);
@@ -41,17 +44,22 @@ namespace Ego.PDF.Samples
             }
         }
 
+        private static string GetBasePath()
+        {
+            return Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
         private static void DrawHeader(Sample8c pdf)
         {
             pdf.SetXY(20, 20);
-            pdf.SetFont("Helvetica", "B", 24);
+            pdf.SetFont("Poppins", "", 24);
             pdf.SetTextColor(BrandDark);
             pdf.Cell(pdf.GetStringWidth("ego"), 11, "ego");
             pdf.SetTextColor(BrandAccent);
             pdf.Cell(pdf.GetStringWidth("Pdf"), 11, "Pdf");
 
             pdf.SetXY(20, 18);
-            pdf.SetFont("Helvetica", "", 30);
+            pdf.SetFont("Poppins", "", 30);
             pdf.SetTextColor(BrandDark);
             pdf.Cell(pdf.W - 40, 13, "INVOICE", "0", 0, AlignEnum.Right);
 
