@@ -1,4 +1,4 @@
-﻿namespace Ego.Pdf.Zpl;
+﻿namespace Ego.PDF.Barcodes.Zpl;
 
 public class BarcodeOptions
 {

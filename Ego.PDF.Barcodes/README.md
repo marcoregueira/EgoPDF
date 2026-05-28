@@ -1,18 +1,23 @@
-# EgoPDF.Zpl
+# EgoPDF.Barcodes
 
-Render Zebra Programming Language (ZPL II) labels to PDF using
+Render barcodes (1D + 2D) and Zebra ZPL II labels to PDF on top of
 [EgoPDF.Generator](https://www.nuget.org/packages/EgoPDF.Generator) and
 [ZXing.Net](https://www.nuget.org/packages/ZXing.Net).
 
 > **Preview.** The API is in flux. Bug reports and PRs welcome; expect
 > breaking changes between preview versions.
 
-## Quick start
+> Renamed from `EgoPDF.Zpl`. The previous name only described half of
+> what the package does (the ZPL parser); barcode rendering is the other
+> half and the more broadly useful part, so the package now leads with
+> it.
+
+## Quick start (ZPL → PDF)
 
 ```csharp
 using Ego.PDF;
 using Ego.PDF.Data;
-using Ego.Pdf.Zpl;
+using Ego.PDF.Barcodes.Zpl;
 
 using var pdf = new FPdf("label.pdf");
 pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
@@ -30,7 +35,7 @@ zpl.SetMonospaceFont("robotomonob");   // mapped to ZPL fonts "A".."V"
 
 zpl.Print(@"
 ^XA
-^FO50,50^FDHello from EgoPDF.Zpl!^FS
+^FO50,50^FDHello from EgoPDF.Barcodes!^FS
 ^FO50,200^BCN,80,N,N,N^FD12345678^FS
 ^XZ
 ");

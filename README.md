@@ -7,7 +7,7 @@ Two NuGet packages live in this repo:
 | Package | Purpose | Status |
 | --- | --- | --- |
 | [`EgoPDF.Generator`](https://www.nuget.org/packages/EgoPDF.Generator) | Core FPDF API plus SkiaSharp-driven font embedding | Stable |
-| [`EgoPDF.Zpl`](https://www.nuget.org/packages/EgoPDF.Zpl) | Render Zebra ZPL II labels to PDF on top of the generator | Preview |
+| [`EgoPDF.Barcodes`](https://www.nuget.org/packages/EgoPDF.Barcodes) | Render Zebra ZPL II labels to PDF on top of the generator | Preview |
 
 Both packages target `net8.0` and `net9.0` and ship under the MIT
 license. `EgoPDF.Generator` additionally carries a `NOTICE` file
@@ -17,7 +17,7 @@ acknowledging FPDF, the PHP project it was originally automated from.
 
 ```
 Ego.PdfCore/          → EgoPDF.Generator package source
-Ego.Pdf.Zpl/          → EgoPDF.Zpl package source
+Ego.PDF.Barcodes.Zpl/          → EgoPDF.Barcodes package source
 Ego.PDF.Samples/      → reusable sample code consumed by the test harness and WebDemo
 Ego.Pdf.Test/         → xUnit tests; the DoSample*/DoZebra* facts emit PDFs next to the test binary for human review
 WebDemo/              → ASP.NET Core demo site that exposes the same samples over HTTP
@@ -43,7 +43,7 @@ pdf.Close();
 ```csharp
 using Ego.PDF;
 using Ego.PDF.Data;
-using Ego.Pdf.Zpl;
+using Ego.PDF.Barcodes.Zpl;
 
 using var pdf = new FPdf("label.pdf");
 pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
@@ -58,7 +58,7 @@ zpl.SetMonospaceFont("robotomonob");
 
 zpl.Print(@"
 ^XA
-^FO50,50^FDHello from EgoPDF.Zpl!^FS
+^FO50,50^FDHello from EgoPDF.Barcodes!^FS
 ^FO50,200^BCN,80,N,N,N^FD12345678^FS
 ^XZ
 ");
@@ -75,7 +75,7 @@ longer feature list for the generator) live next to each project.
 dotnet build PDF.sln
 dotnet test Ego.Pdf.Test/Ego.Pdf.Test.csproj
 dotnet pack Ego.PdfCore/Ego.PdfCore.csproj  -c Release -o artifacts
-dotnet pack Ego.Pdf.Zpl/Ego.Pdf.Zpl.csproj  -c Release -o artifacts
+dotnet pack Ego.PDF.Barcodes/Ego.PDF.Barcodes.csproj  -c Release -o artifacts
 ```
 
 The Zebra `[Fact]`s in the test project don't assert anything — they

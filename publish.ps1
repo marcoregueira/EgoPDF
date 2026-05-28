@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    Pack EgoPDF.Generator + EgoPDF.Zpl and push them to nuget.org.
+    Pack EgoPDF.Generator + EgoPDF.Barcodes and push them to nuget.org.
 
 .DESCRIPTION
     Runs `dotnet pack -c Release` on both NuGet projects, drops the
     .nupkg / .snupkg into ./artifacts and (unless -PackOnly is passed)
     pushes them to https://api.nuget.org/v3/index.json.
 
-    After the EgoPDF.Zpl .nupkg is built the script rewrites its
+    After the EgoPDF.Barcodes .nupkg is built the script rewrites its
     .nuspec so the EgoPDF.Generator dependency becomes an EXACT
     version pin (`version="[X.Y.Z]"`) instead of the SDK's optimistic
     default (`version="X.Y.Z"`, which NuGet treats as `>= X.Y.Z`).
-    This keeps EgoPDF.Zpl pinned to the specific Generator build it
+    This keeps EgoPDF.Barcodes pinned to the specific Generator build it
     was tested against — important while the project is still in
     motion. Disable with -NoPinDependencies.
 
@@ -40,7 +40,7 @@
     publish a single one (default: publish both).
 
 .PARAMETER Zpl
-    Only pack/push the EgoPDF.Zpl package.
+    Only pack/push the EgoPDF.Barcodes package.
 
 .PARAMETER NoPinDependencies
     Skip the post-pack rewrite of the Zpl .nuspec. The dependency on
@@ -188,21 +188,21 @@ if ($publishGenerator) {
 }
 
 if ($publishZpl) {
-    # Pack EgoPDF.Zpl second so its dependency on EgoPDF.Generator
+    # Pack EgoPDF.Barcodes second so its dependency on EgoPDF.Generator
     # picks up the freshly built Generator if you bumped its version.
-    Invoke-Pack (Join-Path $root 'Ego.Pdf.Zpl/Ego.Pdf.Zpl.csproj')
+    Invoke-Pack (Join-Path $root 'Ego.PDF.Barcodes/Ego.PDF.Barcodes.csproj')
 
     if (-not $NoPinDependencies) {
         # The SDK packs ProjectReferences with `>=` semantics. Rewrite the
         # Zpl nuspec so the Generator dep is exact-pinned — Zpl is moving
         # fast and we don't want a future Generator change leaking in.
-        $zplPackages = Get-ChildItem -Path $artifacts -Filter 'EgoPDF.Zpl.*.nupkg' -File
+        $zplPackages = Get-ChildItem -Path $artifacts -Filter 'EgoPDF.Barcodes.*.nupkg' -File
         foreach ($pkg in $zplPackages) {
             Set-ExactDependency -NupkgPath $pkg.FullName -DependencyId 'EgoPDF.Generator'
         }
     }
 
-    Invoke-Push 'EgoPDF.Zpl.*.nupkg'
+    Invoke-Push 'EgoPDF.Barcodes.*.nupkg'
 }
 
 Write-Host "Done." -ForegroundColor Green

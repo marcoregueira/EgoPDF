@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ego.Pdf.Zpl\Ego.Pdf.Zpl.csproj" />
+    <ProjectReference Include="..\Ego.PDF.Barcodes\Ego.PDF.Barcodes.csproj" />
     <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj" />
   </ItemGroup>
 

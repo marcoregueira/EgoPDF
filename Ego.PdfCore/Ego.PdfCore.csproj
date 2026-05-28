@@ -24,7 +24,7 @@
     <Authors>Marco Antonio Regueira</Authors>
     <Company>Marco Antonio Regueira</Company>
     <Copyright>Copyright (c) 2017-2026 Marco Antonio Regueira</Copyright>
-    <Description>FPDF-based PDF generator for .NET. Embeds TrueType fonts with valid PDF descriptors (Acrobat-strict compatible), draws text / lines / rectangles / cells / multi-cell / images, and exposes the classic FPDF API on net8.0 and net9.0. Pair with EgoPDF.Zpl to render Zebra ZPL II labels.</Description>
+    <Description>FPDF-based PDF generator for .NET. Embeds TrueType fonts with valid PDF descriptors (Acrobat-strict compatible), draws text / lines / rectangles / cells / multi-cell / images, and exposes the classic FPDF API on net8.0 and net9.0. Pair with EgoPDF.Barcodes to render Zebra ZPL II labels.</Description>
     <PackageTags>pdf;fpdf;generator;portable;net8;net9</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

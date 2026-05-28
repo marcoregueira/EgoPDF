@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebDemo", "WebDemo\WebDemo.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.Pdf.Test", "Ego.Pdf.Test\Ego.Pdf.Test.csproj", "{B08C74F7-F3DD-413B-92F7-F09045B01A14}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.Pdf.Zpl", "Ego.Pdf.Zpl\Ego.Pdf.Zpl.csproj", "{2B6667B0-28A6-412B-8F6B-EC0269703A16}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.PDF.Barcodes", "Ego.PDF.Barcodes\Ego.PDF.Barcodes.csproj", "{2B6667B0-28A6-412B-8F6B-EC0269703A16}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

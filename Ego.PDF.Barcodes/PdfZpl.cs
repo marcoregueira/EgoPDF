@@ -1,5 +1,5 @@
 ﻿using Ego.PDF;
-namespace Ego.Pdf.Zpl;
+namespace Ego.PDF.Barcodes.Zpl;
 
 public class PdfZpl
 {

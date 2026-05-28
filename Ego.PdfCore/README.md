@@ -5,7 +5,7 @@ C# port of [FPDF](http://www.fpdf.org) with bug fixes and modern additions
 descriptors, page-size and image helpers).
 
 If you also need to render Zebra ZPL labels to PDF, add the companion
-preview package [`EgoPDF.Zpl`](https://www.nuget.org/packages/EgoPDF.Zpl).
+preview package [`EgoPDF.Barcodes`](https://www.nuget.org/packages/EgoPDF.Barcodes).
 
 ## Quick start
 

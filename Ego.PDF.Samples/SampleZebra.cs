@@ -1,4 +1,4 @@
-using Ego.Pdf.Zpl;
+using Ego.PDF.Barcodes.Zpl;
 using Ego.PDF.Data;
 using System;
 using System.IO;

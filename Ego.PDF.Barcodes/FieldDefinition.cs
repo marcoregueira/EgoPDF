@@ -4,9 +4,9 @@ using ZXing.OneD;
 using ZXing;
 using Ego.PDF.Data;
 using Microsoft.Xna.Framework;
-using static Ego.Pdf.Zpl.PdfZpl;
+using static Ego.PDF.Barcodes.Zpl.PdfZpl;
 
-namespace Ego.Pdf.Zpl;
+namespace Ego.PDF.Barcodes.Zpl;
 
 public class FieldDefinition
 {

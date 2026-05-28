@@ -1,4 +1,4 @@
-# Azure DevOps pipeline: pack EgoPDF.Generator + EgoPDF.Zpl y los publica
+# Azure DevOps pipeline: pack EgoPDF.Generator + EgoPDF.Barcodes y los publica
 # juntos en nuget.org. Disparo manual desde la UI ("Run pipeline").
 #
 # Requisitos:

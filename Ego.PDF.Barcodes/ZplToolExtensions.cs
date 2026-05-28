@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Ego.Pdf.Zpl;
+namespace Ego.PDF.Barcodes.Zpl;
 
 /// <summary>
 /// Small helpers for the ZPL parser: safe positional access on the
