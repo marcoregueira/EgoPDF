@@ -1,30 +1,19 @@
+using Ego.PDF.Barcodes;
 using Ego.PDF.Data;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using ZXing;
-using ZXing.Aztec;
-using ZXing.Common;
-using ZXing.Datamatrix;
-using ZXing.OneD;
-using ZXing.PDF417;
-using ZXing.QrCode;
 
 namespace Ego.PDF.Samples;
 
 /// <summary>
-/// Gallery of barcode symbologies that the project can render through
-/// ZXing.Net. Two-column layout on a single A4 page: linear barcodes
-/// on the left, matrix barcodes on the right, both branded with the
-/// egoPdf palette.
-///
-/// All renderers share the same drawing primitives: AddBarcode for the
-/// 1D writers (which return a single bool[] row of modules) and
-/// AddMatrix for the 2D writers (which return a ZXing BitMatrix).
+/// Gallery of barcode symbologies that the project can render. The
+/// drawing primitives all live in <see cref="BarcodeRenderer"/> (in
+/// the EgoPDF.Barcodes package); this sample is just a two-column
+/// layout that picks a payload and a brand colour for each
+/// symbology.
 /// </summary>
-public class Sample9: FPdf
+public class Sample9 : FPdf
 {
     private static readonly Color BrandDark   = new Color(26, 29, 38);
     private static readonly Color BrandAccent = new Color(204, 105, 95);
@@ -64,11 +53,6 @@ public class Sample9: FPdf
         DrawMatrixColumn(rightX, columnsTop, rightWidth);
     }
 
-    /// <summary>
-    /// Draws the navy egoPdf header band at the top of the page.
-    /// Wordmark on the left ("ego" white + "Pdf" coral) and large
-    /// "BARCODES" title on the right.
-    /// </summary>
     private void DrawPageHeader()
     {
         const double bandHeight = 44;
@@ -90,10 +74,6 @@ public class Sample9: FPdf
         SetTextColor(BrandDark);
     }
 
-    /// <summary>
-    /// Coral hairline + small-caps coral label, used at the top of each column.
-    /// Returns the Y position from which the column body should start.
-    /// </summary>
     private double DrawSectionLabel(double x, double y, double width, string text)
     {
         SetDrawColor(BrandAccent);
@@ -109,27 +89,26 @@ public class Sample9: FPdf
         return y + 18;
     }
 
-    /// <summary>
-    /// Visual indent between the column label/title and the actual bars
-    /// or matrix. Labels stay flush against the column origin; codes are
-    /// nudged right so they hang under their captions like a list entry.
-    /// </summary>
+    /// <summary>Visual indent between captions and codes so the codes hang under their labels.</summary>
     private const double CodeIndent = 3;
+
+    /// <summary>Module width for every 1D code, in mm.</summary>
+    private const double ModuleWidth = 0.5;
 
     private void DrawLinearColumn(double x, double y, double width)
     {
         double cursor = DrawSectionLabel(x, y, width, "LINEAR 1D");
 
-        var rows = new (string label, bool[] modules, int height, Color color)[]
+        var rows = new (string label, Action<double, double, double, Color> draw, double height, Color color)[]
         {
-            ("Code 128",           Encode1D(new Code128Writer(), "EGOPDF-128",     BarcodeFormat.CODE_128),   10, BrandDark),
-            ("Code 39",            Encode1D(new Code39Writer(),  "EGOPDF-39",      BarcodeFormat.CODE_39),    10, BrandAccent),
-            ("Code 93",            Encode1D(new Code93Writer(),  "EGOPDF-93",      BarcodeFormat.CODE_93),    10, BrandDark),
-            ("Interleaved 2 of 5", Encode1D(new ITFWriter(),     "12345678901234", BarcodeFormat.ITF),        10, BrandAccent),
-            ("Codabar",            Encode1D(new CodaBarWriter(), "A12345678B",     BarcodeFormat.CODABAR),    10, BrandDark),
-            ("EAN-13",             Encode1D(new EAN13Writer(),   "0123456789128",  BarcodeFormat.EAN_13),     12, BrandAccent),
-            ("EAN-8",              Encode1D(new EAN8Writer(),    "12345670",       BarcodeFormat.EAN_8),      12, BrandDark),
-            ("UPC-A",              Encode1D(new UPCAWriter(),    "012345678905",   BarcodeFormat.UPC_A),      12, BrandAccent),
+            ("Code 128",           (rx, ry, h, c) => BarcodeRenderer.DrawCode128         (this, "EGOPDF-128",      rx, ry, ModuleWidth, h, c), 10, BrandDark),
+            ("Code 39",            (rx, ry, h, c) => BarcodeRenderer.DrawCode39          (this, "EGOPDF-39",       rx, ry, ModuleWidth, h, c), 10, BrandAccent),
+            ("Code 93",            (rx, ry, h, c) => BarcodeRenderer.DrawCode93          (this, "EGOPDF-93",       rx, ry, ModuleWidth, h, c), 10, BrandDark),
+            ("Interleaved 2 of 5", (rx, ry, h, c) => BarcodeRenderer.DrawInterleaved2of5 (this, "12345678901234", rx, ry, ModuleWidth, h, c), 10, BrandAccent),
+            ("Codabar",            (rx, ry, h, c) => BarcodeRenderer.DrawCodabar         (this, "A12345678B",     rx, ry, ModuleWidth, h, c), 10, BrandDark),
+            ("EAN-13",             (rx, ry, h, c) => BarcodeRenderer.DrawEan13           (this, "0123456789128",  rx, ry, ModuleWidth, h, c), 12, BrandAccent),
+            ("EAN-8",              (rx, ry, h, c) => BarcodeRenderer.DrawEan8            (this, "12345670",       rx, ry, ModuleWidth, h, c), 12, BrandDark),
+            ("UPC-A",              (rx, ry, h, c) => BarcodeRenderer.DrawUpcA            (this, "012345678905",   rx, ry, ModuleWidth, h, c), 12, BrandAccent),
         };
 
         foreach (var row in rows)
@@ -139,11 +118,7 @@ public class Sample9: FPdf
             SetXY(x, cursor);
             Cell(width, 4, row.label);
 
-            // AddBarcode draws at pdf.Y (when y=null), so move the cursor
-            // to the desired bar top before drawing.
-            Y = cursor + 5;
-            AddBarcode(0.5, row.modules, x + CodeIndent, y: null, row.height, row.color);
-
+            row.draw(x + CodeIndent, cursor + 5, row.height, row.color);
             cursor += 5 + row.height + 4;
         }
     }
@@ -153,154 +128,35 @@ public class Sample9: FPdf
         double cursor = DrawSectionLabel(x, y, width, "MATRIX 2D");
 
         const double matrixSize = 22.5; // mm, square cells (height); width = size * aspect.
+        const double pdf417Aspect = 2.0;
 
-        // Strip the default quiet-zone padding so all four matrices have
-        // the same visible margin (none) and share the same left edge.
-        // PDF417 in particular ships with a wide quiet zone that visually
-        // shifts the code to the right of the column.
-        var noMargin = new Dictionary<EncodeHintType, object>
+        var matrices = new (string label, double matrixWidth, double matrixHeight, Action<double, double, Color> draw, Color color)[]
         {
-            { EncodeHintType.MARGIN, 0 },
-        };
-
-        var matrices = new (string label, BitMatrix matrix, double aspect, Color color)[]
-        {
-            ("QR Code",     new QRCodeWriter().encode("https://github.com/marcoregueira/egopdf",
-                                                       BarcodeFormat.QR_CODE, 0, 0, noMargin),     1.0, BrandDark),
-            ("Data Matrix", new DataMatrixWriter().encode("egoPdf · Data Matrix · 2026",
-                                                       BarcodeFormat.DATA_MATRIX, 0, 0, noMargin), 1.0, BrandAccent),
-            ("PDF417",      new PDF417Writer().encode("egoPdf · PDF417 · 1234567890",
-                                                       BarcodeFormat.PDF_417, 0, 0, noMargin),     2.0, BrandDark),
-            ("Aztec",       new AztecWriter().encode("egoPdf · Aztec · 1234567890",
-                                                       BarcodeFormat.AZTEC, 0, 0, noMargin),       1.0, BrandAccent),
+            ("QR Code",     matrixSize, matrixSize,
+                (mx, my, c) => BarcodeRenderer.DrawQrCode    (this, "https://github.com/marcoregueira/egopdf", mx, my, matrixSize, c),
+                BrandDark),
+            ("Data Matrix", matrixSize, matrixSize,
+                (mx, my, c) => BarcodeRenderer.DrawDataMatrix(this, "egoPdf · Data Matrix · 2026",            mx, my, matrixSize, c),
+                BrandAccent),
+            ("PDF417",      matrixSize * pdf417Aspect, matrixSize,
+                (mx, my, c) => BarcodeRenderer.DrawPdf417    (this, "egoPdf · PDF417 · 1234567890",           mx, my, matrixSize * pdf417Aspect, matrixSize, c),
+                BrandDark),
+            ("Aztec",       matrixSize, matrixSize,
+                (mx, my, c) => BarcodeRenderer.DrawAztec     (this, "egoPdf · Aztec · 1234567890",            mx, my, matrixSize, c),
+                BrandAccent),
         };
 
         foreach (var m in matrices)
         {
-            DrawMatrix(m.label, m.matrix, x, cursor, matrixSize, m.aspect, m.color, matrixIndent: CodeIndent);
+            // Caption above the matrix sits flush against the column edge.
+            SetFont("Roboto", "", 10);
+            SetTextColor(TextMuted);
+            SetXY(x, cursor);
+            Cell(m.matrixWidth, 5, m.label);
+
+            m.draw(x + CodeIndent, cursor + 6, m.color);
             cursor += 5 + matrixSize + 8; // caption + matrix + gap
         }
-    }
-
-    /// <summary>
-    /// Wrap any ZXing writer (including the few that don't expose
-    /// encode(string) -> bool[]) into a single row of modules by going
-    /// through the universal BitMatrix overload and reading row 0.
-    /// Trailing/leading "off" modules (the quiet zone the writer adds)
-    /// are stripped so the first dark bar sits flush against the column
-    /// origin and aligns with the 2D matrices on the right.
-    /// </summary>
-    private static bool[] Encode1D(Writer writer, string contents, BarcodeFormat format)
-    {
-        var matrix = writer.encode(contents, format, 0, 0);
-        var bits = new bool[ matrix.Width ];
-        for (int i = 0; i < matrix.Width; i++)
-            bits[ i ] = matrix[ i, 0 ];
-
-        int first = 0;
-        while (first < bits.Length && !bits[ first ]) first++;
-        int last = bits.Length - 1;
-        while (last > first && !bits[ last ]) last--;
-        if (first == 0 && last == bits.Length - 1) return bits;
-
-        var trimmed = new bool[ last - first + 1 ];
-        Array.Copy(bits, first, trimmed, 0, trimmed.Length);
-        return trimmed;
-    }
-
-    private void DrawMatrix(string label, BitMatrix matrix, double x, double y, double targetMm,
-        double aspect = 1.0, Color? color = null, double matrixIndent = 0)
-    {
-        var drawColor = color ?? BrandDark;
-
-        // Caption above the matrix sits flush against `x`.
-        SetFont("Roboto", "", 10);
-        SetTextColor(TextMuted);
-        SetXY(x, y);
-        Cell(targetMm * aspect, 5, label);
-
-        // Each ZXing module → moduleMm user units. PDF417 isn't square so
-        // we let the caller pass an aspect ratio that scales the matrix
-        // width by `aspect` while keeping the height equal to targetMm.
-        var moduleMmX = (targetMm * aspect) / matrix.Width;
-        var moduleMmY = targetMm / matrix.Height;
-        AddMatrix(matrix, x + matrixIndent, y + 6, moduleMmX, moduleMmY, drawColor);
-    }
-
-    private void AddBarcode(double w, bool[] bitmap, double? x, double? y, int height, Color? color = null)
-    {
-        color = color ?? BrandDark;
-        var index = 0;
-        var count = bitmap.Length;
-        var left = x ?? X;
-        // DrawArea translates point.Y by H - pdf.Y, so a relative top of 0
-        // lands on pdf.Y itself. Don't seed `top` with Y or the bars end
-        // up double-translated.
-        var top = y ?? 0;
-        while (index < count)
-        {
-            if (bitmap[ index ])
-            {
-                var trueCount = bitmap.Skip(index + 1).TakeWhile(b => b).Count();
-                var points = new[]
-                {
-                    new DrawingPoint(left + w * index, top),
-                    new DrawingPoint(left + (w * index) + (w * (trueCount + 1)), top),
-                    new DrawingPoint(left + (w * index) + (w * (trueCount + 1)), top + height),
-                    new DrawingPoint(left + w * index, top + height),
-                };
-                DrawArea(color, 0.00, points);
-                index += trueCount;
-            }
-            index++;
-        }
-    }
-
-    /// <summary>
-    /// Stamps a 2D BitMatrix as a grid of small filled rectangles. Adjacent
-    /// "on" modules in the same row are coalesced into a single rectangle
-    /// so the PDF stays compact.
-    /// </summary>
-    private void AddMatrix(BitMatrix matrix, double x, double y, double moduleWidth, double moduleHeight, Color color)
-    {
-        for (int row = 0; row < matrix.Height; row++)
-        {
-            int runStart = -1;
-            for (int col = 0; col < matrix.Width; col++)
-            {
-                var on = matrix[ col, row ];
-                if (on)
-                {
-                    if (runStart < 0) runStart = col;
-                }
-                else if (runStart >= 0)
-                {
-                    StampRun(x, y, moduleWidth, moduleHeight, runStart, row, col - runStart, color);
-                    runStart = -1;
-                }
-            }
-            if (runStart >= 0)
-                StampRun(x, y, moduleWidth, moduleHeight, runStart, row, matrix.Width - runStart, color);
-        }
-    }
-
-    private void StampRun(double x, double y, double mw, double mh, int col, int row, int length, Color color)
-    {
-        // DrawArea applies an implicit (H - pdf.Y) - point.Y translation,
-        // so to position the matrix at the absolute (x, y) we passed in,
-        // we have to feed Y values relative to pdf.Y here.
-        var left = x + col * mw;
-        var top = (y - Y) + row * mh;
-        var right = left + length * mw;
-        var bottom = top + mh;
-        var points = new[]
-        {
-            new DrawingPoint(left,  top),
-            new DrawingPoint(right, top),
-            new DrawingPoint(right, bottom),
-            new DrawingPoint(left,  bottom),
-        };
-        DrawArea(color, 0.00, points);
     }
 
     private static string GetPath()
