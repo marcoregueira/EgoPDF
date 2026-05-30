@@ -26,6 +26,7 @@ public class SampleMarkdown : FPdf
         // (barcode, cta) need wiring here.
         theme.Shortcodes.Register("barcode", new BarcodeShortcode());
         theme.Shortcodes.Register("cta", new CallToActionShortcode());
+        theme.Shortcodes.Register("imagepair", new ImagePairShortcode());
 
         // The demo references a PNG sitting alongside the sample's
         // binary; build an absolute path so the markdown renders the
@@ -112,16 +113,23 @@ public class SampleMarkdown : FPdf
 
         ## Images
 
-        The built-in `image` shortcode is the controlled path: explicit
-        width, alignment, optional caption and clickable link.
+        Three idioms cover the typical image needs:
 
-        [[image src="{LOGO}" width=30 align=center caption="The egoPdf wordmark, 30 mm wide and centered" link="https://github.com/marcoregueira/egopdf"]]
+        - `![alt](url)` — natural pixel size at the theme's print DPI
+          (150 by default), capped at the column width.
+        - `[[image src=... width=... align=... caption=... link=...]]`
+          — explicit dimensions, alignment, caption, clickable link.
+        - `[[imagepair src1=... src2=... caption1=... caption2=...]]`
+          — two images side by side in equal half-column cells, with
+          optional captions and dividers. Useful when a single
+          full-column image would dominate the page.
 
-        The plain Markdown syntax `![alt](url)` does the simpler thing —
-        natural pixel size translated through the theme's print DPI
-        (150 by default), capped at the column width. Great for high-res
-        images that already have a known size.
+        Example pair:
 
-        ![egoPdf logo]({LOGO})
+        [[imagepair
+            src1="{LOGO}" caption1="Left cell — [[image]] style"
+            src2="{LOGO}" caption2="Right cell — ![alt](url) style"
+            borders=true
+        ]]
         """;
 }
