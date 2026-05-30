@@ -20,6 +20,7 @@ public sealed class ShortcodeRegistry
         // EgoPDF.Generator are registered up front. Users can override
         // them by re-registering under the same name.
         Register("pagebreak", PageBreakShortcode.Instance);
+        Register("image", ImageShortcode.Instance);
     }
 
     public ShortcodeRegistry Register(string name, IShortcodeHandler handler)

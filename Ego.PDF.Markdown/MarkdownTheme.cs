@@ -34,6 +34,15 @@ public sealed class MarkdownTheme
 
     public double CodeFontSize { get; set; } = 9.5;
 
+    /// <summary>
+    /// Print DPI assumed when sizing an <c>![alt](url)</c> image whose
+    /// natural pixel dimensions need to be converted to millimetres. A
+    /// 600-pixel-wide image at 150 DPI lays out 101.6 mm wide. Higher
+    /// DPI shrinks images, lower DPI enlarges them. The image is then
+    /// capped at the column width to avoid overflowing the page.
+    /// </summary>
+    public int ImageDpi { get; set; } = 150;
+
     // ---- Spacing (in user units, default mm) -------------------------------
 
     /// <summary>Line height used by <c>Write()</c> for paragraphs.</summary>

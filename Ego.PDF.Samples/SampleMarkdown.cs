@@ -1,12 +1,13 @@
 using Ego.PDF.Data;
 using Ego.PDF.Markdown;
+using System;
 using System.IO;
 
 namespace Ego.PDF.Samples;
 
 /// <summary>
 /// Demonstrates the EgoPDF.Markdown package: parses an embedded
-/// Markdown string and emits a single-page PDF. Uses the default
+/// Markdown string and emits a multi-page PDF. Uses the default
 /// theme (FPDF core fonts) so the sample runs without loading any
 /// TTF files.
 /// </summary>
@@ -20,17 +21,25 @@ public class SampleMarkdown : FPdf
         pdf.AddPage(PageSizeEnum.A4);
 
         var theme = MarkdownTheme.Default;
-        // [[pagebreak]] is registered automatically by ShortcodeRegistry;
-        // only the package-specific handlers need wiring here.
+        // [[pagebreak]] and [[image]] are registered automatically by
+        // ShortcodeRegistry; only the package-specific handlers
+        // (barcode, cta) need wiring here.
         theme.Shortcodes.Register("barcode", new BarcodeShortcode());
         theme.Shortcodes.Register("cta", new CallToActionShortcode());
 
-        MarkdownRenderer.Render(pdf, Document, theme);
+        // The demo references a PNG sitting alongside the sample's
+        // binary; build an absolute path so the markdown renders the
+        // same regardless of the OS working directory at test time.
+        var logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "egopdf-logo.png")
+            .Replace('\\', '/');
+        var document = DocumentTemplate.Replace("{LOGO}", logoPath);
+
+        MarkdownRenderer.Render(pdf, document, theme);
         pdf.Close();
         return pdf.Buffer.BaseStream;
     }
 
-    private const string Document = """
+    private const string DocumentTemplate = """
         # Markdown to PDF
 
         This document is rendered by **EgoPDF.Markdown** using the *default*
@@ -73,6 +82,20 @@ public class SampleMarkdown : FPdf
         > many output formats, including PDF.
 
         [[pagebreak]]
+
+        ## Images
+
+        The plain Markdown image syntax `![alt](url)` resolves the file,
+        reads its natural dimensions via Skia and lays it out at the
+        theme's print DPI (150 by default), capped at the column width.
+        No more 64x64 icons inflating to fill the page:
+
+        ![egoPdf logo]({LOGO})
+
+        For finer control, the built-in `image` shortcode adds width,
+        alignment, captions and a clickable link:
+
+        [[image src="{LOGO}" width=30 align=center caption="The egoPdf wordmark, 30 mm wide and centered" link="https://github.com/marcoregueira/egopdf"]]
 
         ## Shortcodes
 

@@ -335,9 +335,37 @@ public static class MarkdownRenderer
         }
 
         var contentWidth = pdf.W - pdf.LeftMargin - pdf.RightMargin;
-        pdf.Image(path, pdf.LeftMargin, pdf.Y, contentWidth, 0);
+
+        // Use the image's natural pixel size translated through ImageDpi
+        // so a 64x64 icon renders small and an 1800x1200 photo renders
+        // big — instead of every image inflating to fill the column.
+        // Falls back to full column width if Skia can't read the size.
+        var (pxW, pxH) = TryReadImageDimensions(path);
+        double widthMm = pxW > 0
+            ? Math.Min(contentWidth, Shortcodes.ImageShortcode.PixelsToMm(pxW, theme.ImageDpi))
+            : contentWidth;
+        double heightMm = pxW > 0 && pxH > 0
+            ? widthMm * pxH / pxW
+            : 0; // 0 lets FPdf.Image preserve the aspect ratio itself
+
+        pdf.Image(path, pdf.LeftMargin, pdf.Y, widthMm, heightMm);
         pdf.Y += theme.ParagraphSpacing;
         pdf.SetX(pdf.LeftMargin);
+    }
+
+    private static (int width, int height) TryReadImageDimensions(string path)
+    {
+        try
+        {
+            using var stream = File.OpenRead(path);
+            using var codec = SkiaSharp.SKCodec.Create(stream);
+            if (codec is null) return (0, 0);
+            return (codec.Info.Width, codec.Info.Height);
+        }
+        catch
+        {
+            return (0, 0);
+        }
     }
 
     // ---- Inlines -----------------------------------------------------------

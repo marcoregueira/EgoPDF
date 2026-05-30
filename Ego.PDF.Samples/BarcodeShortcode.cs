@@ -2,7 +2,6 @@ using Ego.PDF.Barcodes;
 using Ego.PDF.Markdown;
 using Ego.PDF.Markdown.Shortcodes;
 using Microsoft.Xna.Framework;
-using System.Globalization;
 
 namespace Ego.PDF.Samples;
 
@@ -42,9 +41,9 @@ public sealed class BarcodeShortcode : IShortcodeHandler
             return;
         }
 
-        var type = block.Options.TryGetValue("type", out var t) ? t.ToLowerInvariant() : "qr";
-        var color = ParseColor(block.Options, theme.BodyColor);
-        var align = block.Options.TryGetValue("align", out var a) ? a.ToLowerInvariant() : "left";
+        var type = ShortcodeOptions.GetString(block.Options, "type", "qr").ToLowerInvariant();
+        var color = ShortcodeOptions.GetColor(block.Options, "color", theme.BodyColor);
+        var align = ShortcodeOptions.GetString(block.Options, "align", "left").ToLowerInvariant();
 
         var paddingTop = theme.ParagraphSpacing;
         var paddingBottom = theme.ParagraphSpacing;
@@ -54,7 +53,7 @@ public sealed class BarcodeShortcode : IShortcodeHandler
         {
             case "qr":
             {
-                var size = ParseDouble(block.Options, "size", 30);
+                var size = ShortcodeOptions.GetDouble(block.Options, "size", 30);
                 var x = AlignX(pdf, size, align);
                 BarcodeRenderer.DrawQrCode(pdf, data, x, pdf.Y, size, color);
                 pdf.Y += size;
@@ -62,7 +61,7 @@ public sealed class BarcodeShortcode : IShortcodeHandler
             }
             case "datamatrix":
             {
-                var size = ParseDouble(block.Options, "size", 25);
+                var size = ShortcodeOptions.GetDouble(block.Options, "size", 25);
                 var x = AlignX(pdf, size, align);
                 BarcodeRenderer.DrawDataMatrix(pdf, data, x, pdf.Y, size, color);
                 pdf.Y += size;
@@ -70,7 +69,7 @@ public sealed class BarcodeShortcode : IShortcodeHandler
             }
             case "aztec":
             {
-                var size = ParseDouble(block.Options, "size", 25);
+                var size = ShortcodeOptions.GetDouble(block.Options, "size", 25);
                 var x = AlignX(pdf, size, align);
                 BarcodeRenderer.DrawAztec(pdf, data, x, pdf.Y, size, color);
                 pdf.Y += size;
@@ -78,8 +77,8 @@ public sealed class BarcodeShortcode : IShortcodeHandler
             }
             case "pdf417":
             {
-                var w = ParseDouble(block.Options, "width", 60);
-                var h = ParseDouble(block.Options, "height", 20);
+                var w = ShortcodeOptions.GetDouble(block.Options, "width", 60);
+                var h = ShortcodeOptions.GetDouble(block.Options, "height", 20);
                 var x = AlignX(pdf, w, align);
                 BarcodeRenderer.DrawPdf417(pdf, data, x, pdf.Y, w, h, color);
                 pdf.Y += h;
@@ -123,8 +122,8 @@ public sealed class BarcodeShortcode : IShortcodeHandler
     private static void Draw1D(FPdf pdf, string data, ShortcodeBlock block,
         OneDDrawer drawer, Color color, string align)
     {
-        var moduleWidth = ParseDouble(block.Options, "width", 0.5);
-        var height = ParseDouble(block.Options, "height", 14);
+        var moduleWidth = ShortcodeOptions.GetDouble(block.Options, "width", 0.5);
+        var height = ShortcodeOptions.GetDouble(block.Options, "height", 14);
         // We don't know the natural width of a 1D barcode without
         // encoding it, so for "center" / "right" we approximate using
         // the available column width as a generous bounding box.
@@ -144,30 +143,5 @@ public sealed class BarcodeShortcode : IShortcodeHandler
             case "right":  return pdf.W - pdf.RightMargin - width;
             default:       return pdf.LeftMargin;
         }
-    }
-
-    private static double ParseDouble(System.Collections.Generic.IDictionary<string, string> options,
-        string key, double fallback)
-    {
-        if (options.TryGetValue(key, out var raw) &&
-            double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
-        {
-            return v;
-        }
-        return fallback;
-    }
-
-    private static Color ParseColor(System.Collections.Generic.IDictionary<string, string> options, Color fallback)
-    {
-        if (!options.TryGetValue("color", out var raw) || string.IsNullOrEmpty(raw)) return fallback;
-        var hex = raw.TrimStart('#');
-        if (hex.Length != 6) return fallback;
-        if (int.TryParse(hex.Substring(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var r) &&
-            int.TryParse(hex.Substring(2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var g) &&
-            int.TryParse(hex.Substring(4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var b))
-        {
-            return new Color(r, g, b);
-        }
-        return fallback;
     }
 }
