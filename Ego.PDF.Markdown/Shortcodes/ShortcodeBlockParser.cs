@@ -134,12 +134,35 @@ public sealed class ShortcodeBlockParser : BlockParser
         return BlockState.BreakDiscard;
     }
 
+    /// <summary>
+    /// Scan <paramref name="text"/> from <paramref name="from"/> for the
+    /// nearest <c>]]</c> sequence that is NOT inside a quoted value.
+    /// A quoted run starts on <c>"</c> or <c>'</c> and ends on the same
+    /// quote character (single-line; <c>\</c> escapes the next char).
+    /// Without this, captions like <c>caption="text with ]] in it"</c>
+    /// would short-circuit the outer shortcode close.
+    /// </summary>
     private static int FindCloseMarker(string text, int from, int end)
     {
-        for (int i = from; i < end; i++)
+        int i = from;
+        while (i < end)
         {
-            if (text[i] == ']' && text[i + 1] == ']')
+            char c = text[i];
+            if (c == '"' || c == '\'')
+            {
+                char quote = c;
+                i++;
+                while (i < end && text[i] != quote)
+                {
+                    if (text[i] == '\\' && i + 1 < end) i++;
+                    i++;
+                }
+                if (i < end) i++; // step past the closing quote
+                continue;
+            }
+            if (c == ']' && text[i + 1] == ']')
                 return i;
+            i++;
         }
         return -1;
     }

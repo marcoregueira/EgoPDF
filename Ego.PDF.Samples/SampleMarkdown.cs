@@ -127,8 +127,8 @@ public class SampleMarkdown : FPdf
         Example pair:
 
         [[imagepair
-            src1="{LOGO}" caption1="Left cell — [[image]] style"
-            src2="{LOGO}" caption2="Right cell — ![alt](url) style"
+            src1="{LOGO}" caption1="Shortcode with caption + link"
+            src2="{LOGO}" caption2="Same image, second cell"
             borders=true
         ]]
         """;
