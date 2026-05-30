@@ -58,48 +58,7 @@ public class FieldDefinition
 
         if (this.TextMode == FieldMode.Barcode)
         {
-            switch (this.BarcodeMode)
-            {
-                case BarcodeMode.Code128:
-                    DrawBarcodeCode128(pdf, text);
-                    break;
-                case BarcodeMode.Interleaved2of5:
-                    DrawBarcodeI2of5(pdf, text);
-                    break;
-                case BarcodeMode.Code39:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.Code39Writer(),  ZXing.BarcodeFormat.CODE_39);
-                    break;
-                case BarcodeMode.Codabar:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.CodaBarWriter(), ZXing.BarcodeFormat.CODABAR);
-                    break;
-                case BarcodeMode.EAN13:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.EAN13Writer(),   ZXing.BarcodeFormat.EAN_13);
-                    break;
-                case BarcodeMode.EAN8:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.EAN8Writer(),    ZXing.BarcodeFormat.EAN_8);
-                    break;
-                case BarcodeMode.UPC_A:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.UPCAWriter(),    ZXing.BarcodeFormat.UPC_A);
-                    break;
-                case BarcodeMode.UPC_E:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.UPCEWriter(),    ZXing.BarcodeFormat.UPC_E);
-                    break;
-                case BarcodeMode.MSI:
-                    DrawBarcode1D(pdf, text, new ZXing.OneD.MSIWriter(),     ZXing.BarcodeFormat.MSI);
-                    break;
-                case BarcodeMode.QrCode:
-                    DrawBarcode2D(pdf, text, new ZXing.QrCode.QRCodeWriter(),       ZXing.BarcodeFormat.QR_CODE);
-                    break;
-                case BarcodeMode.DataMatrix:
-                    DrawBarcode2D(pdf, text, new ZXing.Datamatrix.DataMatrixWriter(), ZXing.BarcodeFormat.DATA_MATRIX);
-                    break;
-                case BarcodeMode.PDF417:
-                    DrawBarcode2D(pdf, text, new ZXing.PDF417.PDF417Writer(),       ZXing.BarcodeFormat.PDF_417);
-                    break;
-                case BarcodeMode.Aztec:
-                    DrawBarcode2D(pdf, text, new ZXing.Aztec.AztecWriter(),         ZXing.BarcodeFormat.AZTEC);
-                    break;
-            }
+            DispatchBarcode(pdf, text);
             return;
         }
 
@@ -343,6 +302,61 @@ public class FieldDefinition
         pdf.SetX(barcodeLeft + indent);
         pdf.WriteRotatedText(pdf.X, pdf.Y, this.Thickness * 0.7, "N", text, tracking);
     }
+    /// <summary>
+    /// Map every simple-1D BarcodeMode to the ZXing Writer + format
+    /// pair the generic <see cref="DrawBarcode1D"/> pipeline drives.
+    /// Adding a new symbology that fits the "single Writer, single
+    /// format, no codeset hint" pattern is a one-line entry here.
+    /// Code 128 and Interleaved 2 of 5 have their own renderers (codeset
+    /// prefix and odd-length padding) so they stay out of the table.
+    /// </summary>
+    private static readonly Dictionary<BarcodeMode, (Func<ZXing.Writer> writer, ZXing.BarcodeFormat format)> Simple1DWriters = new()
+    {
+        [BarcodeMode.Code39]  = (() => new ZXing.OneD.Code39Writer(),  ZXing.BarcodeFormat.CODE_39),
+        [BarcodeMode.Codabar] = (() => new ZXing.OneD.CodaBarWriter(), ZXing.BarcodeFormat.CODABAR),
+        [BarcodeMode.EAN13]   = (() => new ZXing.OneD.EAN13Writer(),   ZXing.BarcodeFormat.EAN_13),
+        [BarcodeMode.EAN8]    = (() => new ZXing.OneD.EAN8Writer(),    ZXing.BarcodeFormat.EAN_8),
+        [BarcodeMode.UPC_A]   = (() => new ZXing.OneD.UPCAWriter(),    ZXing.BarcodeFormat.UPC_A),
+        [BarcodeMode.UPC_E]   = (() => new ZXing.OneD.UPCEWriter(),    ZXing.BarcodeFormat.UPC_E),
+        [BarcodeMode.MSI]     = (() => new ZXing.OneD.MSIWriter(),     ZXing.BarcodeFormat.MSI),
+    };
+
+    /// <summary>
+    /// Same shape as <see cref="Simple1DWriters"/> for the 2D family --
+    /// QR, Data Matrix, PDF417 and Aztec all route through
+    /// <see cref="DrawBarcode2D"/>.
+    /// </summary>
+    private static readonly Dictionary<BarcodeMode, (Func<ZXing.Writer> writer, ZXing.BarcodeFormat format)> Simple2DWriters = new()
+    {
+        [BarcodeMode.QrCode]     = (() => new ZXing.QrCode.QRCodeWriter(),         ZXing.BarcodeFormat.QR_CODE),
+        [BarcodeMode.DataMatrix] = (() => new ZXing.Datamatrix.DataMatrixWriter(), ZXing.BarcodeFormat.DATA_MATRIX),
+        [BarcodeMode.PDF417]     = (() => new ZXing.PDF417.PDF417Writer(),         ZXing.BarcodeFormat.PDF_417),
+        [BarcodeMode.Aztec]      = (() => new ZXing.Aztec.AztecWriter(),           ZXing.BarcodeFormat.AZTEC),
+    };
+
+    private void DispatchBarcode(FPdf pdf, string text)
+    {
+        if (Simple1DWriters.TryGetValue(this.BarcodeMode, out var w1))
+        {
+            DrawBarcode1D(pdf, text, w1.writer(), w1.format);
+            return;
+        }
+        if (Simple2DWriters.TryGetValue(this.BarcodeMode, out var w2))
+        {
+            DrawBarcode2D(pdf, text, w2.writer(), w2.format);
+            return;
+        }
+        // Specialised renderers: Code 128 honours the >; / >: / >> codeset
+        // prefix on the field data; Interleaved 2 of 5 pads odd-length
+        // digit strings with a leading zero. Both also use options
+        // classes the simple pipeline doesn't know about.
+        switch (this.BarcodeMode)
+        {
+            case BarcodeMode.Code128:         DrawBarcodeCode128(pdf, text); break;
+            case BarcodeMode.Interleaved2of5: DrawBarcodeI2of5(pdf, text); break;
+        }
+    }
+
     /// <summary>
     /// Generic 1D barcode renderer. Encodes the text through any
     /// ZXing Writer using the universal BitMatrix encode overload
