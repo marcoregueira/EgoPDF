@@ -215,28 +215,95 @@ public static class MarkdownRenderer
         var lines = text.Split('\n');
         var padding = theme.CodeBlockPadding;
         var lineHeight = theme.LineHeight - 0.5;
-        var blockHeight = lines.Length * lineHeight + 2 * padding;
         var contentWidth = pdf.W - pdf.LeftMargin - pdf.RightMargin;
+        var available = contentWidth - 2 * padding;
 
+        // GetStringWidth depends on the active font; pick it before
+        // measuring so the wrap math matches the rendered glyphs.
+        pdf.SetFont(theme.CodeFont, "", theme.CodeFontSize);
+
+        // Pre-wrap every source line against the available text width.
+        // Without this, a long single-line shortcode would render past
+        // the code-block tint and the page right margin -- the user's
+        // visible "se sale por la derecha" symptom.
+        var wrapped = new List<string>();
+        foreach (var line in lines)
+            WrapCodeLine(pdf, line, available, wrapped);
+
+        var blockHeight = wrapped.Count * lineHeight + 2 * padding;
         var blockX = pdf.LeftMargin;
         var blockY = pdf.Y;
 
         pdf.SetFillColor(theme.CodeBackground);
         pdf.Rect(blockX, blockY, contentWidth, blockHeight, "F");
 
-        pdf.SetFont(theme.CodeFont, "", theme.CodeFontSize);
         pdf.SetTextColor(theme.CodeColor);
         pdf.SetXY(blockX + padding, blockY + padding);
 
-        foreach (var line in lines)
+        foreach (var wrapLine in wrapped)
         {
             pdf.SetX(blockX + padding);
-            pdf.Cell(contentWidth - 2 * padding, lineHeight, line);
+            pdf.Cell(available, lineHeight, wrapLine);
             pdf.Ln(lineHeight);
         }
 
         pdf.SetX(pdf.LeftMargin);
         pdf.Y = blockY + blockHeight + theme.ParagraphSpacing;
+    }
+
+    /// <summary>
+    /// Hard-wrap one source line of a code block at the current font
+    /// against <paramref name="maxWidth"/>, preferring a whitespace
+    /// breakpoint when one exists in the fitted prefix, falling back
+    /// to a character-level break for solid runs like a long URL.
+    /// Empty lines round-trip unchanged.
+    /// </summary>
+    private static void WrapCodeLine(FPdf pdf, string line, double maxWidth, List<string> output)
+    {
+        if (string.IsNullOrEmpty(line))
+        {
+            output.Add(line);
+            return;
+        }
+        if (pdf.GetStringWidth(line) <= maxWidth)
+        {
+            output.Add(line);
+            return;
+        }
+
+        int start = 0;
+        while (start < line.Length)
+        {
+            // Greedy fit: extend `end` while the substring still fits.
+            int end = start;
+            double accW = 0;
+            while (end < line.Length)
+            {
+                var w = pdf.GetStringWidth(line[end].ToString());
+                if (accW + w > maxWidth && end > start) break;
+                accW += w;
+                end++;
+            }
+
+            // Try to back up to the last whitespace inside [start..end)
+            // so the break lands at a "natural" boundary. If there isn't
+            // one (e.g. a long URL), fall through to the hard break.
+            int breakAt = end;
+            if (end < line.Length)
+            {
+                for (int i = end - 1; i > start; i--)
+                {
+                    if (line[i] == ' ' || line[i] == '\t')
+                    {
+                        breakAt = i + 1; // consume the space on the previous line
+                        break;
+                    }
+                }
+            }
+
+            output.Add(line.Substring(start, breakAt - start));
+            start = breakAt;
+        }
     }
 
     private static string CollectLines(LeafBlock code)
