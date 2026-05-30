@@ -2037,6 +2037,167 @@ public class FPdf: IDisposable
         return SavedPositions.Peek();
     }
 
+    // ====================================================================
+    //  Layout primitives -- Bounds / Row / Stack / Panel
+    // ====================================================================
+
+    /// <summary>
+    /// Returns the printable area of the current page as a <see cref="Rect"/>:
+    /// the page size minus the four margins. Convenient starting point for
+    /// composing layouts with <see cref="Row(Rect,int,double)"/> and friends.
+    /// </summary>
+    public Rect Bounds()
+    {
+        var x = LeftMargin;
+        var y = TopMargin;
+        var w = W - LeftMargin - RightMargin;
+        var h = H - TopMargin - PageBreakMargin;
+        return new Rect(x, y, w, h);
+    }
+
+    /// <summary>
+    /// Splits <paramref name="bounds"/> into <paramref name="count"/>
+    /// equal-width side-by-side rectangles separated by <paramref name="gap"/>
+    /// mm. Equivalent to <c>Row(bounds, Enumerable.Repeat(1.0, count), gap)</c>.
+    /// </summary>
+    public Rect[] Row(Rect bounds, int count, double gap = 0)
+    {
+        if (count <= 0) return Array.Empty<Rect>();
+        var weights = new double[count];
+        for (int i = 0; i < count; i++) weights[i] = 1.0;
+        return Row(bounds, weights, gap);
+    }
+
+    /// <summary>
+    /// Splits <paramref name="bounds"/> horizontally according to
+    /// <paramref name="weights"/>. Weights are normalised, so <c>{1, 2, 1}</c>
+    /// and <c>{0.25, 0.5, 0.25}</c> produce the same result.
+    /// <paramref name="gap"/> mm of horizontal space sits between each slot.
+    ///
+    /// <code>
+    /// var slots = pdf.Row(pdf.Bounds(), new[] { 1.0, 2.0, 1.0 }, gap: 3);
+    /// // slots[0].W : slots[1].W : slots[2].W == 1 : 2 : 1
+    /// </code>
+    /// </summary>
+    public Rect[] Row(Rect bounds, double[] weights, double gap = 0)
+    {
+        if (weights == null || weights.Length == 0) return Array.Empty<Rect>();
+        double sum = 0;
+        for (int i = 0; i < weights.Length; i++) sum += Math.Max(0, weights[i]);
+        if (sum <= 0) return Array.Empty<Rect>();
+
+        var available = Math.Max(0, bounds.W - gap * (weights.Length - 1));
+        var slots = new Rect[weights.Length];
+        var cursor = bounds.X;
+        for (int i = 0; i < weights.Length; i++)
+        {
+            var w = available * Math.Max(0, weights[i]) / sum;
+            slots[i] = new Rect(cursor, bounds.Y, w, bounds.H);
+            cursor += w + gap;
+        }
+        return slots;
+    }
+
+    /// <summary>
+    /// Splits <paramref name="bounds"/> into <paramref name="count"/>
+    /// equal-height stacked rectangles separated by <paramref name="gap"/>
+    /// mm of vertical space.
+    /// </summary>
+    public Rect[] Stack(Rect bounds, int count, double gap = 0)
+    {
+        if (count <= 0) return Array.Empty<Rect>();
+        var weights = new double[count];
+        for (int i = 0; i < count; i++) weights[i] = 1.0;
+        return Stack(bounds, weights, gap);
+    }
+
+    /// <summary>
+    /// Splits <paramref name="bounds"/> vertically according to
+    /// <paramref name="weights"/> (normalised). Useful when the relative
+    /// heights matter more than absolute mm.
+    ///
+    /// <code>
+    /// var rows = pdf.Stack(pdf.Bounds(), new[] { 1.0, 3.0 }, gap: 4);
+    /// // rows[0] gets 25% of the height, rows[1] gets 75%
+    /// </code>
+    /// </summary>
+    public Rect[] Stack(Rect bounds, double[] weights, double gap = 0)
+    {
+        if (weights == null || weights.Length == 0) return Array.Empty<Rect>();
+        double sum = 0;
+        for (int i = 0; i < weights.Length; i++) sum += Math.Max(0, weights[i]);
+        if (sum <= 0) return Array.Empty<Rect>();
+
+        var available = Math.Max(0, bounds.H - gap * (weights.Length - 1));
+        var slots = new Rect[weights.Length];
+        var cursor = bounds.Y;
+        for (int i = 0; i < weights.Length; i++)
+        {
+            var h = available * Math.Max(0, weights[i]) / sum;
+            slots[i] = new Rect(bounds.X, cursor, bounds.W, h);
+            cursor += h + gap;
+        }
+        return slots;
+    }
+
+    /// <summary>
+    /// Paints a titled framed box at <paramref name="bounds"/> using the
+    /// current draw/fill/font/text colours, then invokes <paramref name="body"/>
+    /// with the inner content rectangle (below the title band, padded). The
+    /// font and colour state in effect on entry is restored after the body
+    /// runs, so the caller doesn't have to clean up.
+    ///
+    /// <code>
+    /// pdf.SetFillColor(PanelFill);
+    /// pdf.SetDrawColor(LineGray);
+    /// pdf.SetTextColor(BrandAccent);
+    /// pdf.SetFont("Helvetica", "B", 8);
+    /// pdf.Panel(slot, "MEDIDAS DC", content =>
+    /// {
+    ///     // free to set any font/colour here -- restored on exit
+    ///     pdf.SetFont("Helvetica", "", 8);
+    ///     pdf.SetXY(content.X, content.Y);
+    ///     pdf.Cell(content.W, 5, "Voc: 247 V");
+    /// });
+    /// </code>
+    /// </summary>
+    /// <param name="bounds">Outer rectangle (including frame and title band).</param>
+    /// <param name="title">Title text; pass <c>null</c> or empty for no title band.</param>
+    /// <param name="body">Renderer for the panel contents. Receives the inner rect.</param>
+    /// <param name="padding">Padding from the frame to the inner content, in mm.</param>
+    /// <param name="titleHeight">Height of the title band, in mm.</param>
+    public void Panel(Rect bounds, string title, Action<Rect> body,
+        double padding = 3, double titleHeight = 5)
+    {
+        using (PushState())
+        {
+            // Frame: filled rectangle stroked with the current draw colour.
+            // "DF" means both border and fill from the current state.
+            Rect(bounds.X, bounds.Y, bounds.W, bounds.H, "DF");
+
+            double topUsed = padding;
+            if (!string.IsNullOrEmpty(title))
+            {
+                SetXY(bounds.X + padding, bounds.Y + padding * 0.6);
+                Cell(bounds.W - 2 * padding, titleHeight, title);
+                // Hairline below the title using the current draw colour.
+                Line(bounds.X + padding, bounds.Y + padding * 0.6 + titleHeight + 0.5,
+                     bounds.Right - padding, bounds.Y + padding * 0.6 + titleHeight + 0.5);
+                topUsed = padding * 0.6 + titleHeight + 1.5;
+            }
+
+            var content = bounds.Inset(padding, topUsed, padding, padding);
+            body?.Invoke(content);
+        }
+    }
+
+    /// <summary>
+    /// Title-less variant of <see cref="Panel(Rect, string, Action{Rect}, double, double)"/>
+    /// -- just a framed padded box.
+    /// </summary>
+    public void Panel(Rect bounds, Action<Rect> body, double padding = 3)
+        => Panel(bounds, null, body, padding, 0);
+
     public virtual double GetX()
     {
         // Get x position

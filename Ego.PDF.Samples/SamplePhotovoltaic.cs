@@ -210,17 +210,14 @@ public class SamplePhotovoltaic : FPdf
 
     private void DrawThreePanels(Installation inst)
     {
-        var topY = Y;
-        var totalW = W - LeftMargin - RightMargin;
-        var gap = 3.0;
-        var panelW = (totalW - 2 * gap) / 3.0;
-        var panelH = 54.0;
+        // Row() splits the printable width into three equal slots with
+        // a 3 mm gap between them, returning their Rect coordinates.
+        // No manual (x + w + gap) arithmetic, no off-by-one when the
+        // count changes.
+        var rowBounds = new Rect(LeftMargin, Y, W - LeftMargin - RightMargin, 54.0);
+        var slots = Row(rowBounds, 3, gap: 3);
 
-        var x1 = LeftMargin;
-        var x2 = x1 + panelW + gap;
-        var x3 = x2 + panelW + gap;
-
-        DrawPanel(x1, topY, panelW, panelH, "MEDIDAS DC", new (string, string)[]
+        DrawPanel(slots[0], "MEDIDAS DC", new (string, string)[]
         {
             ("Voc string 1",   $"{inst.Strings[0].Voc:0.0} V"),
             ("Isc string 1",   $"{inst.Strings[0].Isc:0.0} A"),
@@ -230,7 +227,7 @@ public class SamplePhotovoltaic : FPdf
             ("Aislamiento +/-", $"{inst.Strings.Min(s => s.Rais):0.#} MOhm"),
         });
 
-        DrawPanel(x2, topY, panelW, panelH, "MEDIDAS AC", new (string, string)[]
+        DrawPanel(slots[1], "MEDIDAS AC", new (string, string)[]
         {
             ("Tensión L-N",     $"{inst.AcVoltage:0.0} V"),
             ("Frecuencia",      $"{inst.AcFrequency:0.00} Hz"),
@@ -240,7 +237,7 @@ public class SamplePhotovoltaic : FPdf
             ("Conexión",        "Monofásica 230 V"),
         });
 
-        DrawPanel(x3, topY, panelW, panelH, "PROTECCIONES", new (string, string)[]
+        DrawPanel(slots[2], "PROTECCIONES", new (string, string)[]
         {
             ("Magnetotérmico",  $"{inst.MagnetoA} A curva C"),
             ("Diferencial",     $"{inst.DiffRatedmA} mA tipo A"),
@@ -250,44 +247,42 @@ public class SamplePhotovoltaic : FPdf
             ("Protección sobret.", "Tipo 2 (DC y AC)"),
         });
 
-        Y = topY + panelH + 4;
+        Y = rowBounds.Bottom + 4;
     }
 
-    private void DrawPanel(double x, double y, double w, double h, string title, (string label, string value)[] rows)
+    private void DrawPanel(Rect bounds, string title, (string label, string value)[] rows)
     {
-        // Self-contained renderer: caller's font, colours and line
-        // width come back unchanged after the using-block exits.
-        using (PushState())
+        // Configure brand styling once for the frame + title; Panel()
+        // honours the current draw/fill/font/text colours and restores
+        // them after the body, so nothing leaks into the caller.
+        SetFillColor(PanelFill);
+        SetDrawColor(LineGray);
+        SetLineWidth(0.2);
+        SetFont("Helvetica", "B", 8);
+        SetTextColor(BrandAccent);
+
+        Panel(bounds, title, content =>
         {
-            SetFillColor(PanelFill);
-            SetDrawColor(LineGray);
-            SetLineWidth(0.2);
-            Rect(x, y, w, h, "DF");
-
-            SetXY(x + 3, y + 2);
-            SetFont("Helvetica", "B", 8);
-            SetTextColor(BrandAccent);
-            Cell(w - 6, 4, title);
-
-            // Hairline below the title.
-            SetDrawColor(LineGray);
-            Line(x + 3, y + 7.5, x + w - 3, y + 7.5);
-
-            var rowH = (h - 10) / rows.Length;
+            // `content` is the inner rect post-title and post-padding.
+            // Stack() then carves it into one row per (label, value)
+            // pair without any manual arithmetic.
+            var rowRects = Stack(content, rows.Length);
+            var labelW = content.W * 0.55;
             for (int i = 0; i < rows.Length; i++)
             {
-                var rowY = y + 9 + i * rowH;
-                SetXY(x + 3, rowY);
+                var r = rowRects[i];
+
+                SetXY(r.X, r.Y);
                 SetFont("Helvetica", "", 8);
                 SetTextColor(TextMuted);
-                Cell(w * 0.55, rowH, rows[i].label);
+                Cell(labelW, r.H, rows[i].label);
 
-                SetXY(x + w * 0.55 + 3, rowY);
+                SetXY(r.X + labelW, r.Y);
                 SetFont("Helvetica", "B", 8);
                 SetTextColor(BrandDark);
-                Cell(w * 0.45 - 6, rowH, rows[i].value, "0", 0, AlignEnum.Right);
+                Cell(r.W - labelW, r.H, rows[i].value, "0", 0, AlignEnum.Right);
             }
-        }
+        });
     }
 
     // ---- Unifilar schematic (drawn in code) -------------------------------
