@@ -61,6 +61,11 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--brand-dark);
 }
 
+/* Coral accent text -- used by the landing hero tagline. */
+.text-coral {
+  color: var(--brand-accent);
+}
+
 /* Bootstrap overrides */
 .btn-primary {
   color: #fff;

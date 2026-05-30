@@ -1,218 +1,261 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData[ "Title" ] = "Home page";
+    ViewData["Title"] = "egoPdf — coded PDFs, perfect on paper";
 }
 
-<div class="text-center my-4">
-    <img src="~/img/logo.png" alt="egoPdf" class="img-fluid" style="max-height: 320px;" />
-</div>
+@*
+    Image placeholders.
+    The PNGs below don't exist yet -- the user is going to feed the
+    "Prompts for the image agent" section at the bottom of this page
+    to an image generator and drop the resulting files in
+    wwwroot/img/. Once the four files land, the figure tags below
+    render the artwork in place. Until then the alt text and the
+    caption convey what each slot is for.
+*@
 
-
-<div class="row">
-    <div class="col-xs-12">
-        <h2>Description</h2>
-        <ul>
-            <li>
-                This is an automated port of FPF for PHP. Some parts have been recoded but many others are still as given.
-            </li>
-            <li>
-                This is not a full fledged tool, but instead if is intendend to be used as last resource. If everything else fails or is too heavy and you have some time to spend, then, maybe this is for you.
-            </li>
-
-            <li>
-                Should you use it? Probably not. Its mantained just for fun. But if you like the DIY approach, then maybe it will suit you.
-            </li>
-        </ul>
+<section class="text-center my-5">
+    <img src="~/img/logo.png" alt="egoPdf"
+         class="img-fluid mb-4" style="max-height: 220px;" />
+    <h1 class="display-5 fw-light mb-2">
+        Coded PDFs, perfect on paper.
+        <span class="text-coral">Now agent-friendly.</span>
+    </h1>
+    <p class="lead text-muted mb-4">
+        A small family of .NET libraries for generating PDFs with
+        millimetric precision, written for people who reach for a
+        ruler and people who reach for an agent.
+    </p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a asp-page="/Examples" class="btn btn-dark btn-lg">
+            See the examples
+        </a>
+        <a href="https://www.nuget.org/packages?q=EgoPDF"
+           target="_blank" rel="noopener"
+           class="btn btn-outline-dark btn-lg">
+            On NuGet
+        </a>
+        <a href="https://github.com/marcoregueira/egopdf"
+           target="_blank" rel="noopener"
+           class="btn btn-outline-dark btn-lg">
+            On GitHub
+        </a>
     </div>
-</div>
-<div class="row-fluid">
-    <div class="span12">
-        <h2>
-            Tutorial
-        </h2>
-        <p>
-            Currently, egoPdf status is work in progress. First milestone is to recreate all samples
-            in the FPDF <a href="https://www.fpdf.org/en/tutorial/index.php" target="_blank" rel="noopener">tutorial</a>.
-        </p>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>
-                    </th>
-                    <th>
-                        Original FPDF sample
-                    </th>
-                    <th>
-                        egoPdf implementation & variations
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <b>Sample 1</b>. Minimal example
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto1.htm" target="_blank" rel="noopener">Tutorial 1</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample1">Tutorial 1</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 2</b>. Header, footer, page break and image
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto2.htm" target="_blank" rel="noopener">Tutorial 2</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample2">PNG image</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="2"></i>
-                        <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSample2b">PNG with alpha channel</a>
-                        <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSample2c">JPG image</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 3</b>. Line breaks and colors
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto3.htm" target="_blank" rel="noopener">Tutorial 3</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample3">Tutorial 3</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="3"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 4</b>. Multi-columns
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto4.htm" target="_blank" rel="noopener">Tutorial 4</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample4">Tutorial 4</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="4"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 5</b>. Tables
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto5.htm" target="_blank" rel="noopener">Tutorial 5</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample5">Tutorial 5</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="5"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 6</b>. Links and flowing text
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto6.htm" target="_blank" rel="noopener">Tutorial 6</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample6">Tutorial 6</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="6"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 7</b>. Adding new fonts and encoding support
-                    </td>
-                    <td>
-                        <a href="https://www.fpdf.org/en/tutorial/tuto7.htm" target="_blank" rel="noopener">Tutorial 7</a>
-                    </td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample7">Tutorial 7</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="7"></i>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <h2>
-            New samples
-        </h2>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>
-                    </th>
-                    <th>
-                        New sample
-                    </th>
-                    <th>
-                        Implementation
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <b>Sample 1</b>.  Invoice (three layouts)
-                    </td>
-                    <td>Tutorial 8.</td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample8">Coloured header</a>
-                        <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSample8b">Minimalist</a>
-                        <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSample8c">Modular cards</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 2</b>.  Barcodes. Requires 
-                    </td>
-                    <td>Tutorial 9.</td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSample9">Barcodes</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 3</b>. Zebra Emulation
-                    </td>
-                    <td></td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=1">Horizontal shipping (^BC, ^GB, ^FR)</a>
-                        <i class="icon-list-alt sampleSource link_out" data-sample="1"></i>
-                        <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=2">Vertical shipping (rotated, ^GFA, ^B2)</a>
-                        <br />
-                        <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=3">Barcode catalogue (^BC / ^B3 / ^B2 / ^BK / ^BE / ^B8 / ^BU / ^BM / ^BQ / ^BX / ^B7 / ^BO)</a>
-                        <br />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 4</b>. Markdown to PDF
-                    </td>
-                    <td></td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSampleMarkdown">Markdown demo (Phase 1 happy path)</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b>Sample 5</b>. Photovoltaic acceptance report
-                    </td>
-                    <td></td>
-                    <td>
-                        <a (click)="download($event)" href="/api/SampleData/GetSamplePhotovoltaic">PV commissioning report (3 pages, brand-coloured header + technical panels)</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+</section>
+
+<figure class="text-center my-5">
+    <img src="~/img/landing-hero.png" alt="Stylised illustration: C# code on the left transforming into a printed PDF on the right, ruler and pencil overlay."
+         class="img-fluid border rounded shadow-sm"
+         style="max-width: 880px;" />
+    <figcaption class="text-muted small mt-2">
+        Hero illustration — generated separately, see prompt below.
+    </figcaption>
+</figure>
+
+<section class="my-5">
+    <h2 class="mb-3">What it is</h2>
+    <p>
+        <b>egoPdf</b> is a .NET PDF generation library that started as
+        an automated port of <a href="https://www.fpdf.org/" target="_blank" rel="noopener">FPDF</a>
+        and grew into a small ecosystem:
+    </p>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+                <h5 class="mb-1">
+                    <a href="https://www.nuget.org/packages/EgoPDF.Generator/" target="_blank" rel="noopener">EgoPDF.Generator</a>
+                </h5>
+                <p class="text-muted small mb-2">Core PDF engine. MIT. SkiaSharp for font metrics + image decode.</p>
+                <p class="mb-0 small">Cell / MultiCell / Image / Rect / Line / Link &mdash; plus
+                    the new <code>Row</code> / <code>Stack</code> / <code>Panel</code> layout primitives,
+                    <code>PushState</code> / <code>PushPos</code> scope helpers and <code>CellMeasure</code>
+                    for auto-grow rows.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+                <h5 class="mb-1">
+                    <a href="https://www.nuget.org/packages/EgoPDF.Barcodes/" target="_blank" rel="noopener">EgoPDF.Barcodes</a>
+                </h5>
+                <p class="text-muted small mb-2">1D + 2D symbologies via ZXing.Net, plus a ZPL II emulator.</p>
+                <p class="mb-0 small">QR, Data Matrix, PDF417, Aztec, Code 128, Code 39, EAN, UPC, MSI,
+                    Codabar, Interleaved 2 of 5 &mdash; same API surface, table-driven dispatch internally.
+                    Bonus: parse ZPL II strings and render the labels as PDFs.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+                <h5 class="mb-1">
+                    <a href="https://www.nuget.org/packages/EgoPDF.Markdown/" target="_blank" rel="noopener">EgoPDF.Markdown</a>
+                </h5>
+                <p class="text-muted small mb-2">CommonMark + GFM via Markdig, rendered through the core engine.</p>
+                <p class="mb-0 small">Headings, lists, code blocks, links, autolinks, block quotes, images.
+                    Built-in shortcode extension: <code>[[name k=v]]</code> blocks dispatch to handlers, so
+                    Markdown can drop straight into native egoPdf primitives.
+                </p>
+            </div>
+        </div>
     </div>
-</div>
+</section>
+
+<section class="my-5">
+    <h2 class="mb-3">What changed (the agent-friendly turn)</h2>
+    <p>
+        The classic FPDF API is a stateful machine: every <code>Cell</code>,
+        <code>SetFont</code> and <code>SetXY</code> mutates global state and
+        you keep that state in your head as you write. That works for a human
+        with a ruler, less well for an agent assembling a page from generic
+        instructions. The recent iteration adds the missing primitives:
+    </p>
+    <dl class="row mt-4">
+        <dt class="col-sm-3">Layout primitives</dt>
+        <dd class="col-sm-9">
+            <code>Row(bounds, n)</code>, <code>Stack(bounds, weights)</code>,
+            <code>Panel(bounds, title, body)</code> and the <code>Rect</code>
+            value type with <code>Inset</code> / <code>WithTopOffset</code> /
+            <code>Right</code> / <code>Bottom</code> helpers. The math of
+            <code>x + width + gap</code> disappears; the call site reads as the
+            layout it produces.
+        </dd>
+        <dt class="col-sm-3">Scope helpers</dt>
+        <dd class="col-sm-9">
+            <code>using (pdf.PushState())</code> snapshots font, text, fill and
+            draw colours plus line width and restores them on dispose.
+            <code>using (pdf.PushPos())</code> does the same for the cursor.
+            Sub-renderers compose without leaking state.
+        </dd>
+        <dt class="col-sm-3">Styling as data</dt>
+        <dd class="col-sm-9">
+            <code>PanelStyle</code> captures a frame + title look as a record
+            you can reuse across calls. The PV report's <code>BrandPanel</code>
+            is declared once and applied to every technical panel.
+        </dd>
+        <dt class="col-sm-3">Brand kit</dt>
+        <dd class="col-sm-9">
+            <code>EgoPdfBrand</code> centralises the colour palette, the thin
+            Poppins wordmark and the <code>LoadPoppins</code> font registration
+            used by Sample8 / Sample9 / SamplePhotovoltaic / SampleMarkdown's
+            header band.
+        </dd>
+        <dt class="col-sm-3">Markdown escape hatches</dt>
+        <dd class="col-sm-9">
+            Block shortcodes (<code>[[barcode]]</code>, <code>[[cta]]</code>,
+            <code>[[image]]</code>, <code>[[imagepair]]</code>) drop out of
+            Markdown into native egoPdf code (Row, Image, brand styling) and
+            back. Useful while GFM tables aren't implemented yet.
+        </dd>
+        <dt class="col-sm-3">Visual regression</dt>
+        <dd class="col-sm-9">
+            Every sample PDF is hashed on each test run and compared against
+            a SHA-256 baseline. Run-to-run determinism is ensured by snapshotting
+            <code>FontBuilder.Fonts</code> at module load and blanking the
+            xref + <code>/CreationDate</code> in the canonical form.
+        </dd>
+    </dl>
+</section>
+
+<figure class="text-center my-5">
+    <img src="~/img/landing-primitives.png" alt="Diagram: a page being carved into rows, columns and a titled panel, with labels Row(bounds, 3), Stack(bounds, weights), Panel(bounds, title)."
+         class="img-fluid border rounded shadow-sm"
+         style="max-width: 880px;" />
+    <figcaption class="text-muted small mt-2">
+        Layout primitives diagram &mdash; see prompt below.
+    </figcaption>
+</figure>
+
+<section class="my-5">
+    <h2 class="mb-3">How to use it</h2>
+    <p>
+        Install <code>EgoPDF.Generator</code> from NuGet, then either keep the
+        classic imperative API for tight control, drop in the new primitives
+        for ergonomics, or render a Markdown string and only escape to
+        primitives where the visual demands it:
+    </p>
+<pre class="border rounded p-3 bg-light"><code>// 1. Classic imperative
+using var pdf = new FPdf("invoice.pdf");
+pdf.AddPage(PageSizeEnum.A4);
+pdf.SetFont("Helvetica", "B", 16);
+pdf.Cell(40, 10, "INVOICE", "0", 1, AlignEnum.Right);
+
+// 2. With primitives
+var cols = pdf.Row(pdf.Bounds(), new[] { 2.0, 1.0 }, gap: 3);
+pdf.Panel(cols[0], "DETAILS", brandStyle, content =&gt; {
+    // body lives inside `content`, state restored on return
+});
+
+// 3. Markdown
+var theme = MarkdownTheme.Default;
+theme.Shortcodes.Register("barcode", new BarcodeShortcode());
+MarkdownRenderer.Render(pdf, markdownSource, theme);
+</code></pre>
+    <p>
+        See <a asp-page="/Examples">Examples</a> for live PDFs of every pattern
+        above, or read the
+        <a href="https://github.com/marcoregueira/egopdf/blob/master/RECIPES.md"
+           target="_blank" rel="noopener">RECIPES.md</a>
+        catalog for copy-pasteable snippets.
+    </p>
+</section>
+
+<section class="my-5 p-4 bg-light border rounded">
+    <h2 class="mb-3">Prompts for the image agent</h2>
+    <p class="text-muted">
+        Four illustrations slot into this landing once they exist. Each block
+        below is a self-contained prompt; copy-paste into your image
+        generator of choice and drop the resulting PNGs into
+        <code>WebDemo/wwwroot/img/</code> with the file names indicated.
+        Brand palette: dark <code>#1A1D26</code>, coral <code>#CC695F</code>,
+        muted <code>#6E7382</code>; white background; no people; no
+        text inside the image; safe to compose at 16:9 (1600 &times; 900
+        px works for all of them).
+    </p>
+
+    <h5>1. <code>wwwroot/img/landing-hero.png</code> &mdash; hero banner</h5>
+<pre class="border rounded p-3 bg-white"><code>A clean, minimalist illustration in flat-vector style. Left half:
+a stylised IDE window showing a few lines of C# code (just the
+shapes, no readable text), with a coral cursor blinking on one
+line. An arrow flows from the IDE rightwards. Right half: an A4
+printed PDF page sitting on a desk with a wooden ruler and a
+pencil resting on it, with subtle horizontal lines suggesting
+rendered paragraphs. Colour palette: deep blue-grey (#1A1D26)
+for outlines and structure, coral (#CC695F) as the single accent,
+white background. 16:9 aspect, no people, no text in the
+illustration. Editorial, calm tone.</code></pre>
+
+    <h5 class="mt-4">2. <code>wwwroot/img/landing-primitives.png</code> &mdash; layout diagram</h5>
+<pre class="border rounded p-3 bg-white"><code>A diagrammatic illustration of layout primitives. Centre stage:
+a stylised A4 page (portrait) being carved into a 2x3 grid by
+faint coral lines. Two top cells hold simple bullet-list icons,
+one middle cell holds a small bar-chart, one cell holds a QR
+code placeholder, the bottom row is a single wide panel with a
+small title bar and three rows of placeholder content. Floating
+labels in muted grey monospace next to relevant cells:
+"Row(bounds, n)" beside a horizontal split, "Stack(bounds, w)"
+beside a vertical split, "Panel(bounds, title)" beside the wide
+bottom panel. Same #1A1D26 / #CC695F / #6E7382 palette on white,
+flat-vector, technical-but-friendly, no people. 16:9.</code></pre>
+
+    <h5 class="mt-4">3. <code>wwwroot/img/landing-mixed-mode.png</code> &mdash; mixed-mode document</h5>
+<pre class="border rounded p-3 bg-white"><code>A single stylised A4 page split horizontally. Top third: a dark
+brand header band (#1A1D26 fill) with a small white-and-coral
+wordmark in the top-left corner and a right-aligned bold title
+suggestion. Bottom two thirds: a clean white area showing
+stylised Markdown content -- two heading bars, a few paragraph
+lines (just horizontal strokes), a bullet list of three items,
+and a coral block-quote bar on the left. Thin coral hairline
+bridges the dark band and the markdown area. Same palette on
+white, flat-vector, editorial design tone, no readable text
+inside the page. 16:9.</code></pre>
+
+    <h5 class="mt-4">4. <code>wwwroot/img/landing-agent.png</code> &mdash; agent-friendly mark</h5>
+<pre class="border rounded p-3 bg-white"><code>A friendly minimalist scene: an abstract wireframe robot or
+geometric agent figure (think simple cube or sphere with a
+single coral eye-dot, not a humanoid) holding a printed A4
+page that shows faint horizontal lines suggesting rendered
+text plus a small QR code in the corner. A pencil and a wooden
+ruler rest beside the figure. Same #1A1D26 / #CC695F palette on
+white, flat-vector, generous whitespace, no people, no
+copyrighted characters, no text inside the illustration. 16:9.</code></pre>
+</section>

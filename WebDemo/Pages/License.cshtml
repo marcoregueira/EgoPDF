@@ -7,9 +7,11 @@
 <h1>@ViewData["Title"]</h1>
 
 <p class="text-muted">
-    egoPdf is released as two NuGet packages, both under the MIT license.
+    egoPdf is released as three NuGet packages, all under the MIT license.
     The <code>EgoPDF.Generator</code> package additionally carries an
     acknowledgment to FPDF, the PHP project it was originally automated from.
+    Third-party dependencies (SkiaSharp, ZXing.Net, Markdig) are listed
+    with their own licenses below.
 </p>
 
 <h2>MIT License</h2>
@@ -55,8 +57,65 @@ SOFTWARE.</code></pre>
     MIT License above.
 </p>
 <p>
-    The <code>EgoPDF.Barcodes</code> package is original work by Marco Antonio
-    Regueira and contains no FPDF-derived code.
+    The <code>EgoPDF.Barcodes</code> and <code>EgoPDF.Markdown</code>
+    packages are original work by Marco Antonio Regueira and contain no
+    FPDF-derived code.
+</p>
+
+<h2>Third-party dependencies</h2>
+<p class="text-muted">
+    egoPdf depends on three runtime packages. All licenses are
+    distribution-compatible with MIT.
+</p>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Package</th>
+                <th>Version</th>
+                <th>License</th>
+                <th>Used by</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <a href="https://github.com/mono/SkiaSharp" target="_blank" rel="noopener">SkiaSharp</a>
+                </td>
+                <td>3.116.1</td>
+                <td>
+                    <a href="https://github.com/mono/SkiaSharp/blob/main/LICENSE.md" target="_blank" rel="noopener">MIT</a>
+                </td>
+                <td><code>EgoPDF.Generator</code> &mdash; font metrics + image decode</td>
+            </tr>
+            <tr>
+                <td>
+                    <a href="https://github.com/micjahn/ZXing.Net" target="_blank" rel="noopener">ZXing.Net</a>
+                </td>
+                <td>0.16.10</td>
+                <td>
+                    <a href="https://github.com/micjahn/ZXing.Net/blob/master/COPYING" target="_blank" rel="noopener">Apache 2.0</a>
+                </td>
+                <td><code>EgoPDF.Barcodes</code> &mdash; encodes every 1D / 2D symbology</td>
+            </tr>
+            <tr>
+                <td>
+                    <a href="https://github.com/xoofx/markdig" target="_blank" rel="noopener">Markdig</a>
+                </td>
+                <td>0.40.0</td>
+                <td>
+                    <a href="https://github.com/xoofx/markdig/blob/master/license.txt" target="_blank" rel="noopener">BSD-2-Clause</a>
+                </td>
+                <td><code>EgoPDF.Markdown</code> &mdash; CommonMark + GFM parser; we walk the AST ourselves</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p class="text-muted small">
+    <code>Microsoft.SourceLink.GitHub</code> (MIT) is referenced as a
+    build-only asset and does not ship inside the NuGet packages.
 </p>
 
 <h2>Trademarks</h2>
