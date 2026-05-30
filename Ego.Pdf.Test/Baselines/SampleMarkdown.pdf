@@ -912,10 +912,11 @@ endobj
 <</Type /Page
 /Parent 1 0 R
 /Resources 2 0 R
+/Annots [<</Type /Annot /Subtype /Link /Rect [255.12 287.71 340.16 187.25] /Border [0 0 0] /A <</S /URI /URI (https://github.com/marcoregueira/egopdf)>>>>]
 /Contents 8 0 R>>
 endobj
 8 0 obj
-<</Length 1909>>
+<</Length 2397>>
 stream
 2 J
 0.85 w
@@ -956,6 +957,15 @@ q 0.431 0.451 0.510 rg BT 380.68 333.61 Td (Same image, second cell) Tj ET Q
 0.863 0.863 0.878 RG
 0.57 w
 306.14 574.01 260.79 -245.20 re S
+BT /F2 11.00 Tf ET
+q 0.102 0.114 0.149 rg BT 31.19 308.51 Td (And the single ) Tj ET Q
+BT /F4 9.50 Tf ET
+q 0.102 0.114 0.149 rg BT 103.95 308.96 Td ([[image]]) Tj ET Q
+BT /F2 11.00 Tf ET
+q 0.102 0.114 0.149 rg BT 155.25 308.51 Td ( shortcode standalone — explicit width, centred, with a caption and a clickable link:) Tj ET Q
+q 85.04 0 0 100.46 255.12 187.25 cm /I1 Do Q
+BT /F3 10.00 Tf ET
+q 0.431 0.451 0.510 rg BT 188.15 173.62 Td (The egoPdf wordmark, 30 mm wide and centered) Tj ET Q
 
 endstream
 endobj

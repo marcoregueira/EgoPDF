@@ -131,5 +131,10 @@ public class SampleMarkdown : FPdf
             src2="{LOGO}" caption2="Same image, second cell"
             borders=true
         ]]
+
+        And the single `[[image]]` shortcode standalone — explicit
+        width, centred, with a caption and a clickable link:
+
+        [[image src="{LOGO}" width=30 align=center caption="The egoPdf wordmark, 30 mm wide and centered" link="https://github.com/marcoregueira/egopdf"]]
         """;
 }
