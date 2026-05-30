@@ -47,7 +47,7 @@ namespace Ego.PDF.Samples
         {
             base.Footer();
             SetY(-15);
-            SetFont("Arial", "I", 15);
+            SetFont("Arial", "I", 8);
             SetTextColor(128);
             // Page number
             Cell(0, 10, "Page " + PageNo() + "/{nb}", "0", 0, AlignEnum.Center);
