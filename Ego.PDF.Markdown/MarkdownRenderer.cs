@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using Ego.PDF.Data;
 using Markdig;
+using Markdig.Extensions.EmphasisExtras;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
+using Ego.PDF.Markdown.Shortcodes;
 using Microsoft.Xna.Framework;
 
 namespace Ego.PDF.Markdown;
@@ -34,6 +36,18 @@ namespace Ego.PDF.Markdown;
 public static class MarkdownRenderer
 {
     /// <summary>
+    /// CommonMark + GitHub Flavored Markdown + EgoPDF shortcodes
+    /// (<c>[[name k=v ...]]</c>). Built once and shared across calls.
+    /// </summary>
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UsePipeTables()
+        .UseTaskLists()
+        .UseAutoLinks()
+        .UseEmphasisExtras(EmphasisExtraOptions.Strikethrough)
+        .Use<ShortcodeExtension>()
+        .Build();
+
+    /// <summary>
     /// Parses <paramref name="markdown"/> and writes it to <paramref name="pdf"/>
     /// using <paramref name="theme"/> (or <see cref="MarkdownTheme.Default"/>).
     /// Add at least one page to the PDF before calling.
@@ -44,7 +58,7 @@ public static class MarkdownRenderer
         if (markdown is null) throw new ArgumentNullException(nameof(markdown));
         theme ??= MarkdownTheme.Default;
 
-        var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        var pipeline = Pipeline;
         var doc = Markdig.Markdown.Parse(markdown, pipeline);
         var ctx = new RenderContext(theme);
 
@@ -78,6 +92,7 @@ public static class MarkdownRenderer
             case FencedCodeBlock fcb:   RenderCodeBlock(pdf, fcb, ctx); break;
             case CodeBlock cb:          RenderCodeBlock(pdf, cb, ctx); break;
             case QuoteBlock q:          RenderQuote(pdf, q, ctx); break;
+            case ShortcodeBlock sc:     RenderShortcode(pdf, sc, ctx); break;
             default:                    /* skip unknown block types in phase 1 */ break;
         }
     }
@@ -230,6 +245,31 @@ public static class MarkdownRenderer
         return sb.ToString().TrimEnd('\n', '\r');
     }
 
+    // ---- Shortcode ---------------------------------------------------------
+
+    private static void RenderShortcode(FPdf pdf, ShortcodeBlock sc, RenderContext ctx)
+    {
+        var theme = ctx.Theme;
+        pdf.SetX(pdf.LeftMargin);
+
+        if (theme.Shortcodes.TryGet(sc.Name, out var handler))
+        {
+            handler.Render(pdf, sc, theme);
+            pdf.SetX(pdf.LeftMargin);
+            return;
+        }
+
+        // No handler — render the raw token as muted italic so the
+        // author notices something is off without breaking the layout.
+        pdf.SetFont(theme.BodyFont, "I", theme.BodyFontSize);
+        pdf.SetTextColor(theme.MutedColor);
+        var lh = System.Math.Max(1, (int)System.Math.Round(theme.LineHeight));
+        pdf.Write(lh, "[[" + sc.RawText + "]]");
+        pdf.Ln(theme.LineHeight);
+        pdf.Y += theme.ParagraphSpacing;
+        pdf.SetTextColor(theme.BodyColor);
+    }
+
     // ---- Quote -------------------------------------------------------------
 
     private static void RenderQuote(FPdf pdf, QuoteBlock q, RenderContext ctx)
@@ -305,20 +345,48 @@ public static class MarkdownRenderer
     private static void RenderInlines(FPdf pdf, ContainerInline? container, InlineContext ctx)
     {
         if (container is null) return;
+
+        // Collapse runs of LiteralInline + soft LineBreakInline into a single
+        // Write call. Multiple consecutive Writes produce multiple Tj
+        // operations in the PDF stream; each one carries CMargin padding
+        // inside its Cell that accumulates visually into "double space"
+        // artefacts between words across emit boundaries. Concatenating
+        // them into one string lets FPdf.Write emit a single tight Tj.
+        var buffer = new StringBuilder();
         foreach (var inline in container)
         {
-            RenderInline(pdf, inline, ctx);
+            switch (inline)
+            {
+                case LiteralInline lit:
+                    buffer.Append(lit.Content.ToString());
+                    break;
+                case LineBreakInline { IsHard: false }:
+                    buffer.Append(' ');
+                    break;
+                case LineBreakInline { IsHard: true }:
+                    FlushBuffer(pdf, buffer, ctx);
+                    pdf.Ln(ctx.LineHeight);
+                    break;
+                default:
+                    FlushBuffer(pdf, buffer, ctx);
+                    RenderInline(pdf, inline, ctx);
+                    break;
+            }
         }
+        FlushBuffer(pdf, buffer, ctx);
+    }
+
+    private static void FlushBuffer(FPdf pdf, StringBuilder buffer, InlineContext ctx)
+    {
+        if (buffer.Length == 0) return;
+        pdf.Write(ctx.LineHeight, buffer.ToString());
+        buffer.Clear();
     }
 
     private static void RenderInline(FPdf pdf, Inline inline, InlineContext ctx)
     {
         switch (inline)
         {
-            case LiteralInline lit:
-                pdf.Write(ctx.LineHeight, lit.Content.ToString());
-                break;
-
             case EmphasisInline em:
             {
                 // Markdig encodes ** / __ as DelimiterCount == 2 (strong),
@@ -395,17 +463,6 @@ public static class MarkdownRenderer
                 pdf.SetTextColor(ctx.Color);
                 break;
             }
-
-            case LineBreakInline br:
-                if (br.IsHard)
-                {
-                    pdf.Ln(ctx.LineHeight);
-                }
-                else
-                {
-                    pdf.Write(ctx.LineHeight, " ");
-                }
-                break;
 
             case ContainerInline container:
                 RenderInlines(pdf, container, ctx);

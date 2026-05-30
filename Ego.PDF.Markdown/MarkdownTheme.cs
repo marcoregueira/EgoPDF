@@ -1,3 +1,4 @@
+using Ego.PDF.Markdown.Shortcodes;
 using Microsoft.Xna.Framework;
 
 namespace Ego.PDF.Markdown;
@@ -74,6 +75,13 @@ public sealed class MarkdownTheme
     public Color MutedColor { get; set; } = new Color(110, 115, 130);
 
     // ---- Glyphs ------------------------------------------------------------
+
+    /// <summary>
+    /// Handlers for <c>[[name k=v ...]]</c> shortcodes. Register a handler
+    /// per name (e.g. <c>theme.Shortcodes.Register("barcode", ...)</c>);
+    /// unknown shortcodes fall back to muted-italic raw text.
+    /// </summary>
+    public ShortcodeRegistry Shortcodes { get; } = new ShortcodeRegistry();
 
     /// <summary>
     /// Character used as bullet for unordered lists. Defaults to "-" so
