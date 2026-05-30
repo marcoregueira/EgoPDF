@@ -92,6 +92,12 @@ namespace Ego.Pdf.Test
             SampleMarkdown.GetSample("sample-markdown.pdf");
         }
 
+        [Fact]
+        public void DoSamplePhotovoltaic()
+        {
+            SamplePhotovoltaic.GetSample("sample-photovoltaic.pdf", GetPath());
+        }
+
         // --------------------------------------------------------------
         // Zebra "tests" (visual smoke tests, not assertions)
         //

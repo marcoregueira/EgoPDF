@@ -140,6 +140,19 @@ namespace WebDemo.Controllers
         }
 
         [HttpGet()]
+        public FileStreamResult GetSamplePhotovoltaic()
+        {
+            // Pass null so the sample resolves photo assets against
+            // AppDomain.BaseDirectory (= the bin root). The PV pictures
+            // are propagated there by the Ego.PDF.Samples project
+            // reference, not into App_Data like the invoice assets.
+            var buffer = SamplePhotovoltaic.GetSample(null, null);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
+        [HttpGet()]
         public FileStreamResult GetSampleZebra([FromQuery] int id)
         {
             var buffer =
