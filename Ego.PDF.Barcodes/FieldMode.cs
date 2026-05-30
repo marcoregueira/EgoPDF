@@ -26,41 +26,20 @@ public class BarcodeOptions
     public int Width { get; set; } = 2;
 }
 
-public class Barcode128Options
-{
-    /*
-        orientation: The bar code orientation to use. Valid values are N (no rotation), R (rotate 90° clockwise), I (rotate 180° clockwise), and B (rotate 270° clockwise). The default value is the orientation configured via the ^FW command, which itself defaults to N (no rotation).
-        height: The bar code height, in dots. Any number between 1 and 32,000 may be used. The default value is the bar code height configured via the ^BY command, which itself defaults to 10.
-        line: Whether or not to include human-readable text with the bar code. Valid values are Y and N. The default value is Y (include human-readable text).
-        lineAbove: Whether or not to place the human-readable text above the bar code. Valid values are Y and N. The default value is N (if printed, text is placed below the bar code), except for mode U where the default is Y (if printed, text is placed above the bar code).
-        checkDigit: Whether or not to calculate a GS1 (UCC) Mod 10 check digit. Valid values are Y and N. The default value is N (GS1 check digit is not calculated).
-        mode: The mode to use to encode the bar code data. Valid values are N (no mode, subsets are specified explicitly as part of the field data), U (UCC case mode, field data must contain 19 digits), A (automatic mode, the ZPL engine automatically determines the subsets that are used to encode the data), and D (UCC/EAN mode, field data must contain GS1 numbers). The default value is N (no mode, subsets are specified explicitly as part of the field data).
-    */
-
-    /// <summary>
-    /// Empty, N, R, I, B
-    /// </summary>
-    public string Orientation { get; set; } = "";
-    public int Height { get; set; } = 10;
-    public bool Line { get; set; } = true;
-    public bool LineAbove { get; set; } = false;
-}
-
-/// <summary>Options for ^B2 Interleaved 2 of 5.</summary>
-public class Barcode2of5Options
-{
-    /// <summary>Empty, N, R, I, B.</summary>
-    public string Orientation { get; set; } = "";
-    public int Height { get; set; } = 10;
-    public bool Line { get; set; } = true;
-    public bool LineAbove { get; set; } = false;
-    public bool CheckDigit { get; set; } = false;
-}
-
 /// <summary>
-/// Shared options for the simple 1D ZPL barcodes (^B3 Code 39, ^BK
-/// Codabar, ^BE EAN-13, ^B8 EAN-8, ^BU UPC-A, ^B9 UPC-E, ^BM MSI).
+/// Per-field options for every ZPL 1D barcode the engine renders: the
+/// simple symbologies (^B3 Code 39, ^BK Codabar, ^BE EAN-13, ^B8 EAN-8,
+/// ^BU UPC-A, ^B9 UPC-E, ^BM MSI) plus ^BC Code 128 and ^B2 Interleaved
+/// 2 of 5. Each ^B? command parses its parameter tail into one of these,
+/// then the FieldDefinition.Draw dispatch reads it back.
 /// </summary>
+/// <remarks>
+/// FieldDefinition keeps three independent instances of this type
+/// (Barcode128Options, Barcode2of5Options, Barcode1DOptions) so a label
+/// that mixes ^BC and ^B3 doesn't leak parameters between the two.
+/// CheckDigit is ignored by Code 128 and the simple writers that don't
+/// expose it.
+/// </remarks>
 public class Barcode1DOptions
 {
     /// <summary>Empty, N, R, I, B.</summary>

@@ -24,8 +24,11 @@ public class FieldDefinition
     public BarcodeMode BarcodeMode { get; set; }
 
     public BarcodeOptions BarcodeOptions { get; } = new BarcodeOptions();
-    public Barcode128Options Barcode128Options { get; } = new Barcode128Options();
-    public Barcode2of5Options Barcode2of5Options { get; } = new Barcode2of5Options();
+    // Three independent instances of Barcode1DOptions so a label that
+    // alternates ^BC / ^B2 / ^B3 etc. doesn't leak parameters between
+    // them (each ^B? handler writes to its own instance).
+    public Barcode1DOptions Barcode128Options { get; } = new Barcode1DOptions();
+    public Barcode1DOptions Barcode2of5Options { get; } = new Barcode1DOptions();
     public Barcode1DOptions Barcode1DOptions { get; } = new Barcode1DOptions();
     public Barcode2DOptions Barcode2DOptions { get; } = new Barcode2DOptions();
     public string EscapeCharacter { get; set; }
@@ -544,19 +547,7 @@ public class FieldDefinition
     }
 
     private static void DrawAbsoluteRect(FPdf pdf, double absX, double absY, double w, double h, Color color)
-    {
-        // FPdf.DrawArea is relative to pdf.Y; convert to that convention.
-        var relY = absY - pdf.Y;
-        var points = new[]
-        {
-            new DrawingPoint(absX,         relY),
-            new DrawingPoint(absX + w,     relY),
-            new DrawingPoint(absX + w,     relY + h),
-            new DrawingPoint(absX,         relY + h),
-            new DrawingPoint(absX,         relY),
-        };
-        pdf.DrawArea(color, 0.00, points);
-    }
+        => PdfZpl.DrawFilledRect(pdf, absX, absY, w, h, color);
 
     public CharSize GetFontSize(string font, int dpi)
     {

@@ -127,23 +127,64 @@ public class PdfZpl
         Tokens[ "^DF" ] = Voidf;
         Tokens[ "^XF" ] = Voidf;
 
-        // Barcodes.
+        // Barcodes -- 1D family driven by the OneDBarcodes table so each
+        // ZPL command is one row of data instead of a one-off method.
         Tokens[ "^BY" ] = SetDefaultBarcodeOptions;
-        Tokens[ "^BC" ] = Code128;
-        Tokens[ "^B2" ] = Interleaved2of5;
-        Tokens[ "^B3" ] = Code39;
-        Tokens[ "^BK" ] = Codabar;
-        Tokens[ "^BE" ] = Ean13;
-        Tokens[ "^B8" ] = Ean8;
-        Tokens[ "^BU" ] = UpcA;
-        Tokens[ "^B9" ] = UpcE;
-        Tokens[ "^BM" ] = Msi;
+        foreach (var spec in OneDBarcodes)
+        {
+            var captured = spec;
+            Tokens[ captured.Token ] = (pdf, body) => Handle1DBarcode(body, captured);
+        }
         Tokens[ "^B7" ] = Pdf417;
         Tokens[ "^BQ" ] = QrCode;
         Tokens[ "^BX" ] = DataMatrix;
         Tokens[ "^BO" ] = Aztec;
 
         ResetField(Pdf);
+    }
+
+    /// <summary>
+    /// Where each ZPL 1D command parks its parsed parameters and how its
+    /// parameter tail is indexed. <c>OptionsTarget</c> returns the
+    /// <see cref="FieldDefinition"/> property the ^B? handler writes to;
+    /// keeping three separate instances avoids cross-talk inside a label
+    /// that mixes symbologies. The <c>...Idx</c> fields are the position
+    /// each parameter occupies in the command's comma-separated tail.
+    /// </summary>
+    private readonly record struct OneDSpec(
+        string Token,
+        BarcodeMode Mode,
+        Func<FieldDefinition, Barcode1DOptions> OptionsTarget,
+        int HeightIdx, int LineIdx, int LineAboveIdx, int CheckDigitIdx);
+
+    private static readonly OneDSpec[] OneDBarcodes =
+    {
+        // ^BC  orientation, height, line,        lineAbove, checkDigit, mode
+        new("^BC", BarcodeMode.Code128,         f => f.Barcode128Options,  1, 2, 3, -1),
+        // ^B2  orientation, height, line,        lineAbove, checkDigit
+        new("^B2", BarcodeMode.Interleaved2of5, f => f.Barcode2of5Options, 1, 2, 3,  4),
+        // ^B3  orientation, checkDigit, height,  line,      lineAbove
+        new("^B3", BarcodeMode.Code39,          f => f.Barcode1DOptions,   2, 3, 4,  1),
+        // ^BK  orientation, checkDigit, height,  line,      lineAbove, startChar, stopChar
+        new("^BK", BarcodeMode.Codabar,         f => f.Barcode1DOptions,   2, 3, 4, -1),
+        // ^BE  orientation, height, line,        lineAbove
+        new("^BE", BarcodeMode.EAN13,           f => f.Barcode1DOptions,   1, 2, 3, -1),
+        // ^B8  orientation, height, line,        lineAbove
+        new("^B8", BarcodeMode.EAN8,            f => f.Barcode1DOptions,   1, 2, 3, -1),
+        // ^BU  orientation, height, line,        lineAbove, checkDigit
+        new("^BU", BarcodeMode.UPC_A,           f => f.Barcode1DOptions,   1, 2, 3,  4),
+        // ^B9  orientation, height, line,        lineAbove, checkDigit
+        new("^B9", BarcodeMode.UPC_E,           f => f.Barcode1DOptions,   1, 2, 3,  4),
+        // ^BM  orientation, type (A-D), height,  line,      lineAbove, checkDigit2
+        new("^BM", BarcodeMode.MSI,             f => f.Barcode1DOptions,   2, 3, 4, -1),
+    };
+
+    private void Handle1DBarcode(string commandLine, OneDSpec spec)
+    {
+        Apply1DOptions(spec.OptionsTarget(this.CurrentField), commandLine.Substring(3),
+            spec.HeightIdx, spec.LineIdx, spec.LineAboveIdx, spec.CheckDigitIdx);
+        this.CurrentField.TextMode = FieldMode.Barcode;
+        this.CurrentField.BarcodeMode = spec.Mode;
     }
 
     private void FrameBox(FPdf pdf, string arg2)
@@ -340,18 +381,19 @@ public class PdfZpl
     // ---------------------------------------------------------------------
 
     /// <summary>
-    /// Parse the orientation + height + line + lineAbove + checkDigit tail
-    /// shared by most ZPL 1D barcode commands. Each command places those
-    /// values at slightly different positions in the parameter list (e.g.
-    /// ^BC puts height at index 1, but ^B3 and ^BK put it at index 2
-    /// because the check-digit flag comes first); callers pass the
-    /// per-command indices via the optional arguments. Pass -1 to skip a
-    /// field.
+    /// Parse the orientation + height + line + lineAbove + checkDigit
+    /// tail shared by every ZPL 1D barcode command into
+    /// <paramref name="opts"/>. Each command places those values at
+    /// slightly different positions in the comma-separated tail (e.g.
+    /// ^BC puts height at index 1 while ^B3 and ^BK put it at 2 because
+    /// the check-digit flag comes first); the per-command indices live
+    /// in <see cref="OneDBarcodes"/>. Pass <c>-1</c> for any index to
+    /// skip that field.
     /// </summary>
-    private void Set1DOptions(string body, int heightIdx = 1, int lineIdx = 2, int lineAboveIdx = 3, int checkDigitIdx = -1)
+    private static void Apply1DOptions(Barcode1DOptions opts, string body,
+        int heightIdx, int lineIdx, int lineAboveIdx, int checkDigitIdx)
     {
         var parts = body.Split(',');
-        var opts = this.CurrentField.Barcode1DOptions;
         opts.Orientation = parts.ToString(0, opts.Orientation);
         if (heightIdx >= 0 && parts.Length > heightIdx && int.TryParse(parts[ heightIdx ], out var h) && h > 0)
             opts.Height = h;
@@ -370,63 +412,6 @@ public class PdfZpl
         var opts = this.CurrentField.Barcode2DOptions;
         opts.Orientation = parts.ToString(0, opts.Orientation);
         opts.Magnification = parts.ToInt(1, defaultMagnification);
-    }
-
-    private void Code39(FPdf pdf, string arg2)
-    {
-        // ^B3 orientation, checkDigit, height, line, lineAbove
-        Set1DOptions(arg2.Substring(3), heightIdx: 2, lineIdx: 3, lineAboveIdx: 4, checkDigitIdx: 1);
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.Code39;
-    }
-
-    private void Codabar(FPdf pdf, string arg2)
-    {
-        // ^BK orientation, checkDigit (always N), height, line, lineAbove,
-        // startChar, stopChar — we don't expose the start/stop chars yet.
-        Set1DOptions(arg2.Substring(3), heightIdx: 2, lineIdx: 3, lineAboveIdx: 4);
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.Codabar;
-    }
-
-    private void Ean13(FPdf pdf, string arg2)
-    {
-        // ^BE orientation, height, line, lineAbove
-        Set1DOptions(arg2.Substring(3));
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.EAN13;
-    }
-
-    private void Ean8(FPdf pdf, string arg2)
-    {
-        // ^B8 orientation, height, line, lineAbove
-        Set1DOptions(arg2.Substring(3));
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.EAN8;
-    }
-
-    private void UpcA(FPdf pdf, string arg2)
-    {
-        // ^BU orientation, height, line, lineAbove, checkDigit
-        Set1DOptions(arg2.Substring(3), heightIdx: 1, lineIdx: 2, lineAboveIdx: 3, checkDigitIdx: 4);
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.UPC_A;
-    }
-
-    private void UpcE(FPdf pdf, string arg2)
-    {
-        // ^B9 orientation, height, line, lineAbove, checkDigit
-        Set1DOptions(arg2.Substring(3), heightIdx: 1, lineIdx: 2, lineAboveIdx: 3, checkDigitIdx: 4);
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.UPC_E;
-    }
-
-    private void Msi(FPdf pdf, string arg2)
-    {
-        // ^BM orientation, type (A-D), height, line, lineAbove, checkDigit2
-        Set1DOptions(arg2.Substring(3), heightIdx: 2, lineIdx: 3, lineAboveIdx: 4);
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.MSI;
     }
 
     private void Pdf417(FPdf pdf, string arg2)
@@ -477,22 +462,6 @@ public class PdfZpl
         Set2DOptions(arg2.Substring(3));
         this.CurrentField.TextMode = FieldMode.Barcode;
         this.CurrentField.BarcodeMode = BarcodeMode.Aztec;
-    }
-
-    private void Code128(FPdf pdf, string arg2)
-    {
-        // ^BC orientation, height, line, lineAbove, checkDigit, mode
-        var parts = arg2.Substring(3).Split(',');
-        var opts = this.CurrentField.Barcode128Options;
-        opts.Orientation = parts.ToString(0, opts.Orientation);
-        if (parts.Length > 1 && int.TryParse(parts[ 1 ], out var h) && h > 0)
-            opts.Height = h;
-        if (parts.Length > 2 && !string.IsNullOrEmpty(parts[ 2 ]))
-            opts.Line = !parts[ 2 ].Equals("N", StringComparison.OrdinalIgnoreCase);
-        if (parts.Length > 3 && !string.IsNullOrEmpty(parts[ 3 ]))
-            opts.LineAbove = parts[ 3 ].Equals("Y", StringComparison.OrdinalIgnoreCase);
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.Code128;
     }
 
     private void GraphicField(FPdf pdf, string arg2)
@@ -668,20 +637,8 @@ public class PdfZpl
 
     private static void DrawBitmapRun(FPdf pdf, double anchorX, double anchorY, int x, int row, int length)
     {
-        var color = Microsoft.Xna.Framework.Color.Black;
-        var absX = anchorX + x;
-        var absY = anchorY + row;
-        var relY = absY - pdf.Y;
-        // Draw a 1-dot-tall horizontal run as a thin filled rectangle.
-        var points = new[]
-        {
-            new Ego.PDF.Data.DrawingPoint(absX,          relY),
-            new Ego.PDF.Data.DrawingPoint(absX + length, relY),
-            new Ego.PDF.Data.DrawingPoint(absX + length, relY + 1),
-            new Ego.PDF.Data.DrawingPoint(absX,          relY + 1),
-            new Ego.PDF.Data.DrawingPoint(absX,          relY),
-        };
-        pdf.DrawArea(color, 0.00, points);
+        // 1-dot-tall horizontal run = a length x 1 filled rect.
+        DrawFilledRect(pdf, anchorX + x, anchorY + row, length, 1, Microsoft.Xna.Framework.Color.Black);
     }
 
     private void RecallGraphic(FPdf pdf, string arg2)
@@ -711,25 +668,6 @@ public class PdfZpl
             // ignore unreadable images — the rest of the label should still
             // print.
         }
-    }
-
-    private void Interleaved2of5(FPdf pdf, string arg2)
-    {
-        // ^B2 orientation, height, line, lineAbove, checkDigit
-        var parts = arg2.Substring(3).Split(',');
-        var opts = this.CurrentField.Barcode2of5Options;
-        opts.Orientation = parts.ToString(0, opts.Orientation);
-        if (parts.Length > 1 && int.TryParse(parts[ 1 ], out var h) && h > 0)
-            opts.Height = h;
-        if (parts.Length > 2 && !string.IsNullOrEmpty(parts[ 2 ]))
-            opts.Line = !parts[ 2 ].Equals("N", StringComparison.OrdinalIgnoreCase);
-        if (parts.Length > 3 && !string.IsNullOrEmpty(parts[ 3 ]))
-            opts.LineAbove = parts[ 3 ].Equals("Y", StringComparison.OrdinalIgnoreCase);
-        if (parts.Length > 4 && !string.IsNullOrEmpty(parts[ 4 ]))
-            opts.CheckDigit = parts[ 4 ].Equals("Y", StringComparison.OrdinalIgnoreCase);
-
-        this.CurrentField.TextMode = FieldMode.Barcode;
-        this.CurrentField.BarcodeMode = BarcodeMode.Interleaved2of5;
     }
 
     private void Diagonal(FPdf pdf, string arg2)
@@ -865,10 +803,16 @@ public class PdfZpl
         }
     }
 
-    private static void DrawFilledRect(FPdf pdf, double absX, double absY, double w, double h, Microsoft.Xna.Framework.Color color)
+    /// <summary>
+    /// Stamp a solid-fill axis-aligned rectangle at absolute user-unit
+    /// coordinates. Centralises the <c>DrawArea</c> pentagon trick (5
+    /// points, last one repeating the first) used by ^GB outlines, the
+    /// ^GFA bitmap renderer and the barcode module stamper, so the
+    /// implicit <c>(H - pdf.Y) - point.Y</c> transform is applied in
+    /// exactly one place.
+    /// </summary>
+    internal static void DrawFilledRect(FPdf pdf, double absX, double absY, double w, double h, Microsoft.Xna.Framework.Color color)
     {
-        // FPdf.DrawArea applies an implicit (H - pdf.Y) - point.Y transform,
-        // so the Y coordinates passed in have to be relative to pdf.Y.
         var relY = absY - pdf.Y;
         var points = new[]
         {
@@ -942,21 +886,20 @@ public class PdfZpl
     }
 
     private void SetLocation(FPdf pdf, string body)
-    {
-        EnsurePage();
-        body = body.Substring(3);
-        var parts = body.Split(',');
-        var X = parts.ToMilimeters(0, 0, Dpi);
-        var Y = parts.ToMilimeters(1, 0, Dpi);
-        pdf.SetXY(this.TopX + X, this.TopY + Y);
-        pdf.SetXY(X, this.TopY + Y);
-
-        this.CurrentField.Origin = FieldDefinition.OriginEnum.LeftTop;
-
-        this.Alignment = parts.ToString(2, this.Alignment); //valid values are 0(left alignment), 1(right alignment), and 2(automatic alignment based on the direction of the field data text)
-    }
+        => SetFieldOrigin(pdf, body, FieldDefinition.OriginEnum.LeftTop);
 
     private void SetLocationBottom(FPdf pdf, string body)
+        => SetFieldOrigin(pdf, body, FieldDefinition.OriginEnum.LeftBottom);
+
+    /// <summary>
+    /// Shared body of <c>^FO</c> and <c>^FT</c>. The two commands are
+    /// identical bar the <see cref="FieldDefinition.OriginEnum"/> they
+    /// install on the current field: ^FO anchors at the top-left of the
+    /// glyph box, ^FT anchors on the baseline. The third parameter is
+    /// ZPL's text alignment hint (0 left / 1 right / 2 auto by reading
+    /// direction).
+    /// </summary>
+    private void SetFieldOrigin(FPdf pdf, string body, FieldDefinition.OriginEnum origin)
     {
         EnsurePage();
         body = body.Substring(3);
@@ -966,9 +909,8 @@ public class PdfZpl
         pdf.SetXY(this.TopX + X, this.TopY + Y);
         pdf.SetXY(X, this.TopY + Y);
 
-        this.CurrentField.Origin = FieldDefinition.OriginEnum.LeftBottom;
-
-        this.Alignment = parts.ToString(2, this.Alignment); //valid values are 0(left alignment), 1(right alignment), and 2(automatic alignment based on the direction of the field data text)
+        this.CurrentField.Origin = origin;
+        this.Alignment = parts.ToString(2, this.Alignment);
     }
 
     public void PrintToken()
