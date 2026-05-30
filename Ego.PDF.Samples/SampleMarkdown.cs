@@ -83,20 +83,6 @@ public class SampleMarkdown : FPdf
 
         [[pagebreak]]
 
-        ## Images
-
-        The plain Markdown image syntax `![alt](url)` resolves the file,
-        reads its natural dimensions via Skia and lays it out at the
-        theme's print DPI (150 by default), capped at the column width.
-        No more 64x64 icons inflating to fill the page:
-
-        ![egoPdf logo]({LOGO})
-
-        For finer control, the built-in `image` shortcode adds width,
-        alignment, captions and a clickable link:
-
-        [[image src="{LOGO}" width=30 align=center caption="The egoPdf wordmark, 30 mm wide and centered" link="https://github.com/marcoregueira/egopdf"]]
-
         ## Shortcodes
 
         EgoPDF.Markdown ships with a tiny shortcode extension: any line
@@ -121,5 +107,21 @@ public class SampleMarkdown : FPdf
 
         That's the whole happy path. Tables, footnotes and inline images
         are scheduled for later previews.
+
+        [[pagebreak]]
+
+        ## Images
+
+        The built-in `image` shortcode is the controlled path: explicit
+        width, alignment, optional caption and clickable link.
+
+        [[image src="{LOGO}" width=30 align=center caption="The egoPdf wordmark, 30 mm wide and centered" link="https://github.com/marcoregueira/egopdf"]]
+
+        The plain Markdown syntax `![alt](url)` does the simpler thing —
+        natural pixel size translated through the theme's print DPI
+        (150 by default), capped at the column width. Great for high-res
+        images that already have a known size.
+
+        ![egoPdf logo]({LOGO})
         """;
 }
