@@ -89,11 +89,20 @@ public class SampleMarkdown : FPdf
         EgoPDF.Markdown ships with a tiny shortcode extension: any line
         wrapped in `[[ ... ]]` becomes a custom block dispatched to a
         registered handler. The Samples package wires a `barcode`
-        shortcode on top of EgoPDF.Barcodes.
+        shortcode on top of EgoPDF.Barcodes. Source first, then the
+        rendered output:
+
+        ```
+        [[barcode type=qr data="https://github.com/marcoregueira/egopdf" size=30 align=center]]
+        ```
 
         [[barcode type=qr data="https://github.com/marcoregueira/egopdf" size=30 align=center]]
 
         Or a 1D Code 128 across the column:
+
+        ```
+        [[barcode type=code128 data="EGOPDF-128" width=0.5 height=12]]
+        ```
 
         [[barcode type=code128 data="EGOPDF-128" width=0.5 height=12]]
 
@@ -101,6 +110,10 @@ public class SampleMarkdown : FPdf
         on the page is fair game. The Samples package also ships a
         `cta` shortcode that drops a clickable button anywhere in the
         flow:
+
+        ```
+        [[cta text="Star egoPdf on GitHub" url="https://github.com/marcoregueira/egopdf"]]
+        ```
 
         [[cta text="Star egoPdf on GitHub" url="https://github.com/marcoregueira/egopdf"]]
 
