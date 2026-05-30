@@ -800,11 +800,20 @@ public class FPdf: IDisposable
 
     public virtual double GetStringWidth(string s)
     {
-        int i;
+        // Fall back to the "A" width for any character whose glyph is
+        // not present in the current font's metric table. This matches
+        // what MultiCell already does internally and stops the common
+        // crash where an em-dash, Greek letter or other off-Latin-1
+        // codepoint reaches Cell with a right/center alignment.
         double w = 0;
-        var l = TypeSupport.ToString(s).Length;
-        for (i = 0; i < l; i++)
-            w = w + CurrentFont.Widths[ s[ i ].ToString() ];
+        var text = TypeSupport.ToString(s);
+        if (string.IsNullOrEmpty(text)) return 0;
+        var widths = CurrentFont.Widths;
+        double fallback = widths.TryGetValue("A", out var aw) ? aw : 500;
+        foreach (var ch in text)
+        {
+            w += widths.TryGetValue(ch.ToString(), out var cw) ? cw : fallback;
+        }
         return w * FontSize / 1000;
     }
 
@@ -1905,9 +1914,122 @@ public class FPdf: IDisposable
     public DrawingPoint GoBack(GoBackMode mode = GoBackMode.Both)
     {
         var pos = SavedPositions.Pop();
-        this.X = pos.X;
-        this.Y = pos.Y;
+        if (mode != GoBackMode.Y) this.X = pos.X;
+        if (mode != GoBackMode.X) this.Y = pos.Y;
         return pos;
+    }
+
+    /// <summary>
+    /// Pushes the current (X, Y) onto <see cref="SavePos"/>'s stack and
+    /// returns a scope handle that pops it back on dispose. Equivalent
+    /// to a paired <c>SavePos()</c> / <c>GoBack()</c> guarded against
+    /// being forgotten on exceptional paths:
+    ///
+    /// <code>
+    /// using (pdf.PushPos())
+    /// {
+    ///     pdf.SetXY(120, 50);
+    ///     pdf.Image(file, pdf.X, pdf.Y, 30, 0);
+    /// }   // cursor restored even if an exception was thrown above
+    /// </code>
+    ///
+    /// Nests freely: each <c>using</c> is an independent stack frame.
+    /// </summary>
+    public IDisposable PushPos(GoBackMode restore = GoBackMode.Both)
+    {
+        SavePos();
+        return new PositionScope(this, restore);
+    }
+
+    private sealed class PositionScope : IDisposable
+    {
+        private readonly FPdf _pdf;
+        private readonly GoBackMode _mode;
+        private bool _disposed;
+        public PositionScope(FPdf pdf, GoBackMode mode)
+        {
+            _pdf = pdf;
+            _mode = mode;
+        }
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _pdf.GoBack(_mode);
+        }
+    }
+
+    /// <summary>
+    /// Snapshots the current text-and-drawing state — font family,
+    /// style and size; text/fill/draw colours; line width — and
+    /// restores it when the returned scope is disposed. Cursor
+    /// position is left alone (use <see cref="PushPos"/> for that).
+    ///
+    /// <code>
+    /// pdf.SetFont("Helvetica", "", 11);
+    /// pdf.SetTextColor(Color.Black);
+    /// using (pdf.PushState())
+    /// {
+    ///     pdf.SetFont("Helvetica", "B", 7);
+    ///     pdf.SetTextColor(BrandAccent);
+    ///     pdf.Cell(40, 4, "LABEL");
+    /// }
+    /// // back to Helvetica regular 11, black text.
+    /// </code>
+    /// </summary>
+    public IDisposable PushState()
+    {
+        return new StateScope(this);
+    }
+
+    private sealed class StateScope : IDisposable
+    {
+        private readonly FPdf _pdf;
+        private readonly string _family;
+        private readonly string _style;
+        private readonly double _sizePt;
+        private readonly string _drawColor;
+        private readonly string _fillColor;
+        private readonly string _textColor;
+        private readonly bool _colorFlag;
+        private readonly double _lineWidth;
+        private bool _disposed;
+
+        public StateScope(FPdf pdf)
+        {
+            _pdf = pdf;
+            _family = pdf.FontFamily;
+            _style = pdf.FontStyle;
+            _sizePt = pdf.FontSizePt;
+            _drawColor = pdf.DrawColor;
+            _fillColor = pdf.FillColor;
+            _textColor = pdf.TextColor;
+            _colorFlag = pdf.ColorFlag;
+            _lineWidth = pdf.LineWidth;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            // Restore font first (which emits its own /Fn ... Tf
+            // operator) before the colour state, so the saved colour
+            // strings hit the now-current text.
+            if (!string.IsNullOrEmpty(_family))
+            {
+                _pdf.SetFont(_family, _style, _sizePt);
+            }
+            _pdf.DrawColor = _drawColor;
+            _pdf.FillColor = _fillColor;
+            _pdf.TextColor = _textColor;
+            _pdf.ColorFlag = _colorFlag;
+            if (_pdf.Page > 0)
+            {
+                _pdf.Out(_drawColor);
+                if (_fillColor != _drawColor) _pdf.Out(_fillColor);
+            }
+            _pdf.SetLineWidth(_lineWidth);
+        }
     }
 
     public DrawingPoint LastPosition()
