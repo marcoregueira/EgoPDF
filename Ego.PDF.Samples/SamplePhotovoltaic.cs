@@ -24,13 +24,14 @@ public class SamplePhotovoltaic : FPdf
 {
     // ---- Brand palette -----------------------------------------------------
 
-    private static readonly Color BrandDark   = new Color(26, 29, 38);
-    private static readonly Color BrandAccent = new Color(204, 105, 95);
-    private static readonly Color TextMuted   = new Color(110, 115, 130);
+    private static readonly Color BrandDark   = EgoPdfBrand.Dark;
+    private static readonly Color BrandAccent = EgoPdfBrand.Accent;
+    private static readonly Color TextMuted   = EgoPdfBrand.Muted;
+    private static readonly Color LineGray    = EgoPdfBrand.HairLine;
+    private static readonly Color BandSubText = EgoPdfBrand.SubText;
+    // PV-specific tints stay local: only this sample uses them.
     private static readonly Color LightFill   = new Color(247, 238, 236);
-    private static readonly Color LineGray    = new Color(220, 220, 224);
     private static readonly Color PanelFill   = new Color(248, 248, 250);
-    private static readonly Color BandSubText = new Color(180, 184, 196);
     private static readonly Color OkGreen     = new Color(70, 145, 110);
 
     // Centralised look-and-feel for the technical panels. Declared once
@@ -52,6 +53,8 @@ public class SamplePhotovoltaic : FPdf
         pdf._assetsPath = path ?? AppDomain.CurrentDomain.BaseDirectory;
         pdf.SetMargins(12, 10, 12);
         pdf.SetAutoPageBreak(false, 0);
+        // Brand wordmark uses Poppins Extra Light to match the project logo.
+        EgoPdfBrand.LoadPoppins(pdf);
         pdf.RenderAll(BuildSampleInstallation());
         pdf.Close();
         return pdf.Buffer.BaseStream;
@@ -97,13 +100,9 @@ public class SamplePhotovoltaic : FPdf
         SetFillColor(BrandDark);
         Rect(0, 0, W, BandHeight, "F");
 
-        // Left: "ego" white + "Pdf" coral wordmark.
-        SetFont("Helvetica", "B", 22);
-        SetXY(LeftMargin, 11);
-        SetTextColor(Color.White);
-        Cell(GetStringWidth("ego"), 11, "ego");
-        SetTextColor(BrandAccent);
-        Cell(GetStringWidth("Pdf"), 11, "Pdf");
+        // Left: two-tone wordmark in thin Poppins (matches the logo).
+        EgoPdfBrand.DrawWordmark(this, x: LeftMargin, y: 11, sizePt: 22,
+            egoColor: Color.White, pdfColor: BrandAccent, cellHeight: 11);
 
         // Right: title + subtitle stacked.
         SetFont("Helvetica", "B", 16);

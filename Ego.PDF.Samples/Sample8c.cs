@@ -13,9 +13,10 @@ namespace Ego.PDF.Samples
     /// </summary>
     public class Sample8c : FPdf
     {
-        private static readonly Color BrandDark   = new Color(26, 29, 38);
-        private static readonly Color BrandAccent = new Color(204, 105, 95);
-        private static readonly Color TextMuted   = new Color(110, 115, 130);
+        private static readonly Color BrandDark   = EgoPdfBrand.Dark;
+        private static readonly Color BrandAccent = EgoPdfBrand.Accent;
+        private static readonly Color TextMuted   = EgoPdfBrand.Muted;
+        // Card-specific tints stay local: they're a single-sample look.
         private static readonly Color CardFill    = new Color(247, 238, 236); // --brand-bg-soft
         private static readonly Color CardBorder  = new Color(227, 214, 211); // --brand-border
 
@@ -43,8 +44,7 @@ namespace Ego.PDF.Samples
             {
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetAutoPageBreak(false, 0);
-                _ = pdf.LoadFont("Poppins", Path.Combine(GetBasePath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));
-                pdf.AddFont("Poppins", "");
+                EgoPdfBrand.LoadPoppins(pdf);
                 pdf.AddPage();
 
                 DrawHeader(pdf);
@@ -65,12 +65,8 @@ namespace Ego.PDF.Samples
 
         private static void DrawHeader(Sample8c pdf)
         {
-            pdf.SetXY(20, 20);
-            pdf.SetFont("Poppins", "", 24);
-            pdf.SetTextColor(BrandDark);
-            pdf.Cell(pdf.GetStringWidth("ego"), 11, "ego");
-            pdf.SetTextColor(BrandAccent);
-            pdf.Cell(pdf.GetStringWidth("Pdf"), 11, "Pdf");
+            EgoPdfBrand.DrawWordmark(pdf, x: 20, y: 20, sizePt: 24,
+                egoColor: BrandDark, pdfColor: BrandAccent, cellHeight: 11);
 
             pdf.SetXY(20, 18);
             pdf.SetFont("Poppins", "", 30);

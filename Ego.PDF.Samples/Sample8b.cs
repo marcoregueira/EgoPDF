@@ -13,10 +13,10 @@ namespace Ego.PDF.Samples
     /// </summary>
     public class Sample8b : FPdf
     {
-        private static readonly Color BrandDark   = new Color(26, 29, 38);
-        private static readonly Color BrandAccent = new Color(204, 105, 95);
-        private static readonly Color TextMuted   = new Color(110, 115, 130);
-        private static readonly Color HairLine    = new Color(220, 220, 224);
+        private static readonly Color BrandDark   = EgoPdfBrand.Dark;
+        private static readonly Color BrandAccent = EgoPdfBrand.Accent;
+        private static readonly Color TextMuted   = EgoPdfBrand.Muted;
+        private static readonly Color HairLine    = EgoPdfBrand.HairLine;
 
         private Sample8b(string file) : base(file)
         {
@@ -28,8 +28,7 @@ namespace Ego.PDF.Samples
             {
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetAutoPageBreak(false, 0);
-                _ = pdf.LoadFont("Poppins", Path.Combine(GetBasePath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));
-                pdf.AddFont("Poppins", "");
+                EgoPdfBrand.LoadPoppins(pdf);
                 pdf.AddPage();
 
                 DrawHeader(pdf);
@@ -51,13 +50,9 @@ namespace Ego.PDF.Samples
 
         private static void DrawHeader(Sample8b pdf)
         {
-            // Wordmark on the left — "ego" dark + "Pdf" coral.
-            pdf.SetXY(20, 20);
-            pdf.SetFont("Poppins", "", 24);
-            pdf.SetTextColor(BrandDark);
-            pdf.Cell(pdf.GetStringWidth("ego"), 11, "ego");
-            pdf.SetTextColor(BrandAccent);
-            pdf.Cell(pdf.GetStringWidth("Pdf"), 11, "Pdf");
+            // Wordmark on the left -- "ego" dark + "Pdf" coral on white.
+            EgoPdfBrand.DrawWordmark(pdf, x: 20, y: 20, sizePt: 24,
+                egoColor: BrandDark, pdfColor: BrandAccent, cellHeight: 11);
 
             // INVOICE on the right.
             pdf.SetXY(20, 18);

@@ -11,12 +11,13 @@ namespace Ego.PDF.Samples
     {
         private readonly Dictionary<string, int> _tagCount = new Dictionary<string, int>();
 
-        // Brand palette extracted from the egoPdf logo.
-        private static readonly Color BrandDark   = new Color(26, 29, 38);
-        private static readonly Color BrandAccent = new Color(204, 105, 95);
-        private static readonly Color TextMuted   = new Color(110, 115, 130);
-        private static readonly Color BandSubText = new Color(180, 184, 196);
-        private static readonly Color RowBorder   = new Color(220, 220, 224);
+        // Brand palette comes from the shared EgoPdfBrand helper. Aliased
+        // here so the existing local code reads the same as before.
+        private static readonly Color BrandDark   = EgoPdfBrand.Dark;
+        private static readonly Color BrandAccent = EgoPdfBrand.Accent;
+        private static readonly Color TextMuted   = EgoPdfBrand.Muted;
+        private static readonly Color BandSubText = EgoPdfBrand.SubText;
+        private static readonly Color RowBorder   = EgoPdfBrand.HairLine;
 
         private Sample8(string file) : base(file)
         {
@@ -28,8 +29,7 @@ namespace Ego.PDF.Samples
             {
                 pdf.SetMargins(20, 20, 20);
                 pdf.SetAutoPageBreak(false, 0);
-                _ = pdf.LoadFont("Poppins", Path.Combine(GetBasePath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));
-                pdf.AddFont("Poppins", "");
+                EgoPdfBrand.LoadPoppins(pdf);
                 pdf.AddPage();
 
                 DrawHeaderBand(pdf);
@@ -55,14 +55,8 @@ namespace Ego.PDF.Samples
             pdf.SetFillColor(BrandDark);
             pdf.Rect(0, 0, pdf.W, bandHeight, "F");
 
-            // Wordmark — "ego" white, "Pdf" coral, mimicking the logo.
-            pdf.SetFont("Poppins", "", 28);
-            pdf.SetXY(20, 12);
-            pdf.SetTextColor(Color.White);
-            var egoW = pdf.GetStringWidth("ego");
-            pdf.Cell(egoW, 12, "ego");
-            pdf.SetTextColor(BrandAccent);
-            pdf.Cell(pdf.GetStringWidth("Pdf"), 12, "Pdf");
+            EgoPdfBrand.DrawWordmark(pdf, x: 20, y: 12, sizePt: 28,
+                egoColor: Color.White, pdfColor: BrandAccent, cellHeight: 12);
 
             // INVOICE title, right-aligned inside the band.
             pdf.SetFont("Poppins", "", 32);

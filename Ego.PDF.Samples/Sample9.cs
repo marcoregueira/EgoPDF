@@ -15,9 +15,9 @@ namespace Ego.PDF.Samples;
 /// </summary>
 public class Sample9 : FPdf
 {
-    private static readonly Color BrandDark   = new Color(26, 29, 38);
-    private static readonly Color BrandAccent = new Color(204, 105, 95);
-    private static readonly Color TextMuted   = new Color(110, 115, 130);
+    private static readonly Color BrandDark   = EgoPdfBrand.Dark;
+    private static readonly Color BrandAccent = EgoPdfBrand.Accent;
+    private static readonly Color TextMuted   = EgoPdfBrand.Muted;
 
     public static Stream GetSample(string filePath, string path)
     {
@@ -31,9 +31,8 @@ public class Sample9 : FPdf
 
     private void PrintPdf()
     {
-        _ = LoadFont("Poppins", Path.Combine(GetPath(), "Fonts/Poppins/Poppins-ExtraLight.ttf"));
+        EgoPdfBrand.LoadPoppins(this);
         _ = LoadFont("Roboto", Path.Combine(GetPath(), "Fonts/Roboto/RobotoSlab-VariableFont_wght.ttf"));
-        AddFont("Poppins", "");
         AddFont("Roboto", "");
 
         AddPage(PageSizeEnum.A4);
@@ -56,12 +55,8 @@ public class Sample9 : FPdf
         SetFillColor(BrandDark);
         Rect(0, 0, W, bandHeight, "F");
 
-        SetXY(20, 14);
-        SetFont("Poppins", "", 22);
-        SetTextColor(Color.White);
-        Cell(GetStringWidth("ego"), 11, "ego");
-        SetTextColor(BrandAccent);
-        Cell(GetStringWidth("Pdf"), 11, "Pdf");
+        EgoPdfBrand.DrawWordmark(this, x: 20, y: 14, sizePt: 22,
+            egoColor: Color.White, pdfColor: BrandAccent, cellHeight: 11);
 
         SetFont("Poppins", "", 26);
         SetTextColor(Color.White);
