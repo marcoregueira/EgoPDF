@@ -348,8 +348,12 @@ public static class MarkdownRenderer
             ? widthMm * pxH / pxW
             : 0; // 0 lets FPdf.Image preserve the aspect ratio itself
 
-        pdf.Image(path, pdf.LeftMargin, pdf.Y, widthMm, heightMm);
-        pdf.Y += theme.ParagraphSpacing;
+        var y = pdf.Y;
+        pdf.Image(path, pdf.LeftMargin, y, widthMm, heightMm);
+        // FPdf.Image stamps the bitmap but doesn't move the cursor. If
+        // we don't advance Y past the bottom of the image, the next
+        // block (heading, paragraph, etc.) renders ON TOP of it.
+        pdf.Y = y + heightMm + theme.ParagraphSpacing;
         pdf.SetX(pdf.LeftMargin);
     }
 
