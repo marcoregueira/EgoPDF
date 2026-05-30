@@ -51,6 +51,15 @@ public sealed class MarkdownTheme
     /// <summary>Extra vertical space inserted after a paragraph.</summary>
     public double ParagraphSpacing { get; set; } = 3;
 
+    /// <summary>
+    /// Extra vertical space inserted between consecutive list items.
+    /// Pull this below <see cref="ParagraphSpacing"/> for a tight,
+    /// scannable bullet list (typically 0.5 – 1.5 mm). When equal to
+    /// <see cref="ParagraphSpacing"/> (the default) list items breathe
+    /// like any other paragraph.
+    /// </summary>
+    public double ListItemSpacing { get; set; } = 3;
+
     /// <summary>Extra vertical space above a heading.</summary>
     public double HeadingSpacingAbove { get; set; } = 8;
 

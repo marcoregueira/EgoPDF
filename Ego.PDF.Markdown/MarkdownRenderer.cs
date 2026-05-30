@@ -139,7 +139,7 @@ public static class MarkdownRenderer
         RenderInlines(pdf, p.Inline, inlineCtx);
 
         pdf.Ln(theme.LineHeight);
-        pdf.Y += theme.ParagraphSpacing;
+        pdf.Y += ctx.InList ? theme.ListItemSpacing : theme.ParagraphSpacing;
     }
 
     // ---- Lists -------------------------------------------------------------
@@ -148,38 +148,46 @@ public static class MarkdownRenderer
     {
         var theme = ctx.Theme;
         var savedLeftMargin = pdf.LeftMargin;
+        var wasInList = ctx.InList;
         pdf.SetLeftMargin(savedLeftMargin + theme.ListIndent);
         pdf.SetX(pdf.LeftMargin);
+        ctx.InList = true;
 
         int n = list.OrderedStart != null && int.TryParse(list.OrderedStart, out var start) ? start : 1;
 
-        foreach (var child in list)
+        try
         {
-            if (child is not ListItemBlock item) continue;
-
-            var marker = list.IsOrdered ? $"{n++}." : theme.BulletGlyph;
-            pdf.SetFont(theme.BodyFont, "", theme.BodyFontSize);
-            pdf.SetTextColor(theme.MutedColor);
-            pdf.SetX(pdf.LeftMargin - theme.ListMarkerWidth);
-            pdf.Cell(theme.ListMarkerWidth, theme.LineHeight, marker);
-
-            // Render the item's blocks (paragraph, sub-list, code, ...).
-            // First block continues on the same line as the bullet; subsequent
-            // blocks naturally start at the new (indented) LeftMargin.
-            bool first = true;
-            foreach (var itemChild in item)
+            foreach (var child in list)
             {
-                if (!first)
+                if (child is not ListItemBlock item) continue;
+
+                var marker = list.IsOrdered ? $"{n++}." : theme.BulletGlyph;
+                pdf.SetFont(theme.BodyFont, "", theme.BodyFontSize);
+                pdf.SetTextColor(theme.MutedColor);
+                pdf.SetX(pdf.LeftMargin - theme.ListMarkerWidth);
+                pdf.Cell(theme.ListMarkerWidth, theme.LineHeight, marker);
+
+                // Render the item's blocks (paragraph, sub-list, code, ...).
+                // First block continues on the same line as the bullet; subsequent
+                // blocks naturally start at the new (indented) LeftMargin.
+                bool first = true;
+                foreach (var itemChild in item)
                 {
-                    pdf.SetX(pdf.LeftMargin);
+                    if (!first)
+                    {
+                        pdf.SetX(pdf.LeftMargin);
+                    }
+                    RenderBlock(pdf, itemChild, ctx);
+                    first = false;
                 }
-                RenderBlock(pdf, itemChild, ctx);
-                first = false;
             }
         }
-
-        pdf.SetLeftMargin(savedLeftMargin);
-        pdf.SetX(savedLeftMargin);
+        finally
+        {
+            ctx.InList = wasInList;
+            pdf.SetLeftMargin(savedLeftMargin);
+            pdf.SetX(savedLeftMargin);
+        }
     }
 
     // ---- Thematic break ----------------------------------------------------
@@ -542,6 +550,15 @@ public static class MarkdownRenderer
     private sealed class RenderContext
     {
         public MarkdownTheme Theme { get; }
+
+        /// <summary>
+        /// True while the renderer is walking the body of a list item.
+        /// <see cref="RenderParagraph"/> consults this to pick
+        /// <see cref="MarkdownTheme.ListItemSpacing"/> instead of
+        /// <see cref="MarkdownTheme.ParagraphSpacing"/>, so a tight list
+        /// stays tight without affecting plain paragraphs above or below.
+        /// </summary>
+        public bool InList { get; set; }
 
         public RenderContext(MarkdownTheme theme) { Theme = theme; }
 

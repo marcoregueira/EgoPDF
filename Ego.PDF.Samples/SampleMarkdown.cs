@@ -1,15 +1,17 @@
 using Ego.PDF.Data;
 using Ego.PDF.Markdown;
+using Microsoft.Xna.Framework;
 using System;
 using System.IO;
 
 namespace Ego.PDF.Samples;
 
 /// <summary>
-/// Demonstrates the EgoPDF.Markdown package: parses an embedded
-/// Markdown string and emits a multi-page PDF. Uses the default
-/// theme (FPDF core fonts) so the sample runs without loading any
-/// TTF files.
+/// Demonstrates the EgoPDF.Markdown package as a <b>mixed-mode</b>
+/// document: an imperative brand header band on top, the rest rendered
+/// from a Markdown string below. The same FPdf instance is shared, so
+/// nothing stops a caller from interleaving hand-drawn sections with
+/// Markdown blocks.
 /// </summary>
 public class SampleMarkdown : FPdf
 {
@@ -18,14 +20,24 @@ public class SampleMarkdown : FPdf
     public static Stream GetSample(string file)
     {
         using var pdf = new SampleMarkdown(file);
+        pdf.SetMargins(20, 20, 20);
+        EgoPdfBrand.LoadPoppins(pdf);
         pdf.AddPage(PageSizeEnum.A4);
 
+        // 1. Hand-drawn header band -- same primitive used by Sample8 /
+        //    Sample9 / SamplePhotovoltaic, so the brand identity is the
+        //    same across imperative and Markdown samples.
+        DrawBrandBand(pdf);
+
+        // 2. Markdown body. Tight, slightly more-indented list spacing
+        //    so the bullet block reads as a cluster instead of a stack
+        //    of breathing paragraphs.
         var theme = MarkdownTheme.Default;
-        // [[pagebreak]] and [[image]] are registered automatically by
-        // ShortcodeRegistry; only the package-specific handlers
-        // (barcode, cta) need wiring here.
-        theme.Shortcodes.Register("barcode", new BarcodeShortcode());
-        theme.Shortcodes.Register("cta", new CallToActionShortcode());
+        theme.ListItemSpacing = 0.5;
+        theme.ListIndent      = 10;
+
+        theme.Shortcodes.Register("barcode",   new BarcodeShortcode());
+        theme.Shortcodes.Register("cta",       new CallToActionShortcode());
         theme.Shortcodes.Register("imagepair", new ImagePairShortcode());
 
         // The demo references a PNG sitting alongside the sample's
@@ -40,12 +52,36 @@ public class SampleMarkdown : FPdf
         return pdf.Buffer.BaseStream;
     }
 
-    private const string DocumentTemplate = """
-        # Markdown to PDF
+    private static void DrawBrandBand(SampleMarkdown pdf)
+    {
+        const double bandHeight = 44;
+        pdf.SetFillColor(EgoPdfBrand.Dark);
+        pdf.Rect(0, 0, pdf.W, bandHeight, "F");
 
+        EgoPdfBrand.DrawWordmark(pdf, x: 20, y: 14, sizePt: 22,
+            egoColor: Color.White, pdfColor: EgoPdfBrand.Accent, cellHeight: 11);
+
+        pdf.SetFont("Poppins", "", 26);
+        pdf.SetTextColor(Color.White);
+        pdf.SetXY(20, 12);
+        pdf.Cell(pdf.W - 40, 12, "MARKDOWN TO PDF", "0", 0, AlignEnum.Right);
+
+        pdf.SetFont("Helvetica", "", 9);
+        pdf.SetTextColor(EgoPdfBrand.SubText);
+        pdf.SetXY(20, 28);
+        pdf.Cell(pdf.W - 40, 6, "Hand-drawn header band + Markdown body", "0", 0, AlignEnum.Right);
+
+        pdf.SetY(bandHeight + 6);
+        pdf.SetX(pdf.LeftMargin);
+        pdf.SetTextColor(EgoPdfBrand.Dark);
+    }
+
+    private const string DocumentTemplate = """
         This document is rendered by **EgoPDF.Markdown** using the *default*
-        theme (no fonts to load). It exercises the Phase-1 happy path:
-        headings, paragraphs, lists, code blocks, links and rules.
+        theme (no TTFs to load). The dark band above this paragraph is
+        hand-drawn in egoPdf primitives — the rest is straight Markdown
+        through the same FPdf instance. It exercises the Phase-1 happy
+        path: headings, paragraphs, lists, code blocks, links and rules.
 
         ## Inline emphasis
 
@@ -76,15 +112,13 @@ public class SampleMarkdown : FPdf
         pdf.Close();
         ```
 
-        ## Quote
+        [[pagebreak]]
+
+        ## Shortcodes
 
         > Markdown is a lightweight markup language with plain-text
         > formatting syntax. Its design allows it to be converted to
         > many output formats, including PDF.
-
-        [[pagebreak]]
-
-        ## Shortcodes
 
         EgoPDF.Markdown ships with a tiny shortcode extension: any line
         wrapped in `[[ ... ]]` becomes a custom block dispatched to a
