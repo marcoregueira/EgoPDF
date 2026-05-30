@@ -2171,22 +2171,9 @@ public class FPdf: IDisposable
     {
         using (PushState())
         {
-            // Frame: filled rectangle stroked with the current draw colour.
-            // "DF" means both border and fill from the current state.
-            Rect(bounds.X, bounds.Y, bounds.W, bounds.H, "DF");
-
-            double topUsed = padding;
-            if (!string.IsNullOrEmpty(title))
-            {
-                SetXY(bounds.X + padding, bounds.Y + padding * 0.6);
-                Cell(bounds.W - 2 * padding, titleHeight, title);
-                // Hairline below the title using the current draw colour.
-                Line(bounds.X + padding, bounds.Y + padding * 0.6 + titleHeight + 0.5,
-                     bounds.Right - padding, bounds.Y + padding * 0.6 + titleHeight + 0.5);
-                topUsed = padding * 0.6 + titleHeight + 1.5;
-            }
-
-            var content = bounds.Inset(padding, topUsed, padding, padding);
+            RenderPanelFrame(bounds, title, padding, titleHeight,
+                drawFill: true, drawBorder: true, drawHairline: true);
+            var content = ComputeContentRect(bounds, title, padding, titleHeight);
             body?.Invoke(content);
         }
     }
@@ -2197,6 +2184,90 @@ public class FPdf: IDisposable
     /// </summary>
     public void Panel(Rect bounds, Action<Rect> body, double padding = 3)
         => Panel(bounds, null, body, padding, 0);
+
+    /// <summary>
+    /// Styled variant of <see cref="Panel(Rect, string, Action{Rect}, double, double)"/>:
+    /// caller passes a <see cref="PanelStyle"/> describing the fill,
+    /// border and title look. The frame and title are painted with the
+    /// style's colours / font / line width; the rest of the state (and
+    /// anything the body sets) is restored on return.
+    ///
+    /// <code>
+    /// var brand = new PanelStyle
+    /// {
+    ///     FillColor   = panelFill,
+    ///     BorderColor = lineGray,
+    ///     TitleColor  = brandAccent,
+    /// };
+    /// pdf.Panel(slot, "MEDIDAS DC", brand, content => { ... });
+    /// pdf.Panel(slot2, "MEDIDAS AC", brand, content => { ... });
+    /// </code>
+    ///
+    /// A <c>null</c> <see cref="PanelStyle.FillColor"/> skips the fill,
+    /// a <c>null</c> <see cref="PanelStyle.BorderColor"/> skips the border.
+    /// </summary>
+    public void Panel(Rect bounds, string title, PanelStyle style, Action<Rect> body)
+    {
+        style ??= new PanelStyle();
+        using (PushState())
+        {
+            if (style.FillColor.HasValue) SetFillColor(style.FillColor.Value);
+            if (style.BorderColor.HasValue) SetDrawColor(style.BorderColor.Value);
+            SetLineWidth(style.LineWidth);
+
+            if (!string.IsNullOrEmpty(style.TitleFontFamily))
+            {
+                SetFont(style.TitleFontFamily, style.TitleFontStyle ?? "",
+                    style.TitleFontSize);
+            }
+            if (style.TitleColor.HasValue) SetTextColor(style.TitleColor.Value);
+
+            RenderPanelFrame(bounds, title, style.Padding, style.TitleHeight,
+                drawFill: style.FillColor.HasValue,
+                drawBorder: style.BorderColor.HasValue,
+                drawHairline: style.TitleHairline && style.BorderColor.HasValue);
+
+            var content = ComputeContentRect(bounds, title, style.Padding, style.TitleHeight);
+            body?.Invoke(content);
+        }
+    }
+
+    /// <summary>Untitled, styled variant of <see cref="Panel(Rect, string, PanelStyle, Action{Rect})"/>.</summary>
+    public void Panel(Rect bounds, PanelStyle style, Action<Rect> body)
+        => Panel(bounds, null, style, body);
+
+    private void RenderPanelFrame(Rect bounds, string title, double padding,
+        double titleHeight, bool drawFill, bool drawBorder, bool drawHairline)
+    {
+        string mode = (drawFill, drawBorder) switch
+        {
+            (true,  true)  => "DF",
+            (true,  false) => "F",
+            (false, true)  => "D",
+            _              => null,
+        };
+        if (mode != null) Rect(bounds.X, bounds.Y, bounds.W, bounds.H, mode);
+
+        if (!string.IsNullOrEmpty(title))
+        {
+            SetXY(bounds.X + padding, bounds.Y + padding * 0.6);
+            Cell(bounds.W - 2 * padding, titleHeight, title);
+            if (drawHairline)
+            {
+                var hy = bounds.Y + padding * 0.6 + titleHeight + 0.5;
+                Line(bounds.X + padding, hy, bounds.Right - padding, hy);
+            }
+        }
+    }
+
+    private static Rect ComputeContentRect(Rect bounds, string title,
+        double padding, double titleHeight)
+    {
+        double topUsed = padding;
+        if (!string.IsNullOrEmpty(title))
+            topUsed = padding * 0.6 + titleHeight + 1.5;
+        return bounds.Inset(padding, topUsed, padding, padding);
+    }
 
     public virtual double GetX()
     {

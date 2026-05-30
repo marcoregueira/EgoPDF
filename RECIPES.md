@@ -76,14 +76,34 @@ var equalRows = pdf.Stack(content, count: 6);
 
 ### When you need a titled box
 
-`Panel(bounds, title, body)` paints the frame and title using the
-currently-set draw / fill / font / text colours, hands you the inner
-content rect, and restores all state on return.
+Two flavours -- pick the one that fits your call site:
+
+**A. Styled (recommended for repeated panels).** Capture the look once
+as a `PanelStyle`, then reuse it everywhere. No `SetFill` / `SetDraw` /
+`SetFont` choreography around each call.
+
+```csharp
+var brand = new PanelStyle
+{
+    FillColor   = panelFill,
+    BorderColor = lineGray,
+    TitleColor  = brandAccent,
+};
+
+pdf.Panel(slots[0], "MEDIDAS DC",   brand, content => { /* ... */ });
+pdf.Panel(slots[1], "MEDIDAS AC",   brand, content => { /* ... */ });
+pdf.Panel(slots[2], "PROTECCIONES", brand, content => { /* ... */ });
+```
+
+A `null` `FillColor` skips the fill; a `null` `BorderColor` skips the
+border. The body's font/colour mutations are reverted on return.
+
+**B. State-based.** Sets nothing; uses whatever draw/fill/font/text is
+currently configured. Good for one-offs.
 
 ```csharp
 pdf.SetFillColor(panelFill);
 pdf.SetDrawColor(lineGray);
-pdf.SetLineWidth(0.2);
 pdf.SetFont("Helvetica", "B", 8);
 pdf.SetTextColor(brandAccent);
 
@@ -92,10 +112,11 @@ pdf.Panel(slot, "MEDIDAS DC", content =>
     var rows = pdf.Stack(content, 6);
     foreach (var r in rows) { /* render in r */ }
 });
-// fonts and colours are exactly as they were before the call.
 ```
 
-Untitled framed box: `pdf.Panel(bounds, content => ...)`.
+Untitled framed box (both variants):
+`pdf.Panel(bounds, content => ...)` /
+`pdf.Panel(bounds, style, content => ...)`.
 
 ### When you have a Rect and want to shrink it
 
@@ -256,15 +277,23 @@ using (PushState())
 }
 ```
 
-The shipping `DrawIdentificationBlock` does this longhand; the same
-idea written with the layout primitives would be:
+The shipping `DrawIdentificationBlock` is the canonical end-to-end
+example: `Stack` carries the auto-grown row heights, `Row` carves each
+row into N cells, and `Rect.Inset` applies per-cell padding -- all in
+under 30 lines.
 
 ```csharp
-var bounds  = new Rect(LeftMargin, Y, w, rowHs.Sum());
-var rowRects = Stack(bounds, rowHs);
+var bounds  = new Rect(LeftMargin, Y, w, rowHeights.Sum());
+var rowRects = pdf.Stack(bounds, rowHeights);
+
 for (int r = 0; r < rowRects.Length; r++)
-    foreach (var cell in Row(rowRects[r], 4))
-        RenderLabelValue(cell, pairs[r * 4 + ...]);
+{
+    foreach (var cell in pdf.Row(rowRects[r], cols))
+    {
+        var inner = cell.Inset(cellInsetX, topPad, cellInsetX, bottomPad);
+        // label on top, value as MultiCell inside `inner`
+    }
+}
 ```
 
 **See also**: `Ego.PDF.Samples/SamplePhotovoltaic.cs::DrawIdentificationBlock`.

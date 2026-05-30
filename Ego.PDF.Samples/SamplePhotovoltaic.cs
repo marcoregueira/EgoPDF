@@ -33,6 +33,17 @@ public class SamplePhotovoltaic : FPdf
     private static readonly Color BandSubText = new Color(180, 184, 196);
     private static readonly Color OkGreen     = new Color(70, 145, 110);
 
+    // Centralised look-and-feel for the technical panels. Declared once
+    // so a new panel in the report doesn't have to re-derive five
+    // SetFill / SetDraw / SetFont calls.
+    private static readonly PanelStyle BrandPanel = new()
+    {
+        FillColor   = PanelFill,
+        BorderColor = LineGray,
+        TitleColor  = BrandAccent,
+        LineWidth   = 0.2,
+    };
+
     private string _assetsPath = string.Empty;
 
     public static Stream GetSample(string filePath, string path)
@@ -118,19 +129,13 @@ public class SamplePhotovoltaic : FPdf
 
     private void DrawIdentificationBlock(Installation inst)
     {
-        var y = Y;
-        var w = W - LeftMargin - RightMargin;
-        var col = w / 4.0;
-
-        // Layout knobs. Each cell stacks: top padding, coral label,
-        // value text (one or more lines), bottom padding. The row
-        // grows when any value in that row needs more than one line.
         const double topPad     = 1.5;
         const double labelH     = 3.0;
         const double valueLineH = 3.8;
         const double bottomPad  = 1.5;
         const double cellInsetX = 1.5;
         const double minRowH    = 8.0;
+        const int    cols       = 4;
 
         var pairs = new (string label, string value)[]
         {
@@ -144,65 +149,62 @@ public class SamplePhotovoltaic : FPdf
             ("Nº SERIE INV.",  inst.Inverter.Serial),
         };
 
-        // PushState snapshots font + colours + line-width on entry and
-        // restores them on dispose, so anything inside this block can
-        // change them freely without leaking into the caller.
         using (PushState())
         {
-            // Measure each value with the same font we'll use to render
-            // it. CellMeasure walks the text and returns the total height
-            // the string would need if wrapped to `col - 2*cellInsetX`
-            // mm wide; dividing by valueLineH gives the line count.
+            // 1. Measure with the value font; auto-grow the row to the
+            // worst case so no cell clips.
             SetFont("Helvetica", "", 9);
-            var contentW = col - 2 * cellInsetX;
-            var lineCounts = new int[pairs.Length];
-            for (int i = 0; i < pairs.Length; i++)
+            var w = W - LeftMargin - RightMargin;
+            var contentW = w / cols - 2 * cellInsetX;
+
+            double RowHeight(int from)
             {
-                var measuredH = CellMeasure(contentW, valueLineH, pairs[i].value);
-                lineCounts[i] = Math.Max(1, (int)Math.Round(measuredH / valueLineH));
+                int worst = 1;
+                for (int i = from; i < from + cols; i++)
+                {
+                    var h = CellMeasure(contentW, valueLineH, pairs[i].value);
+                    worst = Math.Max(worst, (int)Math.Round(h / valueLineH));
+                }
+                return Math.Max(minRowH, topPad + labelH + worst * valueLineH + bottomPad);
             }
 
-            // Two rows of four cells. Each row picks up the worst-case
-            // line count from its four cells.
-            int row1Lines = Math.Max(Math.Max(lineCounts[0], lineCounts[1]),
-                                     Math.Max(lineCounts[2], lineCounts[3]));
-            int row2Lines = Math.Max(Math.Max(lineCounts[4], lineCounts[5]),
-                                     Math.Max(lineCounts[6], lineCounts[7]));
-            double row1H = Math.Max(minRowH, topPad + labelH + row1Lines * valueLineH + bottomPad);
-            double row2H = Math.Max(minRowH, topPad + labelH + row2Lines * valueLineH + bottomPad);
-            double totalH = row1H + row2H;
+            var rowHeights = new[] { RowHeight(0), RowHeight(cols) };
 
+            // 2. Compose the grid with Stack + Row; no x/y/i%cols math.
+            var bounds = new Rect(LeftMargin, Y, w, rowHeights[0] + rowHeights[1]);
+            var rows = Stack(bounds, rowHeights);
+
+            // 3. Frame + internal dividers.
             SetDrawColor(LineGray);
             SetLineWidth(0.2);
-            Rect(LeftMargin, y, w, totalH, "D");
+            Rect(bounds.X, bounds.Y, bounds.W, bounds.H, "D");
+            Line(bounds.X, rows[1].Y, bounds.Right, rows[1].Y);
+            var colW = bounds.W / cols;
+            for (int i = 1; i < cols; i++)
+                Line(bounds.X + i * colW, bounds.Y, bounds.X + i * colW, bounds.Bottom);
 
-            for (int i = 0; i < pairs.Length; i++)
+            // 4. Render each cell inside its inset rect.
+            for (int r = 0; r < rows.Length; r++)
             {
-                int row = i / 4;
-                int colIdx = i % 4;
-                var cellX = LeftMargin + colIdx * col;
-                var cellY = row == 0 ? y : y + row1H;
+                var cellRects = Row(rows[r], cols);
+                for (int c = 0; c < cols; c++)
+                {
+                    var cell = cellRects[c].Inset(cellInsetX, topPad, cellInsetX, bottomPad);
+                    var (label, value) = pairs[r * cols + c];
 
-                SetXY(cellX + cellInsetX, cellY + topPad);
-                SetFont("Helvetica", "B", 7);
-                SetTextColor(BrandAccent);
-                Cell(contentW, labelH, pairs[i].label);
+                    SetXY(cell.X, cell.Y);
+                    SetFont("Helvetica", "B", 7);
+                    SetTextColor(BrandAccent);
+                    Cell(cell.W, labelH, label);
 
-                SetXY(cellX + cellInsetX, cellY + topPad + labelH);
-                SetFont("Helvetica", "", 9);
-                SetTextColor(BrandDark);
-                MultiCell(contentW, valueLineH, pairs[i].value, "", AlignEnum.Left, false);
+                    SetXY(cell.X, cell.Y + labelH);
+                    SetFont("Helvetica", "", 9);
+                    SetTextColor(BrandDark);
+                    MultiCell(cell.W, valueLineH, value, "", AlignEnum.Left, false);
+                }
             }
 
-            SetDrawColor(LineGray);
-            for (int i = 1; i < 4; i++)
-            {
-                var xLine = LeftMargin + i * col;
-                Line(xLine, y, xLine, y + totalH);
-            }
-            Line(LeftMargin, y + row1H, LeftMargin + w, y + row1H);
-
-            Y = y + totalH + 4;
+            Y = bounds.Bottom + 4;
         }
     }
 
@@ -252,20 +254,11 @@ public class SamplePhotovoltaic : FPdf
 
     private void DrawPanel(Rect bounds, string title, (string label, string value)[] rows)
     {
-        // Configure brand styling once for the frame + title; Panel()
-        // honours the current draw/fill/font/text colours and restores
-        // them after the body, so nothing leaks into the caller.
-        SetFillColor(PanelFill);
-        SetDrawColor(LineGray);
-        SetLineWidth(0.2);
-        SetFont("Helvetica", "B", 8);
-        SetTextColor(BrandAccent);
-
-        Panel(bounds, title, content =>
+        // BrandPanel carries the fill / border / title styling, so this
+        // method is purely about laying out rows -- no SetFill / SetDraw
+        // / SetFont juggling before the call.
+        Panel(bounds, title, BrandPanel, content =>
         {
-            // `content` is the inner rect post-title and post-padding.
-            // Stack() then carves it into one row per (label, value)
-            // pair without any manual arithmetic.
             var rowRects = Stack(content, rows.Length);
             var labelW = content.W * 0.55;
             for (int i = 0; i < rows.Length; i++)
