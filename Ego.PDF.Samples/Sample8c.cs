@@ -19,6 +19,20 @@ namespace Ego.PDF.Samples
         private static readonly Color CardFill    = new Color(247, 238, 236); // --brand-bg-soft
         private static readonly Color CardBorder  = new Color(227, 214, 211); // --brand-border
 
+        // Single PanelStyle reused across every card on the invoice, so
+        // each section is one Panel(slot, "TITLE", Card, body) call
+        // instead of the old DrawCardShell + manual title arithmetic.
+        private static readonly PanelStyle Card = new()
+        {
+            FillColor       = CardFill,
+            BorderColor     = CardBorder,
+            TitleColor      = BrandAccent,
+            LineWidth       = 0.2,
+            Padding         = 5,
+            TitleHeight     = 5,
+            TitleHairline   = false,
+        };
+
         private Sample8c(string file) : base(file)
         {
         }
@@ -71,83 +85,47 @@ namespace Ego.PDF.Samples
 
         private static void DrawInfoCards(Sample8c pdf)
         {
-            const double cardsY = 50;
-            const double cardH = 48;
-            const double gap = 5;
-            double usableW = pdf.W - 40;          // 170 mm
-            double cardW = (usableW - 2 * gap) / 3.0;
+            // Row carves the three card slots; Panel paints the shell
+            // and hands a clean content rect to each filler.
+            var slots = pdf.Row(new Rect(20, 50, pdf.W - 40, 48), 3, gap: 5);
 
-            // From
-            DrawCardShell(pdf, 20, cardsY, cardW, cardH);
-            FillPartyCard(pdf, "FROM", "Acme Studio", new[]
-            {
-                "100 Innovation Blvd",
-                "San Francisco, CA 94110",
-                "United States",
-            }, 20, cardsY, cardW);
+            pdf.Panel(slots[0], "FROM", Card, content => FillPartyCard(pdf, content,
+                "Acme Studio", new[]
+                {
+                    "100 Innovation Blvd",
+                    "San Francisco, CA 94110",
+                    "United States",
+                }));
 
-            // Billed To
-            double x2 = 20 + cardW + gap;
-            DrawCardShell(pdf, x2, cardsY, cardW, cardH);
-            FillPartyCard(pdf, "BILLED TO", "Globex Corporation", new[]
-            {
-                "200 Market Street",
-                "Seattle, WA 98101",
-                "United States",
-            }, x2, cardsY, cardW);
+            pdf.Panel(slots[1], "BILLED TO", Card, content => FillPartyCard(pdf, content,
+                "Globex Corporation", new[]
+                {
+                    "200 Market Street",
+                    "Seattle, WA 98101",
+                    "United States",
+                }));
 
-            // Invoice Info
-            double x3 = 20 + 2 * (cardW + gap);
-            DrawCardShell(pdf, x3, cardsY, cardW, cardH);
-            FillInvoiceInfoCard(pdf, x3, cardsY, cardW);
+            pdf.Panel(slots[2], "INVOICE INFO", Card, content => FillInvoiceInfoCard(pdf, content));
         }
 
-        private static void DrawCardShell(Sample8c pdf, double x, double y, double w, double h)
+        private static void FillPartyCard(Sample8c pdf, Rect content, string name, string[] addressLines)
         {
-            // Outline + fill rectangle as a flat "card".
-            pdf.SetFillColor(CardFill);
-            pdf.SetDrawColor(CardBorder);
-            pdf.SetLineWidth(0.2);
-            pdf.Rect(x, y, w, h, "DF");
-        }
-
-        private static void FillPartyCard(Sample8c pdf, string label, string name, string[] addressLines,
-            double cardX, double cardY, double cardW)
-        {
-            const double padX = 5;
-            const double padY = 5;
-            double x = cardX + padX;
-
-            pdf.SetXY(x, cardY + padY);
-            pdf.SetFont("Helvetica", "B", 8);
-            pdf.SetTextColor(BrandAccent);
-            pdf.Cell(cardW - 2 * padX, 5, label);
-
-            pdf.SetXY(x, cardY + padY + 6);
+            pdf.SetXY(content.X, content.Y);
             pdf.SetFont("Helvetica", "B", 12);
             pdf.SetTextColor(BrandDark);
-            pdf.Cell(cardW - 2 * padX, 6, name);
+            pdf.Cell(content.W, 6, name);
 
             pdf.SetFont("Helvetica", "", 9);
             pdf.SetTextColor(TextMuted);
             for (int i = 0; i < addressLines.Length; i++)
             {
-                pdf.SetXY(x, cardY + padY + 14 + i * 5);
-                pdf.Cell(cardW - 2 * padX, 5, addressLines[i]);
+                pdf.SetXY(content.X, content.Y + 8 + i * 5);
+                pdf.Cell(content.W, 5, addressLines[i]);
             }
         }
 
-        private static void FillInvoiceInfoCard(Sample8c pdf, double cardX, double cardY, double cardW)
+        private static void FillInvoiceInfoCard(Sample8c pdf, Rect content)
         {
-            const double padX = 5;
-            const double padY = 5;
-            double x = cardX + padX;
-
-            pdf.SetXY(x, cardY + padY);
-            pdf.SetFont("Helvetica", "B", 8);
-            pdf.SetTextColor(BrandAccent);
-            pdf.Cell(cardW - 2 * padX, 5, "INVOICE INFO");
-
             var pairs = new (string label, string value)[]
             {
                 ("Number",  "2026-001"),
@@ -156,32 +134,21 @@ namespace Ego.PDF.Samples
             };
             for (int i = 0; i < pairs.Length; i++)
             {
-                double rowY = cardY + padY + 9 + i * 10;
-                pdf.SetXY(x, rowY);
+                double rowY = content.Y + i * 10;
+                pdf.SetXY(content.X, rowY);
                 pdf.SetFont("Helvetica", "", 9);
                 pdf.SetTextColor(TextMuted);
-                pdf.Cell(cardW - 2 * padX, 4, pairs[i].label);
+                pdf.Cell(content.W, 4, pairs[i].label);
 
-                pdf.SetXY(x, rowY + 4);
+                pdf.SetXY(content.X, rowY + 4);
                 pdf.SetFont("Helvetica", "B", 11);
                 pdf.SetTextColor(BrandDark);
-                pdf.Cell(cardW - 2 * padX, 5, pairs[i].value);
+                pdf.Cell(content.W, 5, pairs[i].value);
             }
         }
 
         private static void DrawItemsCard(Sample8c pdf)
         {
-            const double cardX = 20;
-            const double cardY = 110;
-            double cardW = pdf.W - 40;
-            const double padX = 5;
-            const double padY = 5;
-            const double colItem = 80;
-            const double colQty = 20;
-            const double colUnit = 30;
-            const double colAmount = 30;
-
-            // Compute card height from row count.
             var items = new (string desc, string qty, string unit, string amount)[]
             {
                 ("Custom report templates",         "5", "$120.00", "$600.00"),
@@ -189,38 +156,39 @@ namespace Ego.PDF.Samples
                 ("On-site implementation support",  "8",  "$95.00", "$760.00"),
             };
             const double rowH = 9;
-            double cardH = padY + 8 + items.Length * rowH + padY;
+            double cardH = Card.Padding + 8 + items.Length * rowH + Card.Padding;
 
-            DrawCardShell(pdf, cardX, cardY, cardW, cardH);
-
-            // Header
-            double headerY = cardY + padY;
-            pdf.SetXY(cardX + padX, headerY);
-            pdf.SetFont("Helvetica", "B", 9);
-            pdf.SetTextColor(TextMuted);
-            pdf.Cell(colItem,   7, "ITEM",       "0", 0, AlignEnum.Left);
-            pdf.Cell(colQty,    7, "QTY",        "0", 0, AlignEnum.Right);
-            pdf.Cell(colUnit,   7, "UNIT PRICE", "0", 0, AlignEnum.Right);
-            pdf.Cell(colAmount, 7, "AMOUNT",     "0", 1, AlignEnum.Right);
-
-            // Separator under header.
-            pdf.SetDrawColor(CardBorder);
-            pdf.SetLineWidth(0.2);
-            pdf.Line(cardX + padX, headerY + 7, cardX + cardW - padX, headerY + 7);
-
-            // Rows (no borders — separation comes from spacing).
-            pdf.SetFont("Helvetica", "", 10);
-            pdf.SetTextColor(BrandDark);
-            double rowY = headerY + 8;
-            foreach (var item in items)
+            pdf.Panel(new Rect(20, 110, pdf.W - 40, cardH), Card, content =>
             {
-                pdf.SetXY(cardX + padX, rowY);
-                pdf.Cell(colItem,   rowH, item.desc,   "0", 0, AlignEnum.Left);
-                pdf.Cell(colQty,    rowH, item.qty,    "0", 0, AlignEnum.Right);
-                pdf.Cell(colUnit,   rowH, item.unit,   "0", 0, AlignEnum.Right);
-                pdf.Cell(colAmount, rowH, item.amount, "0", 1, AlignEnum.Right);
-                rowY += rowH;
-            }
+                const double colItem = 80, colQty = 20, colUnit = 30, colAmount = 30;
+
+                // Table header.
+                pdf.SetXY(content.X, content.Y);
+                pdf.SetFont("Helvetica", "B", 9);
+                pdf.SetTextColor(TextMuted);
+                pdf.Cell(colItem,   7, "ITEM",       "0", 0, AlignEnum.Left);
+                pdf.Cell(colQty,    7, "QTY",        "0", 0, AlignEnum.Right);
+                pdf.Cell(colUnit,   7, "UNIT PRICE", "0", 0, AlignEnum.Right);
+                pdf.Cell(colAmount, 7, "AMOUNT",     "0", 1, AlignEnum.Right);
+
+                pdf.SetDrawColor(CardBorder);
+                pdf.SetLineWidth(0.2);
+                pdf.Line(content.X, content.Y + 7, content.Right, content.Y + 7);
+
+                // Body rows.
+                pdf.SetFont("Helvetica", "", 10);
+                pdf.SetTextColor(BrandDark);
+                double rowY = content.Y + 8;
+                foreach (var item in items)
+                {
+                    pdf.SetXY(content.X, rowY);
+                    pdf.Cell(colItem,   rowH, item.desc,   "0", 0, AlignEnum.Left);
+                    pdf.Cell(colQty,    rowH, item.qty,    "0", 0, AlignEnum.Right);
+                    pdf.Cell(colUnit,   rowH, item.unit,   "0", 0, AlignEnum.Right);
+                    pdf.Cell(colAmount, rowH, item.amount, "0", 1, AlignEnum.Right);
+                    rowY += rowH;
+                }
+            });
         }
 
         private static void DrawTotalsCard(Sample8c pdf)
@@ -228,45 +196,42 @@ namespace Ego.PDF.Samples
             const double cardW = 80;
             const double cardH = 35;
             double cardX = pdf.W - pdf.RightMargin - cardW;
-            const double cardY = 188;
-            const double padX = 5;
-            const double padY = 5;
 
-            DrawCardShell(pdf, cardX, cardY, cardW, cardH);
+            pdf.Panel(new Rect(cardX, 188, cardW, cardH), Card, content =>
+            {
+                const double labelW = 40;
+                double valueW = content.W - labelW;
 
-            const double labelW = 40;
-            double valueW = cardW - 2 * padX - labelW;
-            double rowY = cardY + padY;
+                // Subtotal
+                pdf.SetXY(content.X, content.Y);
+                pdf.SetFont("Helvetica", "", 10);
+                pdf.SetTextColor(TextMuted);
+                pdf.Cell(labelW, 6, "Subtotal", "0", 0, AlignEnum.Left);
+                pdf.SetTextColor(BrandDark);
+                pdf.Cell(valueW, 6, "$1,840.00", "0", 1, AlignEnum.Right);
 
-            // Subtotal
-            pdf.SetXY(cardX + padX, rowY);
-            pdf.SetFont("Helvetica", "", 10);
-            pdf.SetTextColor(TextMuted);
-            pdf.Cell(labelW, 6, "Subtotal", "0", 0, AlignEnum.Left);
-            pdf.SetTextColor(BrandDark);
-            pdf.Cell(valueW, 6, "$1,840.00", "0", 1, AlignEnum.Right);
+                // VAT
+                pdf.SetX(content.X);
+                pdf.SetTextColor(TextMuted);
+                pdf.Cell(labelW, 6, "VAT 20%", "0", 0, AlignEnum.Left);
+                pdf.SetTextColor(BrandDark);
+                pdf.Cell(valueW, 6, "$368.00", "0", 1, AlignEnum.Right);
 
-            // VAT
-            pdf.SetX(cardX + padX);
-            pdf.SetTextColor(TextMuted);
-            pdf.Cell(labelW, 6, "VAT 20%", "0", 0, AlignEnum.Left);
-            pdf.SetTextColor(BrandDark);
-            pdf.Cell(valueW, 6, "$368.00", "0", 1, AlignEnum.Right);
+                // Divider above total.
+                double ruleY = pdf.Y + 1;
+                pdf.SetDrawColor(CardBorder);
+                pdf.SetLineWidth(0.3);
+                pdf.Line(content.X, ruleY, content.Right, ruleY);
 
-            // Divider above total
-            double ruleY = pdf.Y + 1;
-            pdf.SetDrawColor(CardBorder);
-            pdf.SetLineWidth(0.3);
-            pdf.Line(cardX + padX, ruleY, cardX + cardW - padX, ruleY);
-
-            // Total
-            pdf.Y += 3;
-            pdf.SetX(cardX + padX);
-            pdf.SetFont("Helvetica", "B", 12);
-            pdf.SetTextColor(BrandDark);
-            pdf.Cell(labelW, 8, "TOTAL", "0", 0, AlignEnum.Left);
-            pdf.SetTextColor(BrandAccent);
-            pdf.Cell(valueW, 8, "$2,208.00", "0", 1, AlignEnum.Right);
+                // Total.
+                pdf.Y += 3;
+                pdf.SetX(content.X);
+                pdf.SetFont("Helvetica", "B", 12);
+                pdf.SetTextColor(BrandDark);
+                pdf.Cell(labelW, 8, "TOTAL", "0", 0, AlignEnum.Left);
+                pdf.SetTextColor(BrandAccent);
+                pdf.Cell(valueW, 8, "$2,208.00", "0", 1, AlignEnum.Right);
+            });
         }
 
         private static void DrawFooter(Sample8c pdf)

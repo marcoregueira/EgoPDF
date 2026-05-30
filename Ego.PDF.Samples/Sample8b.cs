@@ -125,20 +125,21 @@ namespace Ego.PDF.Samples
                 ("ISSUED",   "23 May 2026"),
                 ("DUE",      "22 Jun 2026"),
             };
-            double cellWidth = (pdf.W - 40) / 3.0;
+
+            var slots = pdf.Row(new Rect(20, metaY, pdf.W - 40, 12), cells.Length);
 
             for (int i = 0; i < cells.Length; i++)
             {
-                double x = 20 + i * cellWidth;
-                pdf.SetXY(x, metaY);
+                var slot = slots[i];
+                pdf.SetXY(slot.X, slot.Y);
                 pdf.SetFont("Helvetica", "B", 8);
                 pdf.SetTextColor(BrandAccent);
-                pdf.Cell(cellWidth, 5, cells[i].label);
+                pdf.Cell(slot.W, 5, cells[i].label);
 
-                pdf.SetXY(x, metaY + 6);
+                pdf.SetXY(slot.X, slot.Y + 6);
                 pdf.SetFont("Helvetica", "B", 12);
                 pdf.SetTextColor(BrandDark);
-                pdf.Cell(cellWidth, 6, cells[i].value);
+                pdf.Cell(slot.W, 6, cells[i].value);
             }
         }
 
