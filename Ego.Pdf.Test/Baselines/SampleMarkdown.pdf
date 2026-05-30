@@ -89,20 +89,21 @@ endobj
 /Contents 6 0 R>>
 endobj
 6 0 obj
-<</Length 27459>>
+<</Length 27195>>
 stream
 2 J
 0.57 w
 BT /F5 9.50 Tf ET
 0.969 0.933 0.925 rg
-BT /F3 20.00 Tf ET
-q 0.102 0.114 0.149 rg BT 59.53 742.35 Td (Shortcodes) Tj ET Q
 BT /F2 11.00 Tf ET
-q 0.431 0.451 0.510 rg BT 87.87 713.87 Td (Markdown is a lightweight markup language with plain-text formatting syntax. Its design) Tj ET Q
-q 0.431 0.451 0.510 rg BT 87.87 696.86 Td (allows it to be converted to many output formats, including PDF.) Tj ET Q
+q 0.431 0.451 0.510 rg BT 87.87 773.39 Td (Markdown is a lightweight markup language with plain-text formatting syntax. Its design) Tj ET Q
+q 0.431 0.451 0.510 rg BT 87.87 756.39 Td (allows it to be converted to many output formats, including PDF.) Tj ET Q
 0.800 0.412 0.373 RG
 1.98 w
-59.53 725.67 m 59.53 693.07 l S
+59.53 785.20 m 59.53 752.60 l S
+BT /F3 20.00 Tf ET
+q 0.102 0.114 0.149 rg BT 59.53 701.24 Td (Shortcodes) Tj ET Q
+BT /F2 11.00 Tf ET
 q 0.102 0.114 0.149 rg BT 59.53 672.76 Td (EgoPDF.Markdown ships with a tiny shortcode extension: any line wrapped in ) Tj ET Q
 BT /F5 9.50 Tf ET
 q 0.102 0.114 0.149 rg BT 441.02 673.21 Td ([[ ... ]]) Tj ET Q
@@ -917,12 +918,6 @@ BT /F3 11.00 Tf ET
 0.800 0.412 0.373 rg
 210.32 289.13 174.65 -34.02 re f
 q 1.000 1.000 1.000 rg BT 238.66 268.83 Td (Star egoPdf on GitHub) Tj ET Q
-0.863 0.863 0.878 RG
-0.85 w
-56.69 238.11 m 538.59 238.11 l S
-BT /F2 11.00 Tf ET
-q 0.102 0.114 0.149 rg BT 59.53 217.80 Td (That's the whole happy path. Tables, footnotes and inline images are scheduled for later) Tj ET Q
-q 0.102 0.114 0.149 rg BT 59.53 200.79 Td (previews.) Tj ET Q
 
 endstream
 endobj
@@ -937,9 +932,9 @@ endobj
 <</Length 2579>>
 stream
 2 J
-0.85 w
-BT /F2 11.00 Tf ET
-0.863 0.863 0.878 RG
+0.00 w
+BT /F3 11.00 Tf ET
+0.800 0.412 0.373 RG
 0.800 0.412 0.373 rg
 BT /F3 20.00 Tf ET
 q 0.102 0.114 0.149 rg BT 59.53 742.35 Td (Images) Tj ET Q

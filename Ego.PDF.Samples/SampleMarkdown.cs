@@ -114,11 +114,11 @@ public class SampleMarkdown : FPdf
 
         [[pagebreak]]
 
-        ## Shortcodes
-
         > Markdown is a lightweight markup language with plain-text
         > formatting syntax. Its design allows it to be converted to
         > many output formats, including PDF.
+
+        ## Shortcodes
 
         EgoPDF.Markdown ships with a tiny shortcode extension: any line
         wrapped in `[[ ... ]]` becomes a custom block dispatched to a
@@ -150,11 +150,6 @@ public class SampleMarkdown : FPdf
         ```
 
         [[cta text="Star egoPdf on GitHub" url="https://github.com/marcoregueira/egopdf"]]
-
-        ---
-
-        That's the whole happy path. Tables, footnotes and inline images
-        are scheduled for later previews.
 
         [[pagebreak]]
 
