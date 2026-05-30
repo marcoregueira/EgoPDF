@@ -39,18 +39,15 @@ public class Sample9 : FPdf
         AddPage(PageSizeEnum.A4);
         DrawPageHeader();
 
-        // Two-column layout: 1D barcodes on the left take 2/3 of the
-        // body width, matrix barcodes on the right take 1/3, with a
-        // 10mm gutter between them. 20 + 107 + 10 + 53 + 20 = 210mm.
-        const double leftX = 20;
-        const double leftWidth = 107;
-        const double columnGap = 10;
-        const double rightX = leftX + leftWidth + columnGap;     // 137
-        const double rightWidth = 53;
-        const double columnsTop = 62;
+        // Row splits the body width into the 2:1 column layout (1D
+        // gallery wide on the left, 2D matrices narrow on the right)
+        // with a 10 mm gutter between them. Each column receives a
+        // Rect and runs its own vertical cursor inside.
+        var columns = Row(new Rect(20, 62, W - 40, H - 62 - 20),
+                          new[] { 2.0, 1.0 }, gap: 10);
 
-        DrawLinearColumn(leftX, columnsTop, leftWidth);
-        DrawMatrixColumn(rightX, columnsTop, rightWidth);
+        DrawLinearColumn(columns[0]);
+        DrawMatrixColumn(columns[1]);
     }
 
     private void DrawPageHeader()
@@ -74,19 +71,25 @@ public class Sample9 : FPdf
         SetTextColor(BrandDark);
     }
 
-    private double DrawSectionLabel(double x, double y, double width, string text)
+    /// <summary>
+    /// Coral hairline + accent-coloured section label at the top of a
+    /// column. Returns the rect remaining below the label so the caller
+    /// can keep stacking entries inside it.
+    /// </summary>
+    private Rect DrawSectionLabel(Rect column, string text)
     {
-        SetDrawColor(BrandAccent);
-        SetLineWidth(0.3);
-        Line(x, y, x + width, y);
+        using (PushState())
+        {
+            SetDrawColor(BrandAccent);
+            SetLineWidth(0.3);
+            Line(column.X, column.Y, column.Right, column.Y);
 
-        SetXY(x, y + 4);
-        SetFont("Poppins", "", 10);
-        SetTextColor(BrandAccent);
-        Cell(width, 5, text);
-
-        SetTextColor(BrandDark);
-        return y + 18;
+            SetXY(column.X, column.Y + 4);
+            SetFont("Poppins", "", 10);
+            SetTextColor(BrandAccent);
+            Cell(column.W, 5, text);
+        }
+        return column.WithTopOffset(18);
     }
 
     /// <summary>Visual indent between captions and codes so the codes hang under their labels.</summary>
@@ -95,9 +98,9 @@ public class Sample9 : FPdf
     /// <summary>Module width for every 1D code, in mm.</summary>
     private const double ModuleWidth = 0.5;
 
-    private void DrawLinearColumn(double x, double y, double width)
+    private void DrawLinearColumn(Rect column)
     {
-        double cursor = DrawSectionLabel(x, y, width, "LINEAR 1D");
+        var body = DrawSectionLabel(column, "LINEAR 1D");
 
         var rows = new (string label, Action<double, double, double, Color> draw, double height, Color color)[]
         {
@@ -111,21 +114,22 @@ public class Sample9 : FPdf
             ("UPC-A",              (rx, ry, h, c) => BarcodeRenderer.DrawUpcA            (this, "012345678905",   rx, ry, ModuleWidth, h, c), 12, BrandAccent),
         };
 
+        double cursor = body.Y;
         foreach (var row in rows)
         {
             SetFont("Roboto", "", 10);
             SetTextColor(TextMuted);
-            SetXY(x, cursor);
-            Cell(width, 4, row.label);
+            SetXY(body.X, cursor);
+            Cell(body.W, 4, row.label);
 
-            row.draw(x + CodeIndent, cursor + 5, row.height, row.color);
+            row.draw(body.X + CodeIndent, cursor + 5, row.height, row.color);
             cursor += 5 + row.height + 4;
         }
     }
 
-    private void DrawMatrixColumn(double x, double y, double width)
+    private void DrawMatrixColumn(Rect column)
     {
-        double cursor = DrawSectionLabel(x, y, width, "MATRIX 2D");
+        var body = DrawSectionLabel(column, "MATRIX 2D");
 
         const double matrixSize = 22.5; // mm, square cells (height); width = size * aspect.
         const double pdf417Aspect = 2.0;
@@ -146,15 +150,16 @@ public class Sample9 : FPdf
                 BrandAccent),
         };
 
+        double cursor = body.Y;
         foreach (var m in matrices)
         {
             // Caption above the matrix sits flush against the column edge.
             SetFont("Roboto", "", 10);
             SetTextColor(TextMuted);
-            SetXY(x, cursor);
+            SetXY(body.X, cursor);
             Cell(m.matrixWidth, 5, m.label);
 
-            m.draw(x + CodeIndent, cursor + 6, m.color);
+            m.draw(body.X + CodeIndent, cursor + 6, m.color);
             cursor += 5 + matrixSize + 8; // caption + matrix + gap
         }
     }

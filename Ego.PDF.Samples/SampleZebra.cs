@@ -16,6 +16,39 @@ namespace Ego.PDF.Samples
     {
         private SampleZebra(string file) : base(file) { }
 
+        // 4" x 6" label in dots at 203 dpi. Used by the two shipping
+        // labels and by the catalogue; the horizontal label leaves it
+        // unset because the ZPL stream doesn't depend on the clamp.
+        private const int Dpi      = 203;
+        private const int LabelW   = 812;
+        private const int LabelH   = 1218;
+
+        /// <summary>
+        /// Boilerplate-free entry point shared by all three Zebra
+        /// samples: configures the FPdf for 203 dpi point units,
+        /// embeds the Roboto-Mono Bold TTF used for ZPL monospace
+        /// font slot "A", wires the proportional slot "0" to Helvetica
+        /// Bold and returns a ready-to-Print <see cref="PdfZpl"/>.
+        /// When <paramref name="labelSize"/> is supplied the parser
+        /// clamps oversized ^PW / ^LL to that physical bound.
+        /// </summary>
+        private static PdfZpl OpenLabel(SampleZebra pdf, (int width, int height)? labelSize = null)
+        {
+            pdf.SetUnitConverionFactor(UnitEnum.Point, Dpi);
+            pdf.LoadFont("robotomonob",
+                Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
+            pdf.AddFont("robotomonob", "");
+            // Helvetica-Bold is a PDF core font: no embedding needed.
+            pdf.SetFont("helvetica", "B", 16);
+
+            var zpl = new PdfZpl(pdf, Dpi);
+            if (labelSize.HasValue)
+                zpl.SetLabelSize(labelSize.Value.width, labelSize.Value.height);
+            zpl.SetVariableFont("helvetica", "B");
+            zpl.SetMonospaceFont("robotomonob");
+            return zpl;
+        }
+
         /// <summary>
         /// 4" x 6" catalogue label that exercises every ZPL barcode
         /// command the engine maps onto ZXing.Net (^BC, ^B3, ^B2, ^BK,
@@ -25,15 +58,7 @@ namespace Ego.PDF.Samples
         public static Stream GetSampleBarcodes(string file, string resourcePath)
         {
             using var pdf = new SampleZebra(file);
-            pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
-
-            pdf.LoadFont("robotomonob", Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
-            pdf.AddFont("robotomonob", "");
-            pdf.SetFont("helvetica", "B", 16);
-            var zpl = new PdfZpl(pdf, 203);
-            zpl.SetLabelSize(812, 1218);
-            zpl.SetVariableFont("helvetica", "B");
-            zpl.SetMonospaceFont("robotomonob");
+            var zpl = OpenLabel(pdf, (LabelW, LabelH));
             zpl.Print(@"
 ^XA
 ^CF0,24
@@ -94,15 +119,10 @@ namespace Ego.PDF.Samples
         public static Stream GetSampleHorizontalShipping(string file, string resourcePath)
         {
             using var pdf = new SampleZebra(file);
-            pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
-            pdf.LoadFont("robotomonob", Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
-            pdf.AddFont("robotomonob", "");
-            // Helvetica-Bold is a PDF core font: no embedding needed. ZPL
-            // font "0" (proportional) maps to it through SetVariableFont.
-            pdf.SetFont("helvetica", "B", 16);
-            var zpl = new PdfZpl(pdf, 203);
-            zpl.SetVariableFont("helvetica", "B");
-            zpl.SetMonospaceFont("robotomonob");
+            // No SetLabelSize: the ZPL stream stays within the implicit
+            // 4" x 6" envelope so leaving the clamp unset matches the
+            // original Intershipping example.
+            var zpl = OpenLabel(pdf);
             zpl.Print(@"
 ^XA
 
@@ -162,18 +182,10 @@ namespace Ego.PDF.Samples
         public static Stream GetSampleVertical1(string file, string resourcePath)
         {
             using var pdf = new SampleZebra(file);
-            pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
-
-            pdf.LoadFont("robotomonob", Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
-            pdf.AddFont("robotomonob", "");
-            pdf.SetFont("helvetica", "B", 16);
-            var zpl = new PdfZpl(pdf, 203);
-            // Physical label is 4" x 6" at 203 dpi. Any ^PW / ^LL the ZPL
-            // tries to set bigger than this is clamped (matches what
-            // Labelary does when you pre-pick a label size).
-            zpl.SetLabelSize(812, 1218);
-            zpl.SetVariableFont("helvetica", "B");
-            zpl.SetMonospaceFont("robotomonob");
+            // Physical label is 4" x 6" at 203 dpi -- the clamp keeps
+            // ^PW / ^LL inside that envelope (matches Labelary's
+            // behaviour when you pre-pick a label size).
+            var zpl = OpenLabel(pdf, (LabelW, LabelH));
 
             var logoGfa = BuildEgoLogoGfa();
 
