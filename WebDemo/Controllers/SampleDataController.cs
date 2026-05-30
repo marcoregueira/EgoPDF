@@ -131,6 +131,15 @@ namespace WebDemo.Controllers
         }
 
         [HttpGet()]
+        public FileStreamResult GetSampleMarkdown()
+        {
+            var buffer = SampleMarkdown.GetSample(null);
+            buffer.Seek(0, SeekOrigin.Begin);
+            var result = new FileStreamResult(buffer, "application/pdf");
+            return result;
+        }
+
+        [HttpGet()]
         public FileStreamResult GetSampleZebra([FromQuery] int id)
         {
             var buffer =
