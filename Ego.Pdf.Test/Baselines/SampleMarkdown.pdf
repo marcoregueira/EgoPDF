@@ -915,7 +915,7 @@ endobj
 /Contents 8 0 R>>
 endobj
 8 0 obj
-<</Length 1965>>
+<</Length 2126>>
 stream
 2 J
 0.85 w
@@ -945,10 +945,16 @@ q 0.102 0.114 0.149 rg BT 373.09 652.92 Td ( — two images side by side in equal)
 q 0.102 0.114 0.149 rg BT 48.19 635.91 Td (half-column cells, with optional captions and dividers. Useful when a single full-column image would) Tj ET Q
 q 0.102 0.114 0.149 rg BT 48.19 618.90 Td (dominate the page.) Tj ET Q
 q 0.102 0.114 0.149 rg BT 31.19 594.81 Td (Example pair:) Tj ET Q
-q 0.102 0.114 0.149 rg BT 31.19 570.71 Td ([[imagepair src1="C:/temp/egopdf/Ego.Pdf.Test/bin/Debug/net8.0/egopdf-logo.png" caption1="Left cell —) Tj ET Q
-q 0.102 0.114 0.149 rg BT 31.19 553.70 Td ([[image]] style" src2="C:/temp/egopdf/Ego.Pdf.Test/bin/Debug/net8.0/egopdf-logo.png" caption2="Right cell —) Tj ET Q
-q 0.431 0.451 0.510 rg BT 31.19 536.70 Td ([alt]) Tj ET Q
-q 0.102 0.114 0.149 rg BT 48.92 536.70 Td ( style" borders=true ]]) Tj ET Q
+BT /F3 11.00 Tf ET
+q 0.431 0.451 0.510 rg BT 31.19 570.71 Td ([[]]) Tj ET Q
+0.969 0.933 0.925 rg
+28.35 558.42 538.58 -56.69 re f
+BT /F4 9.50 Tf ET
+q 0.102 0.114 0.149 rg BT 38.27 541.40 Td (src1="C:/temp/egopdf/Ego.Pdf.Test/bin/Debug/net8.0/egopdf-logo.png" caption1="Left cell — [[image]] style") Tj ET Q
+q 0.102 0.114 0.149 rg BT 38.27 527.23 Td (src2="C:/temp/egopdf/Ego.Pdf.Test/bin/Debug/net8.0/egopdf-logo.png" caption2="Right cell — ![alt]\(url\) style") Tj ET Q
+q 0.102 0.114 0.149 rg BT 38.27 513.05 Td (borders=true) Tj ET Q
+BT /F2 11.00 Tf ET
+q 0.102 0.114 0.149 rg BT 31.19 481.42 Td (]]) Tj ET Q
 
 endstream
 endobj

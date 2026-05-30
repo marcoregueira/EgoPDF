@@ -6,11 +6,21 @@ using Markdig.Syntax;
 namespace Ego.PDF.Markdown.Shortcodes;
 
 /// <summary>
-/// Markdig block parser that recognises a single-line shortcode of the
-/// form <c>[[name k1=v1 k2="v with spaces" k3='v']]</c> sitting on its
-/// own line (allowing trailing whitespace). Inline occurrences inside a
-/// paragraph are intentionally NOT picked up; the shortcode must be
-/// block-level so the renderer can lay it out vertically.
+/// Markdig block parser that recognises a shortcode of the form
+/// <c>[[name k1=v1 k2="v with spaces" k3='v']]</c> sitting on its own
+/// line, OR spread across several lines for readability:
+///
+/// <code>
+/// [[imagepair
+///     src1="left.png" caption1="Left"
+///     src2="right.png" caption2="Right"
+///     borders=true
+/// ]]
+/// </code>
+///
+/// Inline occurrences inside a paragraph are intentionally NOT picked
+/// up; the shortcode must be block-level so the renderer can lay it
+/// out vertically.
 /// </summary>
 public sealed class ShortcodeBlockParser : BlockParser
 {
@@ -32,47 +42,122 @@ public sealed class ShortcodeBlockParser : BlockParser
         if (start + 1 > end) return BlockState.None;
         if (text[start] != '[' || text[start + 1] != '[') return BlockState.None;
 
-        // Find the matching "]]" within the same line.
-        int closeIdx = -1;
-        for (int i = start + 2; i < end; i++)
+        // Look for "]]" within the same line. If found, the whole
+        // shortcode is single-line: parse and close immediately.
+        int closeIdx = FindCloseMarker(text, start + 2, end);
+        if (closeIdx >= 0)
         {
-            if (text[i] == ']' && text[i + 1] == ']')
-            {
-                closeIdx = i;
-                break;
-            }
+            // The rest of the line must be whitespace — this is a block
+            // shortcode, not an inline one.
+            int after = closeIdx + 2;
+            while (after <= end && (text[after] == ' ' || text[after] == '\t')) after++;
+            if (after <= end) return BlockState.None;
+
+            var content = text.Substring(start + 2, closeIdx - (start + 2)).Trim();
+            if (content.Length == 0) return BlockState.None;
+
+            if (!TryParse(content, out var name, out var options))
+                return BlockState.None;
+
+            processor.NewBlocks.Push(BuildBlock(processor, start, end, name, content, options));
+            return BlockState.BreakDiscard;
         }
-        if (closeIdx < 0) return BlockState.None;
 
-        // The rest of the line must be whitespace — this is a block
-        // shortcode, not an inline one.
-        int after = closeIdx + 2;
-        while (after <= end && (text[after] == ' ' || text[after] == '\t')) after++;
-        if (after <= end) return BlockState.None;
-
-        var content = text.Substring(start + 2, closeIdx - (start + 2)).Trim();
-        if (content.Length == 0) return BlockState.None;
-
-        if (!TryParse(content, out var name, out var options))
+        // No "]]" on this line -- multi-line invocation. Stash whatever
+        // comes after "[[" into a Pending buffer on the block and ask
+        // Markdig to keep feeding us subsequent lines via TryContinue.
+        var firstLine = text.Substring(start + 2, end + 1 - (start + 2));
+        var block = new ShortcodeBlock(this)
         {
+            Span = { Start = start, End = end },
+            Line = processor.LineIndex,
+            Column = processor.Column,
+            Pending = new StringBuilder().Append(firstLine).Append(' '),
+        };
+        processor.NewBlocks.Push(block);
+        return BlockState.ContinueDiscard;
+    }
+
+    public override BlockState TryContinue(BlockProcessor processor, Block block)
+    {
+        var sc = (ShortcodeBlock)block;
+        if (sc.Pending is null) return BlockState.Break;
+
+        var slice = processor.Line;
+        var text = slice.Text;
+        int start = slice.Start;
+        int end = slice.End;
+
+        // A blank line inside an open shortcode aborts it -- treat as
+        // a paragraph break and let the partial text fall through.
+        if (start > end)
+        {
+            sc.Pending = null;
             return BlockState.None;
         }
 
+        int closeIdx = FindCloseMarker(text, start, end);
+        if (closeIdx < 0)
+        {
+            // Still inside the brackets: append the whole line.
+            sc.Pending.Append(text, start, end + 1 - start).Append(' ');
+            return BlockState.ContinueDiscard;
+        }
+
+        // Found "]]" on this line. The rest must be whitespace, same
+        // rule as single-line.
+        int after = closeIdx + 2;
+        while (after <= end && (text[after] == ' ' || text[after] == '\t')) after++;
+        if (after <= end)
+        {
+            sc.Pending = null;
+            return BlockState.None;
+        }
+
+        sc.Pending.Append(text, start, closeIdx - start);
+        var content = sc.Pending.ToString().Trim();
+        sc.Pending = null;
+
+        if (content.Length == 0 || !TryParse(content, out var name, out var options))
+        {
+            // Couldn't make sense of the accumulated text -- bail. The
+            // partial block is discarded; subsequent parsers may pick
+            // the lines up as a paragraph.
+            return BlockState.None;
+        }
+
+        sc.Name = name;
+        sc.RawText = content;
+        foreach (var pair in options)
+            sc.Options[pair.Key] = pair.Value;
+        sc.Span = new SourceSpan(sc.Span.Start, end);
+        return BlockState.BreakDiscard;
+    }
+
+    private static int FindCloseMarker(string text, int from, int end)
+    {
+        for (int i = from; i < end; i++)
+        {
+            if (text[i] == ']' && text[i + 1] == ']')
+                return i;
+        }
+        return -1;
+    }
+
+    private ShortcodeBlock BuildBlock(BlockProcessor processor, int start, int end,
+        string name, string rawText, IList<KeyValuePair<string, string>> options)
+    {
         var block = new ShortcodeBlock(this)
         {
             Span = { Start = start, End = end },
             Line = processor.LineIndex,
             Column = processor.Column,
             Name = name,
-            RawText = content,
+            RawText = rawText,
         };
         foreach (var pair in options)
-        {
             block.Options[pair.Key] = pair.Value;
-        }
-
-        processor.NewBlocks.Push(block);
-        return BlockState.BreakDiscard;
+        return block;
     }
 
     /// <summary>

@@ -35,4 +35,13 @@ public sealed class ShortcodeBlock : LeafBlock
     /// handler is registered for <see cref="Name"/>.
     /// </summary>
     public string RawText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Accumulator used by <see cref="ShortcodeBlockParser"/> while the
+    /// block is still open across multiple source lines (i.e. the
+    /// opening <c>[[</c> and the closing <c>]]</c> sit on different
+    /// lines). Once the closing marker is found this field is parsed
+    /// into <see cref="Name"/> + <see cref="Options"/> and cleared.
+    /// </summary>
+    internal System.Text.StringBuilder Pending { get; set; }
 }
