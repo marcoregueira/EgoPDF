@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using Ego.PDF.Font;
 using Ego.PDF.Samples;
 using Xunit;
 
@@ -17,6 +20,42 @@ using Xunit;
 
 namespace Ego.Pdf.Test
 {
+    /// <summary>
+    /// Snapshots <see cref="FontBuilder.Fonts"/> at module load time -- before
+    /// any test has run -- so the baseline tests can revert to that pristine
+    /// state before each generation. Without this, <c>FPdf.LoadFont</c>'s
+    /// width-cache fills with a union of every glyph touched by previously
+    /// run tests, which makes byte hashes order-dependent.
+    /// </summary>
+    internal static class FontStateGuard
+    {
+        private static HashSet<string> _coreFontKeys;
+
+        [ModuleInitializer]
+        public static void CaptureCoreFonts()
+        {
+            // Touch FontBuilder so its static constructor runs and populates
+            // the dictionary with just the 14 PDF core fonts.
+            _ = FontBuilder.Fonts.Count;
+            _coreFontKeys = new HashSet<string>(FontBuilder.Fonts.Keys, StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Strip every font that wasn't in the original snapshot (i.e.
+        /// everything any previous test embedded). Existing core entries
+        /// are left untouched -- they're read-only after init.
+        /// </summary>
+        public static void RestoreCoreFontsOnly()
+        {
+            if (_coreFontKeys == null) return;
+            var toRemove = FontBuilder.Fonts.Keys
+                .Where(k => !_coreFontKeys.Contains(k))
+                .ToList();
+            foreach (var k in toRemove)
+                FontBuilder.Fonts.Remove(k);
+        }
+    }
+
     /// <summary>
     /// Byte-hash regression for every shipping sample. Each test generates
     /// the sample's PDF, strips the (clock-driven) /CreationDate field
@@ -61,6 +100,11 @@ namespace Ego.Pdf.Test
 
         private static void Run(string name, Func<string, Stream> factory)
         {
+            // FPdf.LoadFont's width cache fills with a union of glyphs from
+            // every font already registered, so a fresh state ensures the
+            // hash of each baseline doesn't depend on what tests ran first.
+            FontStateGuard.RestoreCoreFontsOnly();
+
             var assets = AssemblyDir();
             var stream = factory(assets);
             stream.Seek(0, SeekOrigin.Begin);
@@ -109,15 +153,25 @@ namespace Ego.Pdf.Test
 
         /// <summary>
         /// Strip the parts of the PDF that depend on wall-clock time so
-        /// the hash is stable. Right now that's only /CreationDate.
-        /// Latin1 is a 1:1 byte-string mapping (every byte 0..255 is a
-        /// codepoint) so the regex doesn't garble any binary stream
-        /// payload it happens to touch.
+        /// the hash is stable across runs:
+        ///   1. <c>/CreationDate</c> -- replaced with a fixed marker.
+        ///   2. The cross-reference table -- the byte offsets it stores
+        ///      shift whenever any earlier object changes length, and
+        ///      <c>/CreationDate</c>'s minute/hour/day fields are variable
+        ///      length (FPdf emits e.g. <c>Y530124545</c>, not a padded
+        ///      timestamp), so even with the date masked the xref entries
+        ///      diverge between runs.
+        ///   3. <c>startxref</c>'s offset for the same reason.
+        /// Latin1 is a 1:1 byte-string mapping so the regex doesn't garble
+        /// any binary stream payload it happens to touch.
         /// </summary>
         private static byte[] Canonicalize(byte[] pdf)
         {
             var s = Encoding.Latin1.GetString(pdf);
             s = Regex.Replace(s, @"/CreationDate \(D:[^)]*\)", "/CreationDate (D:NORMALIZED)");
+            s = Regex.Replace(s, @"xref(.*?)trailer", "xref\nNORMALIZED\ntrailer",
+                RegexOptions.Singleline);
+            s = Regex.Replace(s, @"startxref\s*\n?\d+", "startxref\n0");
             return Encoding.Latin1.GetBytes(s);
         }
 
