@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Ego.PDF.Markdown</RootNamespace>
+    <AssemblyName>Ego.PDF.Markdown</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- NuGet package metadata -->
+  <PropertyGroup>
+    <PackageId>EgoPDF.Markdown</PackageId>
+    <Version>1.0.0-preview.1</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Authors>Marco Antonio Regueira</Authors>
+    <Company>Marco Antonio Regueira</Company>
+    <Copyright>Copyright (c) 2026 Marco Antonio Regueira</Copyright>
+    <Description>Render Markdown documents to PDF on top of EgoPDF.Generator and Markdig. Phase-1 happy path: headings (H1-H6), paragraphs with inline emphasis (bold / italic / code / links / autolinks), bullet and ordered lists (nested), fenced code blocks with background, horizontal rules and local images. Targets net8.0 and net9.0. Preview release — API and rendering output may change without notice.</Description>
+    <PackageTags>markdown;md;pdf;commonmark;markdig;preview;net8;net9</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/marcoregueira/egopdf</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>1.0.0-preview.1: first public preview. Phase-1 happy path of Markdown to PDF rendering. Tables, blockquotes, footnotes, task lists and inline images are planned for later previews.</PackageReleaseNotes>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.40.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ego.PdfCore\Ego.PdfCore.csproj" />
+  </ItemGroup>
+
+</Project>

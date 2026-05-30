@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ego.Pdf.Test", "Ego.Pdf.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.PDF.Barcodes", "Ego.PDF.Barcodes\Ego.PDF.Barcodes.csproj", "{2B6667B0-28A6-412B-8F6B-EC0269703A16}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ego.PDF.Markdown", "Ego.PDF.Markdown\Ego.PDF.Markdown.csproj", "{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,18 @@ Global
 		{2B6667B0-28A6-412B-8F6B-EC0269703A16}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{2B6667B0-28A6-412B-8F6B-EC0269703A16}.Release|x86.ActiveCfg = Release|Any CPU
 		{2B6667B0-28A6-412B-8F6B-EC0269703A16}.Release|x86.Build.0 = Release|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Debug|x86.Build.0 = Debug|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Release|x86.ActiveCfg = Release|Any CPU
+		{8A1FBF6E-D49B-4F77-9C53-3D6F3B2D5BAE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -86,6 +86,12 @@ namespace Ego.Pdf.Test
             Sample8c.GetSample("sample8c.pdf", GetPath());
         }
 
+        [Fact]
+        public void DoSampleMarkdown()
+        {
+            SampleMarkdown.GetSample("sample-markdown.pdf");
+        }
+
         // --------------------------------------------------------------
         // Zebra "tests" (visual smoke tests, not assertions)
         //
