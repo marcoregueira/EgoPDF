@@ -6,200 +6,206 @@
 
 @*
     Landing images live in wwwroot/img/landing-*.png. The original
-    image-agent prompts that produced them are kept at the bottom of
-    this file inside a Razor comment, so any future re-generation can
-    reuse the exact wording (palette, aspect, file path).
+    image-agent prompts that produced them sit at the bottom of this
+    file inside a Razor comment, so any future re-generation can reuse
+    the exact wording (palette, aspect, file path).
 *@
 
-<section class="text-center my-5">
-    <img src="~/img/logo.png" alt="egoPdf"
-         class="img-fluid mb-4" style="max-height: 220px;" />
-    <h1 class="display-5 fw-light mb-2">
-        Coded PDFs, perfect on paper.
-        <span class="text-coral">Now agent-friendly.</span>
-    </h1>
-    <p class="lead text-muted mb-4">
-        A small family of .NET libraries for generating PDFs with
-        millimetric precision, written for people who reach for a
-        ruler and people who reach for an agent.
+<section class="text-center py-5">
+    <div class="container">
+        <img src="~/img/logo.png" alt="egoPdf"
+             class="img-fluid mb-4" style="max-height: 200px;" />
+        <h1 class="display-4 fw-light mb-2">
+            Coded PDFs, <span class="text-coral">perfect on paper</span>.
+        </h1>
+        <p class="lead text-muted mb-4">
+            A .NET library family for millimetric PDF layout.
+            Agent-friendly. Ruler-grade. Pure MIT.
+        </p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a asp-page="/Examples" class="btn btn-dark btn-lg px-4">
+                See the examples
+            </a>
+            <a href="https://www.nuget.org/packages?q=EgoPDF"
+               target="_blank" rel="noopener"
+               class="btn btn-outline-dark btn-lg px-4">
+                NuGet
+            </a>
+            <a href="https://github.com/marcoregueira/egopdf"
+               target="_blank" rel="noopener"
+               class="btn btn-outline-dark btn-lg px-4">
+                GitHub
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 border-top">
+    <div class="container">
+    <div class="row align-items-center g-5">
+        <div class="col-md-6">
+            <img src="~/img/landing-hero.png"
+                 alt="C# code on the left transforming into a printed PDF on the right with ruler and pencil overlay."
+                 class="img-fluid rounded shadow-sm" />
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-3">Pixel-perfect PDFs in C#</h2>
+            <p class="lead text-muted">
+                Imperative control over every cell, every millimetre,
+                with no PHP detour. SkiaSharp underneath for accurate
+                font metrics; SourceLink and symbol packages for clean
+                debugging.
+            </p>
+            <ul class="text-muted">
+                <li>The 14 PDF core fonts ship out of the box &mdash; no TTF needed for "Hello World".</li>
+                <li>Embed any TrueType with a single <code>LoadFont</code> call.</li>
+                <li>Output validates cleanly in Acrobat, Chrome and the major PDF viewers.</li>
+            </ul>
+        </div>
+    </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+    <div class="row align-items-center g-5 flex-md-row-reverse">
+        <div class="col-md-6">
+            <img src="~/img/landing-primitives.png"
+                 alt="Diagram of an A4 page being carved into rows, columns and a titled panel with Row/Stack/Panel labels."
+                 class="img-fluid rounded shadow-sm" />
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-3">Layout that reads like the page it draws</h2>
+            <p class="lead text-muted">
+                <code>Row</code>, <code>Stack</code> and <code>Panel</code>
+                compose a page without the <code>x + width + gap</code>
+                arithmetic. The call site reads as the layout it produces.
+            </p>
+<pre class="border rounded p-3 bg-white small mb-0"><code>var cols = pdf.Row(pdf.Bounds(), new[] { 2.0, 1.0 }, gap: 3);
+pdf.Panel(cols[0], "DETAILS", brandStyle, content =&gt; {
+    // body lives inside `content`,
+    // state restored on return
+});</code></pre>
+        </div>
+    </div>
+    </div>
+</section>
+
+<section class="py-5 border-top">
+    <div class="container">
+    <div class="row align-items-center g-5">
+        <div class="col-md-6">
+            <img src="~/img/landing-mixed-mode.png"
+                 alt="A4 page split into a dark brand header band on top and a clean Markdown body with stylised paragraphs and a coral block-quote bar."
+                 class="img-fluid rounded shadow-sm" />
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-3">Markdown and ruler-grade drawing on the same page</h2>
+            <p class="lead text-muted">
+                Render CommonMark + GFM through <code>EgoPDF.Markdown</code>,
+                drop into native code where the visual demands it. The
+                shortcode extension is the bridge.
+            </p>
+            <ul class="text-muted">
+                <li>Headings, lists, code blocks, links, autolinks, quotes, images.</li>
+                <li><code>[[barcode]]</code>, <code>[[image]]</code>, <code>[[cta]]</code>, <code>[[imagepair]]</code>
+                    &mdash; each block shortcode dispatches to a handler you control.</li>
+                <li>Imperative header bands compose with Markdown bodies in the same FPdf instance.</li>
+            </ul>
+        </div>
+    </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+    <div class="row align-items-center g-5 flex-md-row-reverse">
+        <div class="col-md-6">
+            <img src="~/img/landing-agent.png"
+                 alt="Abstract geometric agent figure holding a printed A4 page next to a wooden ruler and pencil."
+                 class="img-fluid rounded shadow-sm" />
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-3">Friendly for humans <em>and</em> agents</h2>
+            <p class="lead text-muted">
+                Single-method primitives, scope helpers that auto-restore
+                state, declarative styling records and a copy-pasteable
+                recipe catalog. An LLM agent can derive everything it
+                needs from the same shipping samples a developer reads.
+            </p>
+            <ul class="text-muted">
+                <li><code>using (pdf.PushState())</code> / <code>PushPos()</code> &mdash; mutate freely, revert on exit.</li>
+                <li><code>PanelStyle</code> records capture frame + title looks as reusable data.</li>
+                <li><a href="https://github.com/marcoregueira/egopdf/blob/master/RECIPES.md" target="_blank" rel="noopener">RECIPES.md</a>
+                    indexes every pattern with pointers into the source samples.</li>
+                <li>SHA-256 visual baselines catch unintended drift between refactors.</li>
+            </ul>
+        </div>
+    </div>
+    </div>
+</section>
+
+<section class="py-5 border-top">
+    <div class="container">
+    <h2 class="text-center mb-4">Three packages, all MIT</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100 text-center">
+                <h5 class="mb-1">
+                    <a href="https://www.nuget.org/packages/EgoPDF.Generator/"
+                       target="_blank" rel="noopener">EgoPDF.Generator</a>
+                </h5>
+                <p class="text-muted small mb-0">
+                    Core PDF engine with the layout primitives.
+                    Depends on SkiaSharp.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100 text-center">
+                <h5 class="mb-1">
+                    <a href="https://www.nuget.org/packages/EgoPDF.Barcodes/"
+                       target="_blank" rel="noopener">EgoPDF.Barcodes</a>
+                </h5>
+                <p class="text-muted small mb-0">
+                    Every 1D / 2D symbology through ZXing.Net,
+                    plus a ZPL II emulator.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100 text-center">
+                <h5 class="mb-1">
+                    <a href="https://www.nuget.org/packages/EgoPDF.Markdown/"
+                       target="_blank" rel="noopener">EgoPDF.Markdown</a>
+                </h5>
+                <p class="text-muted small mb-0">
+                    CommonMark + GFM via Markdig, rendered through
+                    EgoPDF.Generator.
+                </p>
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+<section class="text-center py-5 border-top">
+    <div class="container">
+    <h2 class="mb-3">Ready to render?</h2>
+    <p class="text-muted mb-4">
+        See the live examples or grab the packages from NuGet.
     </p>
     <div class="d-flex gap-2 justify-content-center flex-wrap">
-        <a asp-page="/Examples" class="btn btn-dark btn-lg">
-            See the examples
-        </a>
-        <a href="https://www.nuget.org/packages?q=EgoPDF"
-           target="_blank" rel="noopener"
-           class="btn btn-outline-dark btn-lg">
-            On NuGet
+        <a asp-page="/Examples" class="btn btn-dark btn-lg px-4">
+            Live examples
         </a>
         <a href="https://github.com/marcoregueira/egopdf"
            target="_blank" rel="noopener"
-           class="btn btn-outline-dark btn-lg">
-            On GitHub
+           class="btn btn-outline-dark btn-lg px-4">
+            GitHub
         </a>
     </div>
-</section>
-
-<div class="text-center my-5">
-    <img src="~/img/landing-hero.png" alt="Stylised illustration: C# code on the left transforming into a printed PDF on the right, ruler and pencil overlay."
-         class="img-fluid rounded shadow-sm"
-         style="max-width: 880px;" />
-</div>
-
-<section class="my-5">
-    <h2 class="mb-3">What it is</h2>
-    <p>
-        <b>egoPdf</b> is a .NET PDF generation library that started as
-        an automated port of <a href="https://www.fpdf.org/" target="_blank" rel="noopener">FPDF</a>
-        and grew into a small ecosystem:
-    </p>
-    <div class="row g-3">
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <h5 class="mb-1">
-                    <a href="https://www.nuget.org/packages/EgoPDF.Generator/" target="_blank" rel="noopener">EgoPDF.Generator</a>
-                </h5>
-                <p class="text-muted small mb-2">Core PDF engine. MIT. SkiaSharp for font metrics + image decode.</p>
-                <p class="mb-0 small">Cell / MultiCell / Image / Rect / Line / Link &mdash; plus
-                    the new <code>Row</code> / <code>Stack</code> / <code>Panel</code> layout primitives,
-                    <code>PushState</code> / <code>PushPos</code> scope helpers and <code>CellMeasure</code>
-                    for auto-grow rows.
-                </p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <h5 class="mb-1">
-                    <a href="https://www.nuget.org/packages/EgoPDF.Barcodes/" target="_blank" rel="noopener">EgoPDF.Barcodes</a>
-                </h5>
-                <p class="text-muted small mb-2">1D + 2D symbologies via ZXing.Net, plus a ZPL II emulator.</p>
-                <p class="mb-0 small">QR, Data Matrix, PDF417, Aztec, Code 128, Code 39, EAN, UPC, MSI,
-                    Codabar, Interleaved 2 of 5 &mdash; same API surface, table-driven dispatch internally.
-                    Bonus: parse ZPL II strings and render the labels as PDFs.
-                </p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <h5 class="mb-1">
-                    <a href="https://www.nuget.org/packages/EgoPDF.Markdown/" target="_blank" rel="noopener">EgoPDF.Markdown</a>
-                </h5>
-                <p class="text-muted small mb-2">CommonMark + GFM via Markdig, rendered through the core engine.</p>
-                <p class="mb-0 small">Headings, lists, code blocks, links, autolinks, block quotes, images.
-                    Built-in shortcode extension: <code>[[name k=v]]</code> blocks dispatch to handlers, so
-                    Markdown can drop straight into native egoPdf primitives.
-                </p>
-            </div>
-        </div>
     </div>
-</section>
-
-<div class="text-center my-5">
-    <img src="~/img/landing-agent.png" alt="Abstract geometric agent figure holding a printed A4 page next to a wooden ruler and pencil."
-         class="img-fluid rounded shadow-sm"
-         style="max-width: 720px;" />
-</div>
-
-<section class="my-5">
-    <h2 class="mb-3">What changed (the agent-friendly turn)</h2>
-    <p>
-        The classic FPDF API is a stateful machine: every <code>Cell</code>,
-        <code>SetFont</code> and <code>SetXY</code> mutates global state and
-        you keep that state in your head as you write. That works for a human
-        with a ruler, less well for an agent assembling a page from generic
-        instructions. The recent iteration adds the missing primitives:
-    </p>
-    <dl class="row mt-4">
-        <dt class="col-sm-3">Layout primitives</dt>
-        <dd class="col-sm-9">
-            <code>Row(bounds, n)</code>, <code>Stack(bounds, weights)</code>,
-            <code>Panel(bounds, title, body)</code> and the <code>Rect</code>
-            value type with <code>Inset</code> / <code>WithTopOffset</code> /
-            <code>Right</code> / <code>Bottom</code> helpers. The math of
-            <code>x + width + gap</code> disappears; the call site reads as the
-            layout it produces.
-        </dd>
-        <dt class="col-sm-3">Scope helpers</dt>
-        <dd class="col-sm-9">
-            <code>using (pdf.PushState())</code> snapshots font, text, fill and
-            draw colours plus line width and restores them on dispose.
-            <code>using (pdf.PushPos())</code> does the same for the cursor.
-            Sub-renderers compose without leaking state.
-        </dd>
-        <dt class="col-sm-3">Styling as data</dt>
-        <dd class="col-sm-9">
-            <code>PanelStyle</code> captures a frame + title look as a record
-            you can reuse across calls. The PV report's <code>BrandPanel</code>
-            is declared once and applied to every technical panel.
-        </dd>
-        <dt class="col-sm-3">Brand kit</dt>
-        <dd class="col-sm-9">
-            <code>EgoPdfBrand</code> centralises the colour palette, the thin
-            Poppins wordmark and the <code>LoadPoppins</code> font registration
-            used by Sample8 / Sample9 / SamplePhotovoltaic / SampleMarkdown's
-            header band.
-        </dd>
-        <dt class="col-sm-3">Markdown escape hatches</dt>
-        <dd class="col-sm-9">
-            Block shortcodes (<code>[[barcode]]</code>, <code>[[cta]]</code>,
-            <code>[[image]]</code>, <code>[[imagepair]]</code>) drop out of
-            Markdown into native egoPdf code (Row, Image, brand styling) and
-            back. Useful while GFM tables aren't implemented yet.
-        </dd>
-        <dt class="col-sm-3">Visual regression</dt>
-        <dd class="col-sm-9">
-            Every sample PDF is hashed on each test run and compared against
-            a SHA-256 baseline. Run-to-run determinism is ensured by snapshotting
-            <code>FontBuilder.Fonts</code> at module load and blanking the
-            xref + <code>/CreationDate</code> in the canonical form.
-        </dd>
-    </dl>
-</section>
-
-<div class="text-center my-5">
-    <img src="~/img/landing-primitives.png" alt="Diagram: a page being carved into rows, columns and a titled panel, with labels Row(bounds, 3), Stack(bounds, weights), Panel(bounds, title)."
-         class="img-fluid rounded shadow-sm"
-         style="max-width: 880px;" />
-</div>
-
-<section class="my-5">
-    <h2 class="mb-3">How to use it</h2>
-    <p>
-        Install <code>EgoPDF.Generator</code> from NuGet, then either keep the
-        classic imperative API for tight control, drop in the new primitives
-        for ergonomics, or render a Markdown string and only escape to
-        primitives where the visual demands it:
-    </p>
-<pre class="border rounded p-3 bg-light"><code>// 1. Classic imperative
-using var pdf = new FPdf("invoice.pdf");
-pdf.AddPage(PageSizeEnum.A4);
-pdf.SetFont("Helvetica", "B", 16);
-pdf.Cell(40, 10, "INVOICE", "0", 1, AlignEnum.Right);
-
-// 2. With primitives
-var cols = pdf.Row(pdf.Bounds(), new[] { 2.0, 1.0 }, gap: 3);
-pdf.Panel(cols[0], "DETAILS", brandStyle, content =&gt; {
-    // body lives inside `content`, state restored on return
-});
-
-// 3. Markdown
-var theme = MarkdownTheme.Default;
-theme.Shortcodes.Register("barcode", new BarcodeShortcode());
-MarkdownRenderer.Render(pdf, markdownSource, theme);
-</code></pre>
-    <div class="text-center my-5">
-        <img src="~/img/landing-mixed-mode.png" alt="A4 page split into a dark brand header band on top and a clean Markdown body with stylised paragraphs and a coral block-quote bar."
-             class="img-fluid rounded shadow-sm"
-             style="max-width: 720px;" />
-    </div>
-
-    <p>
-        See <a asp-page="/Examples">Examples</a> for live PDFs of every pattern
-        above, or read the
-        <a href="https://github.com/marcoregueira/egopdf/blob/master/RECIPES.md"
-           target="_blank" rel="noopener">RECIPES.md</a>
-        catalog for copy-pasteable snippets.
-    </p>
 </section>
 
 @*
