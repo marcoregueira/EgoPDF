@@ -5,13 +5,10 @@
 }
 
 @*
-    Image placeholders.
-    The PNGs below don't exist yet -- the user is going to feed the
-    "Prompts for the image agent" section at the bottom of this page
-    to an image generator and drop the resulting files in
-    wwwroot/img/. Once the four files land, the figure tags below
-    render the artwork in place. Until then the alt text and the
-    caption convey what each slot is for.
+    Landing images live in wwwroot/img/landing-*.png. The original
+    image-agent prompts that produced them are kept at the bottom of
+    this file inside a Razor comment, so any future re-generation can
+    reuse the exact wording (palette, aspect, file path).
 *@
 
 <section class="text-center my-5">
@@ -43,14 +40,11 @@
     </div>
 </section>
 
-<figure class="text-center my-5">
+<div class="text-center my-5">
     <img src="~/img/landing-hero.png" alt="Stylised illustration: C# code on the left transforming into a printed PDF on the right, ruler and pencil overlay."
-         class="img-fluid border rounded shadow-sm"
+         class="img-fluid rounded shadow-sm"
          style="max-width: 880px;" />
-    <figcaption class="text-muted small mt-2">
-        Hero illustration — generated separately, see prompt below.
-    </figcaption>
-</figure>
+</div>
 
 <section class="my-5">
     <h2 class="mb-3">What it is</h2>
@@ -99,6 +93,12 @@
         </div>
     </div>
 </section>
+
+<div class="text-center my-5">
+    <img src="~/img/landing-agent.png" alt="Abstract geometric agent figure holding a printed A4 page next to a wooden ruler and pencil."
+         class="img-fluid rounded shadow-sm"
+         style="max-width: 720px;" />
+</div>
 
 <section class="my-5">
     <h2 class="mb-3">What changed (the agent-friendly turn)</h2>
@@ -156,14 +156,11 @@
     </dl>
 </section>
 
-<figure class="text-center my-5">
+<div class="text-center my-5">
     <img src="~/img/landing-primitives.png" alt="Diagram: a page being carved into rows, columns and a titled panel, with labels Row(bounds, 3), Stack(bounds, weights), Panel(bounds, title)."
-         class="img-fluid border rounded shadow-sm"
+         class="img-fluid rounded shadow-sm"
          style="max-width: 880px;" />
-    <figcaption class="text-muted small mt-2">
-        Layout primitives diagram &mdash; see prompt below.
-    </figcaption>
-</figure>
+</div>
 
 <section class="my-5">
     <h2 class="mb-3">How to use it</h2>
@@ -190,6 +187,12 @@ var theme = MarkdownTheme.Default;
 theme.Shortcodes.Register("barcode", new BarcodeShortcode());
 MarkdownRenderer.Render(pdf, markdownSource, theme);
 </code></pre>
+    <div class="text-center my-5">
+        <img src="~/img/landing-mixed-mode.png" alt="A4 page split into a dark brand header band on top and a clean Markdown body with stylised paragraphs and a coral block-quote bar."
+             class="img-fluid rounded shadow-sm"
+             style="max-width: 720px;" />
+    </div>
+
     <p>
         See <a asp-page="/Examples">Examples</a> for live PDFs of every pattern
         above, or read the
@@ -199,63 +202,51 @@ MarkdownRenderer.Render(pdf, markdownSource, theme);
     </p>
 </section>
 
-<section class="my-5 p-4 bg-light border rounded">
-    <h2 class="mb-3">Prompts for the image agent</h2>
-    <p class="text-muted">
-        Four illustrations slot into this landing once they exist. Each block
-        below is a self-contained prompt; copy-paste into your image
-        generator of choice and drop the resulting PNGs into
-        <code>WebDemo/wwwroot/img/</code> with the file names indicated.
-        Brand palette: dark <code>#1A1D26</code>, coral <code>#CC695F</code>,
-        muted <code>#6E7382</code>; white background; no people; no
-        text inside the image; safe to compose at 16:9 (1600 &times; 900
-        px works for all of them).
-    </p>
+@*
+    Image-agent prompts that produced the four landing-*.png files in
+    wwwroot/img/. Kept here so a future regeneration (different agent,
+    different aspect, dark-mode variant, ...) can reuse the exact wording
+    instead of redrafting from scratch. Shared constraints across all
+    four: brand palette dark #1A1D26 + coral #CC695F + muted #6E7382,
+    white background, no people, no readable text inside the image, 16:9
+    aspect (1600x900 works).
 
-    <h5>1. <code>wwwroot/img/landing-hero.png</code> &mdash; hero banner</h5>
-<pre class="border rounded p-3 bg-white"><code>A clean, minimalist illustration in flat-vector style. Left half:
-a stylised IDE window showing a few lines of C# code (just the
-shapes, no readable text), with a coral cursor blinking on one
-line. An arrow flows from the IDE rightwards. Right half: an A4
-printed PDF page sitting on a desk with a wooden ruler and a
-pencil resting on it, with subtle horizontal lines suggesting
-rendered paragraphs. Colour palette: deep blue-grey (#1A1D26)
-for outlines and structure, coral (#CC695F) as the single accent,
-white background. 16:9 aspect, no people, no text in the
-illustration. Editorial, calm tone.</code></pre>
+    --- 1. wwwroot/img/landing-hero.png (hero banner) ---
+    A clean, minimalist illustration in flat-vector style. Left half:
+    a stylised IDE window showing a few lines of C# code (just the
+    shapes, no readable text), with a coral cursor blinking on one
+    line. An arrow flows from the IDE rightwards. Right half: an A4
+    printed PDF page sitting on a desk with a wooden ruler and a
+    pencil resting on it, with subtle horizontal lines suggesting
+    rendered paragraphs. Editorial, calm tone.
 
-    <h5 class="mt-4">2. <code>wwwroot/img/landing-primitives.png</code> &mdash; layout diagram</h5>
-<pre class="border rounded p-3 bg-white"><code>A diagrammatic illustration of layout primitives. Centre stage:
-a stylised A4 page (portrait) being carved into a 2x3 grid by
-faint coral lines. Two top cells hold simple bullet-list icons,
-one middle cell holds a small bar-chart, one cell holds a QR
-code placeholder, the bottom row is a single wide panel with a
-small title bar and three rows of placeholder content. Floating
-labels in muted grey monospace next to relevant cells:
-"Row(bounds, n)" beside a horizontal split, "Stack(bounds, w)"
-beside a vertical split, "Panel(bounds, title)" beside the wide
-bottom panel. Same #1A1D26 / #CC695F / #6E7382 palette on white,
-flat-vector, technical-but-friendly, no people. 16:9.</code></pre>
+    --- 2. wwwroot/img/landing-primitives.png (layout diagram) ---
+    A diagrammatic illustration of layout primitives. Centre stage:
+    a stylised A4 page (portrait) being carved into a 2x3 grid by
+    faint coral lines. Two top cells hold simple bullet-list icons,
+    one middle cell holds a small bar-chart, one cell holds a QR
+    code placeholder, the bottom row is a single wide panel with a
+    small title bar and three rows of placeholder content. Floating
+    labels in muted grey monospace next to relevant cells:
+    "Row(bounds, n)" beside a horizontal split, "Stack(bounds, w)"
+    beside a vertical split, "Panel(bounds, title)" beside the wide
+    bottom panel. Flat-vector, technical-but-friendly.
 
-    <h5 class="mt-4">3. <code>wwwroot/img/landing-mixed-mode.png</code> &mdash; mixed-mode document</h5>
-<pre class="border rounded p-3 bg-white"><code>A single stylised A4 page split horizontally. Top third: a dark
-brand header band (#1A1D26 fill) with a small white-and-coral
-wordmark in the top-left corner and a right-aligned bold title
-suggestion. Bottom two thirds: a clean white area showing
-stylised Markdown content -- two heading bars, a few paragraph
-lines (just horizontal strokes), a bullet list of three items,
-and a coral block-quote bar on the left. Thin coral hairline
-bridges the dark band and the markdown area. Same palette on
-white, flat-vector, editorial design tone, no readable text
-inside the page. 16:9.</code></pre>
+    --- 3. wwwroot/img/landing-mixed-mode.png (mixed-mode document) ---
+    A single stylised A4 page split horizontally. Top third: a dark
+    brand header band (#1A1D26 fill) with a small white-and-coral
+    wordmark in the top-left corner and a right-aligned bold title
+    suggestion. Bottom two thirds: a clean white area showing
+    stylised Markdown content -- two heading bars, a few paragraph
+    lines (just horizontal strokes), a bullet list of three items,
+    and a coral block-quote bar on the left. Thin coral hairline
+    bridges the dark band and the markdown area. Editorial design tone.
 
-    <h5 class="mt-4">4. <code>wwwroot/img/landing-agent.png</code> &mdash; agent-friendly mark</h5>
-<pre class="border rounded p-3 bg-white"><code>A friendly minimalist scene: an abstract wireframe robot or
-geometric agent figure (think simple cube or sphere with a
-single coral eye-dot, not a humanoid) holding a printed A4
-page that shows faint horizontal lines suggesting rendered
-text plus a small QR code in the corner. A pencil and a wooden
-ruler rest beside the figure. Same #1A1D26 / #CC695F palette on
-white, flat-vector, generous whitespace, no people, no
-copyrighted characters, no text inside the illustration. 16:9.</code></pre>
-</section>
+    --- 4. wwwroot/img/landing-agent.png (agent-friendly mark) ---
+    A friendly minimalist scene: an abstract wireframe robot or
+    geometric agent figure (think simple cube or sphere with a
+    single coral eye-dot, not a humanoid) holding a printed A4
+    page that shows faint horizontal lines suggesting rendered
+    text plus a small QR code in the corner. A pencil and a wooden
+    ruler rest beside the figure. Generous whitespace.
+*@
