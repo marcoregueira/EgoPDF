@@ -15,8 +15,11 @@
   <PropertyGroup>
     <PackageId>EgoPDF.Barcodes</PackageId>
     <!-- Preview release: the barcode + ZPL surface is still settling,
-         expect breaking changes between previews. -->
-    <Version>1.0.0-preview.1</Version>
+         expect breaking changes between previews. preview.2 is the
+         result of an internal cleanup (table-driven 1D dispatch,
+         single Barcode1DOptions type, consolidated DrawFilledRect)
+         with no public-API breakage relative to preview.1. -->
+    <Version>1.0.0-preview.2</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
@@ -30,7 +33,7 @@
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>1.0.0-preview.1: rename of EgoPDF.Zpl. Same surface (ZPL II labels + 13 barcode symbologies) under a more accurate package name, since barcodes are the substantial half of what the package does. Not affiliated with Zebra Technologies; "Zebra" and "ZPL" are trademarks of Zebra Technologies.</PackageReleaseNotes>
+    <PackageReleaseNotes>1.0.0-preview.2: internal cleanup. Barcode128Options and Barcode2of5Options merged into a single Barcode1DOptions type; FieldDefinition keeps three separate instances for state isolation between ^BC / ^B2 / simple-1D commands within a label. PdfZpl now dispatches 1D barcode commands from a OneDBarcodes table instead of nine individual methods; FieldDefinition's draw-time dispatch is two BarcodeMode -&gt; (Writer, format) dictionaries. DrawFilledRect helper consolidated between PdfZpl and FieldDefinition. SetLocation / SetLocationBottom (^FO / ^FT) share their body. No public-API breakage relative to preview.1; all baselines render byte-identical.</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

@@ -14,7 +14,12 @@
   <!-- NuGet package metadata -->
   <PropertyGroup>
     <PackageId>EgoPDF.Markdown</PackageId>
-    <Version>1.0.0-preview.1</Version>
+    <!-- Preview release: the Markdown surface is still settling,
+         expect breaking changes between previews. preview.2 adds
+         multi-line shortcodes, code-block line wrapping and the
+         built-in [[image]] shortcode; the rendered output of the
+         Phase-1 happy path is unchanged. -->
+    <Version>1.0.0-preview.2</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
@@ -28,7 +33,7 @@
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>1.0.0-preview.1: first public preview. Phase-1 happy path of Markdown to PDF rendering. Tables, blockquotes, footnotes, task lists and inline images are planned for later previews.</PackageReleaseNotes>
+    <PackageReleaseNotes>1.0.0-preview.2: shortcode + image polish. ShortcodeBlockParser now recognises multi-line [[name ... ]] invocations spread across several source lines and skips ]] sequences that sit inside quoted values. New built-in [[image]] shortcode (auto-registered) with src / width / align / caption / link. New MarkdownTheme.ListItemSpacing for tight bullet lists and MarkdownTheme.ImageDpi (default 150) for plain-Markdown ![alt](url) images sized from their natural pixel dimensions. Fenced code blocks wrap long lines at the column edge instead of overflowing. Block-image cursor advances past the image height instead of overlapping subsequent content. Tables, footnotes and task lists remain on the roadmap.</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
