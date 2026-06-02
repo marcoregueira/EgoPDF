@@ -1,19 +1,20 @@
 <#
 .SYNOPSIS
-    Pack EgoPDF.Generator + EgoPDF.Barcodes and push them to nuget.org.
+    Pack EgoPDF.Generator + EgoPDF.Barcodes + EgoPDF.Markdown and push
+    them to nuget.org.
 
 .DESCRIPTION
-    Runs `dotnet pack -c Release` on both NuGet projects, drops the
+    Runs `dotnet pack -c Release` on each NuGet project, drops the
     .nupkg / .snupkg into ./artifacts and (unless -PackOnly is passed)
     pushes them to https://api.nuget.org/v3/index.json.
 
-    After the EgoPDF.Barcodes .nupkg is built the script rewrites its
-    .nuspec so the EgoPDF.Generator dependency becomes an EXACT
-    version pin (`version="[X.Y.Z]"`) instead of the SDK's optimistic
-    default (`version="X.Y.Z"`, which NuGet treats as `>= X.Y.Z`).
-    This keeps EgoPDF.Barcodes pinned to the specific Generator build it
-    was tested against — important while the project is still in
-    motion. Disable with -NoPinDependencies.
+    After the EgoPDF.Barcodes and EgoPDF.Markdown .nupkg files are built
+    the script rewrites their .nuspec so the EgoPDF.Generator dependency
+    becomes an EXACT version pin (`version="[X.Y.Z]"`) instead of the
+    SDK's optimistic default (`version="X.Y.Z"`, which NuGet treats as
+    `>= X.Y.Z`). This keeps both downstream packages pinned to the
+    specific Generator build they were tested against — important while
+    the project is still in motion. Disable with -NoPinDependencies.
 
     The API key can be supplied via -ApiKey or by setting the
     NUGET_API_KEY environment variable beforehand. The script never
@@ -36,19 +37,24 @@
     script with the same versions is a no-op instead of an error.
 
 .PARAMETER Generator
-    Only pack/push the EgoPDF.Generator package. Combine with -Zpl to
-    publish a single one (default: publish both).
+    Only pack/push the EgoPDF.Generator package. Combine with -Barcodes
+    and/or -Markdown to publish a subset (default: publish all three).
 
-.PARAMETER Zpl
-    Only pack/push the EgoPDF.Barcodes package.
+.PARAMETER Barcodes
+    Only pack/push the EgoPDF.Barcodes package. -Zpl is kept as an
+    alias for the same flag (the package was previously named
+    EgoPDF.Zpl before the rename).
+
+.PARAMETER Markdown
+    Only pack/push the EgoPDF.Markdown package.
 
 .PARAMETER NoPinDependencies
-    Skip the post-pack rewrite of the Zpl .nuspec. The dependency on
-    EgoPDF.Generator will be packed with the SDK's default `>=`
-    semantics.
+    Skip the post-pack rewrite of the Barcodes / Markdown .nuspec.
+    Their dependency on EgoPDF.Generator will be packed with the SDK's
+    default `>=` semantics.
 
 .EXAMPLE
-    # Set the key once per shell, then publish both packages.
+    # Set the key once per shell, then publish all three packages.
     $env:NUGET_API_KEY = 'oy2...'
     ./publish.ps1
 
@@ -57,8 +63,12 @@
     ./publish.ps1 -PackOnly
 
 .EXAMPLE
-    # Publish only the preview ZPL package.
-    ./publish.ps1 -Zpl
+    # Publish only the preview Barcodes package.
+    ./publish.ps1 -Barcodes
+
+.EXAMPLE
+    # Publish Markdown alone, skipping the dependency pin.
+    ./publish.ps1 -Markdown -NoPinDependencies
 #>
 [CmdletBinding()]
 param(
@@ -67,7 +77,9 @@ param(
     [switch] $PackOnly,
     [switch] $SkipDuplicate,
     [switch] $Generator,
-    [switch] $Zpl,
+    [Alias('Zpl')]
+    [switch] $Barcodes,
+    [switch] $Markdown,
     [switch] $NoPinDependencies
 )
 
@@ -75,10 +87,11 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $artifacts = Join-Path $root 'artifacts'
 
-# If neither -Generator nor -Zpl was supplied, publish both.
-$publishBoth = -not ($Generator -or $Zpl)
-$publishGenerator = $publishBoth -or $Generator
-$publishZpl       = $publishBoth -or $Zpl
+# If none of the package switches was supplied, publish all three.
+$publishAll       = -not ($Generator -or $Barcodes -or $Markdown)
+$publishGenerator = $publishAll -or $Generator
+$publishBarcodes  = $publishAll -or $Barcodes
+$publishMarkdown  = $publishAll -or $Markdown
 
 if (-not (Test-Path $artifacts)) {
     New-Item -ItemType Directory -Path $artifacts | Out-Null
@@ -116,7 +129,7 @@ function Invoke-Push {
 
 # Rewrite a <dependency id="$DependencyId" version="X.Y.Z" ...> entry inside
 # the .nuspec of $NupkgPath so the version reads "[X.Y.Z]" (NuGet exact-pin
-# bracket syntax). Idempotent — already-pinned versions are left alone.
+# bracket syntax). Idempotent -- already-pinned versions are left alone.
 function Set-ExactDependency {
     param(
         [Parameter(Mandatory)] [string] $NupkgPath,
@@ -182,27 +195,38 @@ function Set-ExactDependency {
     }
 }
 
+# Pin EgoPDF.Generator inside every freshly built downstream nupkg matching
+# $Pattern. The SDK packs ProjectReferences with `>=` semantics; we want
+# exact `[X.Y.Z]` pins so downstream consumers can't silently absorb a future
+# Generator change.
+function Invoke-PinGeneratorDependency {
+    param([string] $Pattern)
+    if ($NoPinDependencies) { return }
+    $packages = Get-ChildItem -Path $artifacts -Filter $Pattern -File
+    foreach ($pkg in $packages) {
+        Set-ExactDependency -NupkgPath $pkg.FullName -DependencyId 'EgoPDF.Generator'
+    }
+}
+
 if ($publishGenerator) {
     Invoke-Pack (Join-Path $root 'Ego.PdfCore/Ego.PdfCore.csproj')
     Invoke-Push 'EgoPDF.Generator.*.nupkg'
 }
 
-if ($publishZpl) {
-    # Pack EgoPDF.Barcodes second so its dependency on EgoPDF.Generator
-    # picks up the freshly built Generator if you bumped its version.
+if ($publishBarcodes) {
+    # Pack EgoPDF.Barcodes after Generator so its dependency on
+    # EgoPDF.Generator picks up the freshly built version if you bumped it.
     Invoke-Pack (Join-Path $root 'Ego.PDF.Barcodes/Ego.PDF.Barcodes.csproj')
-
-    if (-not $NoPinDependencies) {
-        # The SDK packs ProjectReferences with `>=` semantics. Rewrite the
-        # Zpl nuspec so the Generator dep is exact-pinned — Zpl is moving
-        # fast and we don't want a future Generator change leaking in.
-        $zplPackages = Get-ChildItem -Path $artifacts -Filter 'EgoPDF.Barcodes.*.nupkg' -File
-        foreach ($pkg in $zplPackages) {
-            Set-ExactDependency -NupkgPath $pkg.FullName -DependencyId 'EgoPDF.Generator'
-        }
-    }
-
+    Invoke-PinGeneratorDependency 'EgoPDF.Barcodes.*.nupkg'
     Invoke-Push 'EgoPDF.Barcodes.*.nupkg'
+}
+
+if ($publishMarkdown) {
+    # Same story for EgoPDF.Markdown -- ProjectReference resolves to whatever
+    # Generator version is current locally, so pin it before publishing.
+    Invoke-Pack (Join-Path $root 'Ego.PDF.Markdown/Ego.PDF.Markdown.csproj')
+    Invoke-PinGeneratorDependency 'EgoPDF.Markdown.*.nupkg'
+    Invoke-Push 'EgoPDF.Markdown.*.nupkg'
 }
 
 Write-Host "Done." -ForegroundColor Green
