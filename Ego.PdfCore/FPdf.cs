@@ -2494,6 +2494,15 @@ public class FPdf: IDisposable
         this.Out("endobj");
     }
 
+    /// <summary>
+    /// Emit a raw content-stream snippet at the current insertion point.
+    /// Intended for low-level callers that need to inject PDF operators
+    /// outside the standard text / graphics primitives -- e.g. wrapping
+    /// a text emit in a custom <c>q /MyGState gs ... Q</c> block.
+    /// Use sparingly; the snippet is forwarded to the buffer verbatim.
+    /// </summary>
+    public void EmitRawContent(string snippet) => Out(snippet);
+
     internal virtual void Out(object s)
     {
         // Add a line to the document
@@ -2991,12 +3000,22 @@ public class FPdf: IDisposable
         Out("/XObject <<");
         PutXObjectDictionary();
         Out(">>");
+        if (_extGStateObjects.Count > 0)
+        {
+            Out("/ExtGState <<");
+            foreach (var kv in _extGStateObjects)
+            {
+                Out("/" + kv.Key + " " + kv.Value + " 0 R");
+            }
+            Out(">>");
+        }
     }
 
     internal virtual void PutResources()
     {
         PutFonts();
         PutImages();
+        PutExtGStates();
         // Resource dictionary
         Buffer.Flush();
         Offsets[ 2 ] = Buffer.BaseStream.Length;
@@ -3005,6 +3024,44 @@ public class FPdf: IDisposable
         PutResourceDictionary();
         Out(">>");
         Out("endobj");
+    }
+
+    /// <summary>
+    /// Named ExtGState resources to materialise: maps the name used by
+    /// content streams (e.g. "BlendDiff") to a single blend-mode string
+    /// (e.g. "Difference"). Registered via
+    /// <see cref="EnsureExtGStateBlendMode"/>; serialised to indirect
+    /// PDF objects by <see cref="PutExtGStates"/> right before the page
+    /// resource dictionary.
+    /// </summary>
+    private readonly Dictionary<string, string> _extGStateBlendModes = new();
+
+    /// <summary>Filled by <see cref="PutExtGStates"/> so
+    /// <see cref="PutResourceDictionary"/> knows the object number to
+    /// reference for each registered state.</summary>
+    private readonly Dictionary<string, int> _extGStateObjects = new();
+
+    /// <summary>
+    /// Register an ExtGState named <paramref name="name"/> with the
+    /// supplied PDF BlendMode (e.g. "Difference", "Multiply"). Idempotent.
+    /// After registration the content stream can reference it via
+    /// <c>/{name} gs</c>; the indirect object backing it is emitted at
+    /// document-close time.
+    /// </summary>
+    public void EnsureExtGStateBlendMode(string name, string blendMode)
+    {
+        _extGStateBlendModes[ name ] = blendMode;
+    }
+
+    internal virtual void PutExtGStates()
+    {
+        foreach (var kv in _extGStateBlendModes)
+        {
+            NewObject();
+            _extGStateObjects[ kv.Key ] = ObjectCount;
+            Out("<</Type /ExtGState /BlendMode /" + kv.Value + ">>");
+            Out("endobj");
+        }
     }
 
     //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 

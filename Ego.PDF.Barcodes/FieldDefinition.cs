@@ -45,6 +45,13 @@ public class FieldDefinition
     /// <summary>ZPL ^FR: invert the next graphic field's fill (black ↔ white).</summary>
     public bool Reverse { get; set; }
 
+    /// <summary>
+    /// Mirror of <c>PdfZpl.UseBlendDifferenceForReverse</c>. Pushed onto
+    /// the field at <c>ResetField</c> time so per-field rendering can
+    /// pick its reverse strategy without reaching back into the parser.
+    /// </summary>
+    internal bool UseBlendDifferenceForReverse { get; set; } = true;
+
     internal void Draw(FPdf pdf)
     {
         pdf.FontScale.ScaleX = this.ScaleX;
@@ -121,17 +128,27 @@ public class FieldDefinition
         }
 
         // ^FR (Field Reverse): the field's pixels should invert whatever
-        // is already on the label at the same position. ZPL achieves this
-        // with a 1-bit XOR; PDF has no native XOR for vector content, so
-        // we approximate the common case -- text on top of a previously
-        // painted dark ^GB rect -- by painting the glyphs in white. Any
-        // dark fill below shows through where the glyph isn't; the glyph
-        // itself reads as "white text on the dark background". The trick
-        // breaks down (white-on-white = invisible) when ^FR text isn't
-        // sitting over something opaque, which mirrors a real ZPL author
-        // error rather than an engine bug. PushState snapshots and
-        // restores the text colour so the next field is unaffected.
+        // is already on the label at the same position. ZPL achieves
+        // this with a 1-bit raster XOR. Two PDF emulations are wired:
+        //
+        // 1) BlendMode /Difference (default, faithful). The text is
+        //    painted in white inside a `q /BlendDiff gs ... Q` block,
+        //    and the viewer's compositor XORs each glyph pixel against
+        //    whatever sits below. Works on partial overlap, gradients,
+        //    barcodes etc. Requires the registered ExtGState resource.
+        // 2) Solid white text (fallback). Cheaper stream and PDF/A-1
+        //    compatible, but reads "white on white" wherever the glyph
+        //    overruns the dark area below.
+        //
+        // PushState snapshots and restores text colour so the next
+        // field is unaffected either way.
         using var reverseScope = this.Reverse ? pdf.PushState() : null;
+        var useBlendDifference = this.Reverse && this.UseBlendDifferenceForReverse;
+        if (useBlendDifference)
+        {
+            pdf.EnsureExtGStateBlendMode("BlendDiff", "Difference");
+            pdf.EmitRawContent("q /BlendDiff gs");
+        }
         if (this.Reverse) pdf.SetTextColor(Color.White);
 
         if (FrameBox != null && FrameBox.MaxWidth > 0)
@@ -141,6 +158,11 @@ public class FieldDefinition
         else
         {
             pdf.WriteRotatedText(pdf.X, pdf.Y, baselineOffset, this.Orientation, text, tracking);
+        }
+
+        if (useBlendDifference)
+        {
+            pdf.EmitRawContent("Q");
         }
         pdf.GetPos();
     }

@@ -81,11 +81,23 @@ namespace Ego.PDF.Samples
         {
             using var pdf = new SampleZebra(file);
             var zpl = OpenLabel(pdf, (LabelW, LabelH));
+            // Three rows exercising every interesting case of ^FR on text:
+            //   row 1: ^FR text fully inside a black ^GB rect (canonical).
+            //   row 2: ^FR text that runs past the rect edge -- BlendMode
+            //          /Difference inverts per pixel, so the half over
+            //          black reads white and the half over white reads
+            //          black. With the SetTextColor fallback the right
+            //          half would be invisible.
+            //   row 3: plain text without ^FR for visual comparison.
             zpl.Print(@"
 ^XA
 ^FO40,40^GB360,80,80,B,0^FS
 ^FT60,100^A0N,40^FR^FDREVERSED^FS
-^FT40,200^A0N,40^FDNORMAL TEXT^FS
+
+^FO40,180^GB200,80,80,B,0^FS
+^FT60,240^A0N,40^FR^FDCROSSING THE EDGE^FS
+
+^FT40,360^A0N,40^FDNORMAL TEXT^FS
 ^XZ
 ");
             pdf.Close();
