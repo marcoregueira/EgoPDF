@@ -156,6 +156,17 @@ namespace Ego.Pdf.Test
             SampleZebra.GetSampleVertical1("sample_zebra_vertical1.pdf", GetPath());
         }
 
+        /// <summary>
+        /// Smoke test for ^FR (Field Reverse) on a text field. A regression
+        /// would still produce a PDF (the engine doesn't throw); the visual
+        /// baseline catches the byte-level drift.
+        /// </summary>
+        [Fact]
+        public void DoZebraReverseText()
+        {
+            SampleZebra.GetSampleReverseText("sample_zebra_reverse_text.pdf", GetPath());
+        }
+
 
         [Fact]
         public void DoSample9()

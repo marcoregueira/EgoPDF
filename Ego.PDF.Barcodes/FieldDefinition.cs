@@ -120,6 +120,20 @@ public class FieldDefinition
             tracking = explicitSize ? 0 : ZebraTracking(pdf);
         }
 
+        // ^FR (Field Reverse): the field's pixels should invert whatever
+        // is already on the label at the same position. ZPL achieves this
+        // with a 1-bit XOR; PDF has no native XOR for vector content, so
+        // we approximate the common case -- text on top of a previously
+        // painted dark ^GB rect -- by painting the glyphs in white. Any
+        // dark fill below shows through where the glyph isn't; the glyph
+        // itself reads as "white text on the dark background". The trick
+        // breaks down (white-on-white = invisible) when ^FR text isn't
+        // sitting over something opaque, which mirrors a real ZPL author
+        // error rather than an engine bug. PushState snapshots and
+        // restores the text colour so the next field is unaffected.
+        using var reverseScope = this.Reverse ? pdf.PushState() : null;
+        if (this.Reverse) pdf.SetTextColor(Color.White);
+
         if (FrameBox != null && FrameBox.MaxWidth > 0)
         {
             DrawFramed(pdf, text, baselineOffset, tracking);

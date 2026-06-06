@@ -97,6 +97,7 @@ namespace Ego.Pdf.Test
         [Fact] public void Baseline_SampleZebra_horizontal() => Run("SampleZebra_horizontal",   p => SampleZebra.GetSampleHorizontalShipping(null, p));
         [Fact] public void Baseline_SampleZebra_vertical1()  => Run("SampleZebra_vertical1",    p => SampleZebra.GetSampleVertical1(null, p));
         [Fact] public void Baseline_SampleZebra_barcodes()   => Run("SampleZebra_barcodes",     p => SampleZebra.GetSampleBarcodes(null, p));
+        [Fact] public void Baseline_SampleZebra_reverseText() => Run("SampleZebra_reverseText", p => SampleZebra.GetSampleReverseText(null, p));
 
         private static void Run(string name, Func<string, Stream> factory)
         {
