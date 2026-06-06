@@ -154,33 +154,6 @@ The test project mixes two kinds of facts:
   `EGOPDF_UPDATE_BASELINES=1` to accept the current output as the new
   baseline.
 
-## Publishing to NuGet
-
-`publish.ps1` wraps `dotnet pack` + `dotnet nuget push` for all three
-packages, pinning `EgoPDF.Generator` to an exact version inside the
-downstream nuspecs. The API key reads from `$env:NUGET_API_KEY` by
-default, or from `-ApiKey`:
-
-```powershell
-# Verify all three packages build (no push)
-./publish.ps1 -PackOnly
-
-# Publish all three packages to nuget.org
-$env:NUGET_API_KEY = 'oy2...'
-./publish.ps1
-
-# Publish only one package
-./publish.ps1 -Generator
-./publish.ps1 -Barcodes      # -Zpl is kept as a legacy alias
-./publish.ps1 -Markdown
-
-# Idempotent re-runs: skip versions that already exist on the feed
-./publish.ps1 -SkipDuplicate
-```
-
-Bump the `<Version>` in each csproj before running. NuGet rejects
-re-publishing the same version unless `-SkipDuplicate` is set.
-
 ## License
 
 [MIT](LICENSE). See [NOTICE](NOTICE) for the FPDF acknowledgment that
