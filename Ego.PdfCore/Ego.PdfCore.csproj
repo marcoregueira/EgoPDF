@@ -17,12 +17,15 @@
     <!-- Last MyGet-built version was 2.0.107, so any locally-published
          package needs to sort higher. 2.1.0 reflected the multi-target
          move (net8.0;net9.0, no more netstandard2.0) plus the embedded
-         TrueType descriptor fixes. 2.2.0 adds the agent-friendly
+         TrueType descriptor fixes. 2.2.0 added the agent-friendly
          primitives (Rect, Row, Stack, Panel, PanelStyle, PushState,
-         PushPos, Bounds) and fixes GetStringWidth / GoBack. -->
-    <Version>2.2.0</Version>
-    <AssemblyVersion>2.2.0.0</AssemblyVersion>
-    <FileVersion>2.2.0.0</FileVersion>
+         PushPos, Bounds) and fixed GetStringWidth / GoBack. 2.2.1 is
+         a patch with three bug fixes: AutoFlush on the file-backed
+         constructor, FontScale.Default mutation leak, Sample3 footer
+         font size matching tutorial 3. -->
+    <Version>2.2.1</Version>
+    <AssemblyVersion>2.2.1.0</AssemblyVersion>
+    <FileVersion>2.2.1.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
     <Company>Marco Antonio Regueira</Company>
     <Copyright>Copyright (c) 2017-2026 Marco Antonio Regueira</Copyright>
@@ -34,7 +37,7 @@
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>2.2.0: layout primitives and scope helpers. New Rect value type plus FPdf.Row / Stack / Panel for composing pages without (x + width + gap) arithmetic. PanelStyle records capture frame + title looks as reusable data. PushState / PushPos return IDisposable scopes that auto-restore font, colour, line-width and cursor state. Bounds() returns the printable area as a Rect. Bug fixes: GetStringWidth falls back to the "A" glyph width for missing characters instead of throwing KeyNotFoundException; GoBack(GoBackMode) now honours the X / Y / Both selector. Fully additive over 2.1.0.</PackageReleaseNotes>
+    <PackageReleaseNotes>2.2.1: three bug fixes, no API changes. (1) FPdf("file.pdf") now sets AutoFlush=true on the file-backed buffer; previously the trailing xref / trailer / %%EOF stayed in the StreamWriter's internal buffer and a caller reading Buffer.BaseStream after Close() got a truncated PDF ending at the last endobj. (2) FontScale.Default / DoubleHeight / DoubleWidth become read-only properties that synthesise a fresh instance per access; previously they were mutable static fields and ZPL field-scaling writes (FieldDefinition.ScaleX) leaked into every FPdf constructed afterwards in the same process. (3) Sample3 footer uses 8 pt (matches FPDF tutorial 3) instead of the 15 pt typo. 2.2.0 added layout primitives (Row / Stack / Panel + Rect + PanelStyle) and scope helpers (PushState / PushPos); see release notes for that version.</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

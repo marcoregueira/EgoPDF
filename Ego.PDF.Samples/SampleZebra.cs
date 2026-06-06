@@ -50,26 +50,6 @@ namespace Ego.PDF.Samples
         }
 
         /// <summary>
-        /// Read a ZPL string from <paramref name="zplPath"/> and render it
-        /// through <see cref="PdfZpl"/>. Generic loader used by the
-        /// "open a local ZPL and produce its PDF" debug endpoint in the
-        /// WebDemo; lets us point at any ad-hoc ZPL file without baking
-        /// its content into the sample assembly. Throws
-        /// <see cref="FileNotFoundException"/> if the file is missing.
-        /// </summary>
-        public static Stream GetSampleFromZplFile(string file, string zplPath)
-        {
-            if (!File.Exists(zplPath))
-                throw new FileNotFoundException("ZPL source not found", zplPath);
-
-            using var pdf = new SampleZebra(file);
-            var zpl = OpenLabel(pdf, (LabelW, LabelH));
-            zpl.Print(File.ReadAllText(zplPath));
-            pdf.Close();
-            return pdf.Buffer.BaseStream;
-        }
-
-        /// <summary>
         /// Minimal smoke / regression for the ^FR (Field Reverse) handling on
         /// TEXT fields. Paints a solid black ^GB rectangle, drops a ^FR-marked
         /// text on top of it (which should render white -- the engine inverts
@@ -81,23 +61,11 @@ namespace Ego.PDF.Samples
         {
             using var pdf = new SampleZebra(file);
             var zpl = OpenLabel(pdf, (LabelW, LabelH));
-            // Three rows exercising every interesting case of ^FR on text:
-            //   row 1: ^FR text fully inside a black ^GB rect (canonical).
-            //   row 2: ^FR text that runs past the rect edge -- BlendMode
-            //          /Difference inverts per pixel, so the half over
-            //          black reads white and the half over white reads
-            //          black. With the SetTextColor fallback the right
-            //          half would be invisible.
-            //   row 3: plain text without ^FR for visual comparison.
             zpl.Print(@"
 ^XA
 ^FO40,40^GB360,80,80,B,0^FS
 ^FT60,100^A0N,40^FR^FDREVERSED^FS
-
-^FO40,180^GB200,80,80,B,0^FS
-^FT60,240^A0N,40^FR^FDCROSSING THE EDGE^FS
-
-^FT40,360^A0N,40^FDNORMAL TEXT^FS
+^FT40,200^A0N,40^FDNORMAL TEXT^FS
 ^XZ
 ");
             pdf.Close();

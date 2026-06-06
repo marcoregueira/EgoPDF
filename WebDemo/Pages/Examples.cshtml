@@ -74,7 +74,8 @@
             <td>
                 <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=1">Horizontal shipping label</a><br />
                 <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=2">Vertical rotated label</a><br />
-                <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=3">Barcode catalogue (^BC / ^B3 / ^B2 / ^BK / ^BE / ^B8 / ^BU / ^BM / ^BQ / ^BX / ^B7 / ^BO)</a>
+                <a (click)="download($event)" href="/api/SampleData/GetSampleZebra?id=3">Barcode catalogue (^BC / ^B3 / ^B2 / ^BK / ^BE / ^B8 / ^BU / ^BM / ^BQ / ^BX / ^B7 / ^BO)</a><br />
+                <a (click)="download($event)" href="/api/SampleData/GetSampleZebraReverseText">^FR text reverse (white text over a black ^GB rect)</a>
             </td>
         </tr>
         <tr>
@@ -106,52 +107,6 @@
                 <a (click)="download($event)" href="/api/SampleData/GetSample8">Coloured header</a><br />
                 <a (click)="download($event)" href="/api/SampleData/GetSample8b">Minimalist</a><br />
                 <a (click)="download($event)" href="/api/SampleData/GetSample8c">Modular cards (PanelStyle)</a>
-            </td>
-        </tr>
-    </tbody>
-</table>
-
-<h2 class="mt-5">Debug &amp; in-flight regressions</h2>
-<p class="text-muted">
-    Endpoints we wire up while a specific ZPL / FPdf path is under
-    investigation. Not part of the public sample catalogue &mdash; they
-    can disappear without notice as the underlying bug gets closed.
-</p>
-<table class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th>Sample</th>
-            <th>What it shows</th>
-            <th>Open</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><b>ZPL ^FR text reverse</b></td>
-            <td>
-                Minimal label with a solid black <code>^GB</code> rect
-                and a <code>^FR^FD REVERSED</code> text on top
-                (should render white) plus a regular black
-                <code>NORMAL TEXT</code> below for comparison.
-                Regression sample for the new <code>FieldDefinition</code>
-                reverse-text handling.
-            </td>
-            <td>
-                <a (click)="download($event)" href="/api/SampleData/GetSampleZebraReverseText">Reverse text smoke</a>
-            </td>
-        </tr>
-        <tr>
-            <td><b>SEUR courier label</b></td>
-            <td>
-                Renders <code>tools/local-debug/seur-debug.zpl</code>
-                (gitignored, kept out of the public repo). Uses the
-                <code>^DF</code> / <code>^XF</code> template pattern
-                with <code>^FN</code> field substitutions and a
-                <code>^FR</code> service code on a dark band. 404 if
-                you haven't dropped the ZPL into that folder yet.
-            </td>
-            <td>
-                <a (click)="download($event)" href="/api/SampleData/GetSampleZebraDebugLocal">SEUR debug label</a>
             </td>
         </tr>
     </tbody>

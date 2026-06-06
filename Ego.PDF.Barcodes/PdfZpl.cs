@@ -17,19 +17,6 @@ public class PdfZpl
     public int DefaultFontH { get; private set; } = 9;
     public string MonospaceFont { get; private set; }
     public string MonospaceStyle { get; private set; } = "";
-
-    /// <summary>
-    /// When <c>true</c> (default), <c>^FR</c> on a text field is rendered
-    /// via a PDF <c>BlendMode /Difference</c> ExtGState (faithful raster
-    /// XOR: the glyph always reads against whatever pixels are below
-    /// it, including partial overlap with a <c>^GB</c> rect). When
-    /// <c>false</c>, falls back to painting the text in solid white --
-    /// simpler PDF stream but invisible against a white label
-    /// background. Toggle to <c>false</c> if the output needs to pass
-    /// PDF/A-1 (which forbids non-Normal blend modes); PDF/A-2 and any
-    /// modern viewer are happy with the default.
-    /// </summary>
-    public bool UseBlendDifferenceForReverse { get; set; } = true;
     public string VariableFont { get; private set; }
     public string VariableStyle { get; private set; } = "";
     public Dictionary<string, string> Values { get; private set; }
@@ -326,7 +313,6 @@ public class PdfZpl
         this.CurrentField.VariableStyle = VariableStyle;
         this.CurrentField.FrameBox = null;
         this.CurrentField.Reverse = false;
-        this.CurrentField.UseBlendDifferenceForReverse = this.UseBlendDifferenceForReverse;
     }
 
     public void Print(string zpl)
