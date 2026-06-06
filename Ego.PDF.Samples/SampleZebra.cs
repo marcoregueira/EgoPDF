@@ -50,6 +50,26 @@ namespace Ego.PDF.Samples
         }
 
         /// <summary>
+        /// Read a ZPL string from <paramref name="zplPath"/> and render it
+        /// through <see cref="PdfZpl"/>. Generic loader used by the
+        /// "open a local ZPL and produce its PDF" debug endpoint in the
+        /// WebDemo; lets us point at any ad-hoc ZPL file without baking
+        /// its content into the sample assembly. Throws
+        /// <see cref="FileNotFoundException"/> if the file is missing.
+        /// </summary>
+        public static Stream GetSampleFromZplFile(string file, string zplPath)
+        {
+            if (!File.Exists(zplPath))
+                throw new FileNotFoundException("ZPL source not found", zplPath);
+
+            using var pdf = new SampleZebra(file);
+            var zpl = OpenLabel(pdf, (LabelW, LabelH));
+            zpl.Print(File.ReadAllText(zplPath));
+            pdf.Close();
+            return pdf.Buffer.BaseStream;
+        }
+
+        /// <summary>
         /// Minimal smoke / regression for the ^FR (Field Reverse) handling on
         /// TEXT fields. Paints a solid black ^GB rectangle, drops a ^FR-marked
         /// text on top of it (which should render white -- the engine inverts

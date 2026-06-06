@@ -264,3 +264,6 @@ paket-files/
 __pycache__/
 *.pyc
 nuget.exe
+
+# Local-only debug ZPL / PDF assets (sample inputs we want to render but not ship).
+/tools/local-debug/

@@ -165,6 +165,56 @@ namespace WebDemo.Controllers
             return result;
         }
 
+        /// <summary>
+        /// Debug-only: renders the in-repo SampleZebra.GetSampleReverseText
+        /// so the ^FR text-reverse fix can be inspected in the browser.
+        /// </summary>
+        [HttpGet()]
+        public FileStreamResult GetSampleZebraReverseText()
+        {
+            var buffer = SampleZebra.GetSampleReverseText(null, AppDomain.CurrentDomain.BaseDirectory);
+            buffer.Seek(0, SeekOrigin.Begin);
+            return new FileStreamResult(buffer, "application/pdf");
+        }
+
+        /// <summary>
+        /// Debug-only: renders an ad-hoc ZPL kept under tools/local-debug/
+        /// (gitignored). Walks up from AppContext.BaseDirectory to find
+        /// the repo root so it works regardless of where dotnet run is
+        /// invoked from. 404 with a friendly message when the file is
+        /// missing instead of throwing.
+        /// </summary>
+        [HttpGet()]
+        public IActionResult GetSampleZebraDebugLocal()
+        {
+            var zplPath = FindLocalDebugFile("seur-debug.zpl");
+            if (zplPath == null)
+            {
+                return NotFound(
+                    "No tools/local-debug/seur-debug.zpl was found in the repository root. " +
+                    "Drop the ZPL there to enable this debug endpoint.");
+            }
+            var buffer = SampleZebra.GetSampleFromZplFile(null, zplPath);
+            buffer.Seek(0, SeekOrigin.Begin);
+            return new FileStreamResult(buffer, "application/pdf");
+        }
+
+        private static string FindLocalDebugFile(string fileName)
+        {
+            // Walk up the directory tree from the bin output looking for
+            // a tools/local-debug/<fileName>. Lets the endpoint work
+            // whether dotnet run was launched from the repo root or the
+            // WebDemo project.
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir.FullName, "tools", "local-debug", fileName);
+                if (System.IO.File.Exists(candidate)) return candidate;
+                dir = dir.Parent;
+            }
+            return null;
+        }
+
         [HttpGet()]
         public FileStreamResult GetSample9()
         {
