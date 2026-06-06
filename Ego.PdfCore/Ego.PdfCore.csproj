@@ -33,7 +33,7 @@
     <PackageTags>pdf;fpdf;generator;portable;net8;net9</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://github.com/marcoregueira/egopdf</PackageProjectUrl>
+    <PackageProjectUrl>https://egopdf.azurewebsites.net/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
