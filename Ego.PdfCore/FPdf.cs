@@ -104,12 +104,17 @@ public class FPdf: IDisposable
         if (string.IsNullOrWhiteSpace(filePath))
         {
             Buffer = new StreamWriter(new MemoryStream(), PrivateEncoding, 2048, true);
-            Buffer.AutoFlush = true;
         }
         else
         {
             Buffer = new StreamWriter(File.Create(filePath), PrivateEncoding);
         }
+        // AutoFlush=true uniformly across both branches. Without it on the
+        // file-path branch, the StreamWriter's internal buffer swallows the
+        // trailing xref / trailer / startxref / %%EOF written by Close(),
+        // and a caller that reads Buffer.BaseStream after Close() ends up
+        // with a truncated PDF that finishes at the last "endobj".
+        Buffer.AutoFlush = true;
 
         Offsets = new Dictionary<int, long>();
         Pages = new Dictionary<int, Page>();
