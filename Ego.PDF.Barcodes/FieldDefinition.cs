@@ -152,9 +152,19 @@ public class FieldDefinition
                     }
                     fontPoints = effectiveEm * pdf.k;
                     pdf.SetFontSize(fontPoints);
+                    // For the narrow branch (effective em < charH) the
+                    // glyph fits inside a smaller cell than the ZPL ^h
+                    // would imply; bottom-align inside the em cell so
+                    // the digits sit on FO_y + em rather than floating
+                    // high. The wide branch keeps the original ratio
+                    // because there the cell IS the em and bumping the
+                    // baseline further down (1.0) would push XXX into
+                    // the next field below (^AEN,90 PRUEBAS at +120).
+                    var narrowBranch = requestedAspect < nativeVAspectWH;
+                    var emRatio = narrowBranch ? 1.0 : ascentRatio;
                     baselineOffset = Origin == OriginEnum.LeftBottom
                         ? 0
-                        : effectiveEm * ascentRatio;
+                        : effectiveEm * emRatio;
 
                     // Auto-compress if the per-spec render would overflow
                     // the remaining strip (tracking spills 14 * 100 dots
