@@ -26,12 +26,20 @@ pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
 // Without this, ^A? falls back to whatever font is currently set.
 pdf.LoadFont("robotomonob", "path/to/RobotoMono-Bold.ttf");
 pdf.AddFont("robotomonob", "");
+// Optional: a condensed font backs the scalable proportional ^AP..^AV
+// slots. With it, ^AV* renders at the tight Zebra-V proportions used
+// on real courier labels; without it, those fields fall back to the
+// variable font with PDF Tz horizontal compression -- legible but
+// visibly squeezed at aggressive ^AV widths.
+pdf.LoadFont("robotocondensed", "path/to/RobotoCondensed-VariableFont_wght.ttf");
+pdf.AddFont("robotocondensed", "");
 pdf.SetFont("helvetica", "B", 16);
 
 var zpl = new PdfZpl(pdf, dpi: 203);
-zpl.SetLabelSize(812, 1218);           // 4" x 6" at 203 dpi
-zpl.SetVariableFont("helvetica", "B"); // mapped to ZPL font "0"
-zpl.SetMonospaceFont("robotomonob");   // mapped to ZPL fonts "A".."V"
+zpl.SetLabelSize(812, 1218);              // 4" x 6" at 203 dpi
+zpl.SetVariableFont("helvetica", "B");    // mapped to ZPL font "0"
+zpl.SetMonospaceFont("robotomonob");      // mapped to ZPL fonts "A".."V"
+zpl.SetCondensedFont("robotocondensed");  // optional: ^AP..^AV proportional
 
 zpl.Print(@"
 ^XA
