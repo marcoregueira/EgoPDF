@@ -3254,17 +3254,13 @@ public class FPdf: IDisposable
         Out("0000000000 65535 f ");
         for (i = 1; i <= ObjectCount; i++)
         {
-            Out(sprintf("%010d 00000 n ", Offsets[ i ]));
-            /*
-             * Warning: string.format has a different behaviour for negative numbers
-            if (this.offsets[i] < 0)
-            {
-                this._out(string.Format(CultureInfo.InvariantCulture, "{0:D9} 00000 n ", this.offsets[i]));
-            }
-            else
-            {
-                this._out(string.Format(CultureInfo.InvariantCulture, "{0:D10} 00000 n ", this.offsets[i]));
-            }*/
+            // PDF 1.7 §7.5.4: xref entries are exactly 20 bytes long
+            // and the offset field is "a 10-digit number, zero-padded".
+            // The custom sprintf("%010d", ...) above space-padded ("       211"
+            // instead of "0000000211"); the entry still fit in 20 bytes so
+            // most readers parsed it, but Acrobat treated each line as
+            // structurally suspect and offered to repair the file on close.
+            Out(string.Format(CultureInfo.InvariantCulture, "{0:D10} 00000 n ", Offsets[ i ]));
         }
         // Trailer
         Out("trailer");
