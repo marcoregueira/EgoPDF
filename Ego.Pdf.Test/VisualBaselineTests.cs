@@ -94,10 +94,11 @@ namespace Ego.Pdf.Test
         [Fact] public void Baseline_Sample9()                => Run("Sample9",                  p => Sample9.GetSample(null, p));
         [Fact] public void Baseline_SampleMarkdown()         => Run("SampleMarkdown",           _ => SampleMarkdown.GetSample(null));
         [Fact] public void Baseline_SamplePhotovoltaic()     => Run("SamplePhotovoltaic",       p => SamplePhotovoltaic.GetSample(null, p));
-        [Fact] public void Baseline_SampleZebra_horizontal() => Run("SampleZebra_horizontal",   p => SampleZebra.GetSampleHorizontalShipping(null, p));
-        [Fact] public void Baseline_SampleZebra_vertical1()  => Run("SampleZebra_vertical1",    p => SampleZebra.GetSampleVertical1(null, p));
-        [Fact] public void Baseline_SampleZebra_barcodes()   => Run("SampleZebra_barcodes",     p => SampleZebra.GetSampleBarcodes(null, p));
-        [Fact] public void Baseline_SampleZebra_reverseText() => Run("SampleZebra_reverseText", p => SampleZebra.GetSampleReverseText(null, p));
+        [Fact] public void Baseline_SampleZebra_horizontal()      => Run("SampleZebra_horizontal",      p => SampleZebra.GetSampleHorizontalShipping(null, p));
+        [Fact] public void Baseline_SampleZebra_vertical1()       => Run("SampleZebra_vertical1",       p => SampleZebra.GetSampleVertical1(null, p));
+        [Fact] public void Baseline_SampleZebra_courierPortrait() => Run("SampleZebra_courierPortrait", p => SampleZebra.GetSampleCourierPortrait(null, p));
+        [Fact] public void Baseline_SampleZebra_barcodes()        => Run("SampleZebra_barcodes",        p => SampleZebra.GetSampleBarcodes(null, p));
+        [Fact] public void Baseline_SampleZebra_reverseText()     => Run("SampleZebra_reverseText",     p => SampleZebra.GetSampleReverseText(null, p));
 
         private static void Run(string name, Func<string, Stream> factory)
         {

@@ -279,6 +279,19 @@ namespace Ego.Pdf.Test
         }
 
         /// <summary>
+        /// Portrait courier label adapted (and fully anonymised) from a
+        /// real Spanish parcel-service ZPL: vertical Interleaved 2 of 5
+        /// strip, ^AV* condensed proportional fonts, ^FO + rotated
+        /// ^ABB column titles, Code 128 with a small left-aligned
+        /// caption.
+        /// </summary>
+        [Fact]
+        public void DoZebraCourierPortrait()
+        {
+            SampleZebra.GetSampleCourierPortrait("sample_zebra_courier_portrait.pdf", GetPath());
+        }
+
+        /// <summary>
         /// Smoke test for ^FR (Field Reverse) on a text field. A regression
         /// would still produce a PDF (the engine doesn't throw); the visual
         /// baseline catches the byte-level drift.

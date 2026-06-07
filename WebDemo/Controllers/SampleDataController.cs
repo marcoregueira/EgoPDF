@@ -158,7 +158,8 @@ namespace WebDemo.Controllers
             var buffer =
                 id == 1 ? SampleZebra.GetSampleHorizontalShipping(null, AppDomain.CurrentDomain.BaseDirectory) :
                 id == 2 ? SampleZebra.GetSampleVertical1(null, AppDomain.CurrentDomain.BaseDirectory) :
-                id == 3 ? SampleZebra.GetSampleBarcodes(null, AppDomain.CurrentDomain.BaseDirectory) : null;
+                id == 3 ? SampleZebra.GetSampleCourierPortrait(null, AppDomain.CurrentDomain.BaseDirectory) :
+                id == 4 ? SampleZebra.GetSampleBarcodes(null, AppDomain.CurrentDomain.BaseDirectory) : null;
 
             buffer.Seek(0, SeekOrigin.Begin);
             var result = new FileStreamResult(buffer, "application/pdf");

@@ -196,6 +196,108 @@ namespace Ego.PDF.Samples
         }
 
         /// <summary>
+        /// Portrait 4" x 6" courier label modelled on a Spanish parcel
+        /// service layout (large tracking number across the top, two
+        /// addressee panels with rotated ^ABB column titles, big
+        /// service-tier mark, postcode and 1/1 box counter, vertical
+        /// Interleaved 2 of 5 strip with its caption to the right, and
+        /// a horizontal Code 128 with a small left-aligned caption
+        /// underneath). Anonymised throughout — fictional names,
+        /// addresses, tracking numbers, geometric placeholder logo —
+        /// so the open-source repo doesn't ship anyone's branding.
+        ///
+        /// Exercises the late-2026 ^AV* condensed-font path
+        /// (SetCondensedFont required for full fidelity), the
+        /// ^FO + ^A?B "top-left bbox" rotated-text anchor, the
+        /// ^A?B + ^B?B Mod-10 / wide-ratio Interleaved 2 of 5 encoder
+        /// and the ^BC caption that follows a leading ^A? size.
+        /// </summary>
+        public static Stream GetSampleCourierPortrait(string file, string resourcePath)
+        {
+            using var pdf = new SampleZebra(file);
+            pdf.SetUnitConverionFactor(UnitEnum.Point, Dpi);
+            pdf.LoadFont("robotomonob",
+                Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
+            pdf.AddFont("robotomonob", "");
+            pdf.LoadFont("robotocondensed",
+                Path.Combine(GetPath(), "Fonts", "Roboto Condensed", "RobotoCondensed-VariableFont_wght.ttf"));
+            pdf.AddFont("robotocondensed", "");
+            pdf.SetFont("helvetica", "B", 16);
+
+            var zpl = new PdfZpl(pdf, Dpi);
+            zpl.SetVariableFont("helvetica", "B");
+            zpl.SetMonospaceFont("robotomonob");
+            zpl.SetCondensedFont("robotocondensed");
+
+            var logoGfa = BuildEgoLogoGfa();
+            zpl.Print($@"
+^XA^PW799^LS-10
+^FO30,50{logoGfa}^FS
+^LH0,0^FS
+^LL1230
+^FO250,130^GB520,0,4^FS
+^FO320,300^GB450,0,4^FS
+^FO320,390^GB450,0,4^FS
+^FO320,470^GB450,0,4^FS
+^FO320,820^GB450,0,4^FS
+
+^FX Column titles, rotated bottom-up at the left edge of each panel.
+^FO237,150^ABB,10,10^FDDESTINATARIO^FS
+^FO307,300^ABB,10,10^FDREMITENTE^FS
+^FO307,390^ABB,10,10^FDOBSERVACI.^FS
+
+^FX Top tracking number (^AV native-aspect: w=100 < h*71/80 collapses
+^FX the height proportionally so the long 14-char number fits).
+^FO250,000^AVN,120,100^FD12345678901234^FS
+^FO050,145^ACN,36,10^FD2026-01-15^FS
+^FO050,185^ABN,80,50^FD3^FS
+
+^FX Recipient.
+^FO250,145^ACN,36,10^FDJane Doe^FS
+^FO250,185^ACN,36,10^FD42 EXAMPLE AVENUE^FS
+^FO250,225^ACN,36,10^FDPORTLAND^FS
+^FO250,265^ACN,36,10^FDOR^FS
+
+^FX Sender.
+^FO320,305^ABN,10,10^FD97215^FS
+^FO320,323^ABN,10,10^FD500 INDUSTRIAL BOULEVARD^FS
+^FO320,341^ABN,10,10^FDPORTLAND^FS
+^FO320,359^ABN,10,10^FDOR^FS
+^FO320,377^ABN,10,10^FD^FS
+^FO590,370^ACN,9,10^FD1234(567/890)^FS
+
+^FX Observation note.
+^FO320,400^ABN,9,10^FDAtt: Jane Doe^FS
+
+^FX Service tier panel.
+^FO550,480^ADN,60,14^FDCourier^FS
+^FO550,530^ADN,60,14^FDExpress19:00^FS
+^FO360,560^AVN,120,200^FDXXX^FS
+^FO320,680^AEN,90,20^FDDEMO^FS
+
+^FX Postcode + box counter (^AV with the same w/h ratio so both
+^FX collapse to roughly half the tracking-number height).
+^FO320,750^AVN,105,50^FD97201^FS
+^FO550,750^AVN,110,50^FD    1/1^FS
+
+^FX Lowercase ^Ae font slot (E with the lowercase-tolerant dispatch).
+^FO50,860^AeN,40,20^FDInv. 100^FS
+^FO50,898^AeN,40,20^FDRef. 100a^FS
+
+^FX Vertical Interleaved 2 of 5 with bottom-up caption to the right.
+^BY4,2,20^FO50,320^B2B,200,Y,N,Y^FD12345678901234567^FS
+
+^FX Horizontal Code 128 with a small left-aligned caption underneath.
+^BY4,2^FO50,940^ADN,20,5^BCN,150,Y,N,N,A^FD100a^FS
+
+^FO50,1170^ABN,9,10^FDwww.acmelogistics.example/privacy^FS
+^XZ
+");
+            pdf.Close();
+            return pdf.Buffer.BaseStream;
+        }
+
+        /// <summary>
         /// Vertical 4" x 6" shipping label modelled on a real-world
         /// rotated-text courier label. Exercises ^FT bottom-origin text,
         /// the ^A?B 90° rotation, ^FB wrap inside boxes, an inline ^GFA
