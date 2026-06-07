@@ -617,8 +617,17 @@ public class FieldDefinition
     private void DrawBarcodeI2of5(FPdf pdf, string data)
     {
         var opts = this.Barcode2of5Options;
-        // ITF requires an even number of digits; pad with a leading zero
-        // when the input is odd (matches the Zebra default behaviour).
+        // ^B2 with the checkDigit=Y trailing flag appends a Mod-10
+        // weighted-sum check digit *before* the even-length pad. The
+        // previous code skipped the check-digit step so 17-char
+        // payloads like the GLS courier 61771295653200001 ended up
+        // encoded as "0" + payload (18 chars) instead of payload +
+        // check digit (18 chars). Same length, different bars,
+        // different scanned value.
+        if (opts.CheckDigit)
+            data += ComputeI2of5CheckDigit(data);
+        // ITF requires an even number of digits; pad with a leading
+        // zero when the (post-check-digit) length is still odd.
         if (data.Length % 2 == 1)
             data = "0" + data;
 
@@ -655,6 +664,28 @@ public class FieldDefinition
             var barcodeWidth = w * bitmap.Length;
             DrawHumanReadable(pdf, data, barcodeLeft: pdf.X, barcodeWidth: barcodeWidth);
         }
+    }
+
+    /// <summary>
+    /// Interleaved 2-of-5 Mod-10 weighted-sum check digit. Walks the
+    /// payload right-to-left, multiplying the rightmost digit by 3 and
+    /// alternating 1 / 3 from there; the check digit is whatever pushes
+    /// the running sum to the next multiple of 10. Matches the algorithm
+    /// Zebra applies when ^B2's trailing checkDigit=Y flag is set, and
+    /// the value Labelary stamps under the GLS courier I2of5.
+    /// </summary>
+    private static char ComputeI2of5CheckDigit(string digits)
+    {
+        int sum = 0;
+        for (int i = digits.Length - 1; i >= 0; i--)
+        {
+            if (digits[ i ] < '0' || digits[ i ] > '9') continue;
+            int d = digits[ i ] - '0';
+            int factor = ((digits.Length - 1 - i) % 2 == 0) ? 3 : 1;
+            sum += d * factor;
+        }
+        int check = (10 - (sum % 10)) % 10;
+        return (char)('0' + check);
     }
 
     /// <summary>
