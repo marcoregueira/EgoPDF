@@ -125,31 +125,16 @@
     <None Update="Fonts\Roboto\RobotoSlab-VariableFont_wght.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-Black.ttf">
+    <None Update="Fonts\Roboto Condensed\OFL.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-Bold.ttf">
+    <None Update="Fonts\Roboto Condensed\README.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-ExtraBold.ttf">
+    <None Update="Fonts\Roboto Condensed\RobotoCondensed-VariableFont_wght.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-ExtraLight.ttf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-Light.ttf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-Medium.ttf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-Regular.ttf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-SemiBold.ttf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fonts\Roboto\static\RobotoSlab-Thin.ttf">
+    <None Update="Fonts\Roboto Condensed\RobotoCondensed-Italic-VariableFont_wght.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Fonts\Roboto_Mono\static\RobotoMono-Bold.ttf">

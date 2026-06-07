@@ -37,6 +37,8 @@ public class FieldDefinition
     public string MonospaceStyle { get; internal set; } = "";
     public string VariableFont { get; internal set; }
     public string VariableStyle { get; internal set; } = "";
+    public string CondensedFont { get; internal set; }
+    public string CondensedStyle { get; internal set; } = "";
     internal FrameBox? FrameBox { get; set; }
     public double K { get; internal set; }
     public int DotsW { get; internal set; }
@@ -68,9 +70,19 @@ public class FieldDefinition
         pdf.SetFontSize(fontPoints);
 
         // ^FO places the FO point at the top-left of the bounding box, so the
-        // baseline lives Thickness * 0.7 (≈ ascent) below it. ^FT (Origin =
+        // baseline lives Thickness * ascentRatio below it. ^FT (Origin =
         // LeftBottom) places the FO point ON the baseline, so no offset.
-        var baselineOffset = Origin == OriginEnum.LeftBottom ? 0 : this.Thickness * 0.7;
+        // The default 0.7 is calibrated for helvetica (ascent ≈ 0.72 em);
+        // Roboto Condensed has a much taller ascent (≈ 0.93 em), so when
+        // we render P-V through the condensed slot we'd push the glyph
+        // top above the FO point and leave a wide gap below it. Pick the
+        // multiplier per font slot.
+        double ascentRatio = 0.7;
+        if (this.Font is "P" or "Q" or "R" or "S" or "T" or "U" or "V")
+        {
+            ascentRatio = !string.IsNullOrEmpty(this.CondensedFont) ? 0.93 : 0.72;
+        }
+        var baselineOffset = Origin == OriginEnum.LeftBottom ? 0 : this.Thickness * ascentRatio;
 
         double tracking;
         if (this.Font == "0")
@@ -86,7 +98,22 @@ public class FieldDefinition
             var charH = explicitSize ? DotsH : this.Thickness;
             var charW = explicitSize ? DotsW : (int)Math.Round(this.Thickness * (double)fontsize.DotsW / fontsize.DotsH);
             if (charW <= 0) charW = 1;
-            pdf.SetFont(this.MonospaceFont, this.MonospaceStyle ?? "", 0, null);
+
+            // Fonts P-V are the scalable proportional U-L-D set in Zebra's
+            // catalogue. For these slots we prefer a condensed PDF font if
+            // the host configured one (SetCondensedFont) — that's the only
+            // way to land near Labelary's tight glyph widths without
+            // shipping a font asset. Otherwise fall back to the variable
+            // (proportional) font and fake narrow with PDF horizontal text
+            // scale (Tz) further down.
+            var isProportional = this.Font is "P" or "Q" or "R" or "S" or "T" or "U" or "V";
+            var hasCondensed = isProportional && !string.IsNullOrEmpty(this.CondensedFont);
+            if (hasCondensed)
+                pdf.SetFont(this.CondensedFont, this.CondensedStyle ?? "", 0, null);
+            else if (isProportional && !string.IsNullOrEmpty(this.VariableFont))
+                pdf.SetFont(this.VariableFont, this.VariableStyle ?? "", 0, null);
+            else
+                pdf.SetFont(this.MonospaceFont, this.MonospaceStyle ?? "", 0, null);
 
             if (explicitSize)
             {
@@ -97,10 +124,26 @@ public class FieldDefinition
                 // interpretation matches Labelary's apparent sizing.
                 fontPoints = charH * pdf.k;
                 pdf.SetFontSize(fontPoints);
-                // scaleX makes the horizontal advance match charW dots.
-                var naturalAdvancePt = 0.6 * fontPoints;
-                var targetAdvancePt = charW * pdf.k;
-                this.ScaleX = naturalAdvancePt > 0 ? targetAdvancePt / naturalAdvancePt : 1;
+                if (isProportional)
+                {
+                    // Same compression heuristic in both paths: pull glyph
+                    // width down (Tz < 1) when the ZPL asks for an aspect
+                    // narrower than the font's natural digit advance, leave
+                    // them at native width otherwise. Only ever compress;
+                    // we never stretch a proportional font wider than its
+                    // designer drew it.
+                    var digitAspect = hasCondensed ? 0.51 : 0.6;
+                    var requestedAspect = (double)charW / charH;
+                    this.ScaleX = Math.Min(requestedAspect / digitAspect, 1.0);
+                }
+                else
+                {
+                    // Monospace bitmap fonts (A-H, O): width parameter is
+                    // the per-char advance, so stretch every glyph to charW.
+                    var naturalAdvancePt = 0.6 * fontPoints;
+                    var targetAdvancePt = charW * pdf.k;
+                    this.ScaleX = naturalAdvancePt > 0 ? targetAdvancePt / naturalAdvancePt : 1;
+                }
                 this.ScaleY = 1;
             }
             else
@@ -611,19 +654,24 @@ public class FieldDefinition
                 { "H", new CharSize( "H", 34, 22, 0.111, 0.098, 10.20, 2.81, 2.48, 0.40 ) },
                 { "GS",new CharSize( "GS", 24, 24, 0.079, 0.079, 12.70, 1.99, 1.99, 0.52 ) },
                 { "P", new CharSize( "P", 20, 18, 0.067, 0.060, 0, 1.69, 1.52, 0 ) },
-                //{ "R", new CharSize( "Q", 28, 24, 0.093, 0.080, 0, 2.37, 2,0) },
-                //{ "S", new CharSize( "Q", 0, 0, 0.093, 0.080, 0, 2.37, 2,0) }, // INCOMPLETA
-                //{ "T", new CharSize( "Q", 0, 0, 0.093, 0.080, 0, 2.37, 2,0) }, // INCOMPLETA
-                //{ "U", new CharSize( "Q", 0, 0, 0.093, 0.080, 0, 2.37, 2,0) }, // INCOMPLETA
-                //{ "V", new CharSize( "Q", 0, 0, 0.093, 0.080, 0, 2.37, 2,0) }, // INCOMPLETA
-                //{ "0", new CharSize( "Q", 0, 0, 0.093, 0.080, 0, 2.37, 2,0) }, // INCOMPLETA
+                // Q-V are proportional U-L-D scalable; CharsPerInch is N/A
+                // per Zebra's datasheet, so InChars / MmChars stay at 0.
+                { "Q", new CharSize( "Q", 28, 24, 0.093, 0.080, 0, 2.37, 2.03, 0 ) },
+                { "R", new CharSize( "R", 35, 31, 0.117, 0.103, 0, 2.96, 2.62, 0 ) },
+                { "S", new CharSize( "S", 40, 35, 0.133, 0.177, 0, 3.39, 2.96, 0 ) },
+                { "T", new CharSize( "T", 48, 42, 0.160, 0.140, 0, 4.06, 3.56, 0 ) },
+                { "U", new CharSize( "U", 59, 53, 0.197, 0.177, 0, 5.00, 4.49, 0 ) },
+                { "V", new CharSize( "V", 80, 71, 0.267, 0.237, 0, 6.77, 6.01, 0 ) },
                 { "0", new CharSize( "0", 26, 13, 0.085, 0.053, 19.06, 2.16, 1.34, 0.74 ) },
-
             };
 
-            //if (sizes.ContainsKey(font))
-            return sizes[ font ];
-            //return sizes[ this.DefaultFont ];
+            // Fall back to "A" rather than KeyNotFoundException for any
+            // font slot we don't know about. KNFE used to be swallowed
+            // by PdfZpl.PrintWithData's catch-all and the entire field
+            // silently disappeared; with the fallback the worst case is
+            // a field drawn at the wrong size, which is loud enough to
+            // notice and easy to add to the table here.
+            return sizes.TryGetValue(font, out var size) ? size : sizes[ "A" ];
         }
     }
 

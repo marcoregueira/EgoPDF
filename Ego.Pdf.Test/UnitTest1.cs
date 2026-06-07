@@ -1,3 +1,6 @@
+using Ego.PDF;
+using Ego.PDF.Barcodes.Zpl;
+using Ego.PDF.Data;
 using Ego.PDF.Samples;
 using System;
 using System.IO;
@@ -8,6 +11,36 @@ namespace Ego.Pdf.Test
 {
     public class SampleTests
     {
+        // Temporary local-debug test. Reads the GLS ZPL the user is
+        // investigating from their Downloads folder, renders it through
+        // PdfZpl and writes the resulting PDF next to the source for
+        // side-by-side comparison with the Labelary reference. Skipped
+        // automatically when the input file isn't present (so it
+        // doesn't break CI / other devs' clones).
+        [Fact]
+        public void DoGlsLabelLocalDebug()
+        {
+            const string zplPath = @"C:\Users\Nitropc\Downloads\324f_1.zpl";
+            const string outPath = @"C:\Users\Nitropc\Downloads\324f_1_ours.pdf";
+            if (!File.Exists(zplPath)) return;
+
+            using var pdf = new FPdf(outPath);
+            pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
+            pdf.LoadFont("robotomonob", Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
+            pdf.AddFont("robotomonob", "");
+            pdf.LoadFont("robotocondensed", Path.Combine(GetPath(), "Fonts", "Roboto_Condensed", "RobotoCondensed-VariableFont_wght.ttf"));
+            pdf.AddFont("robotocondensed", "");
+            pdf.SetFont("helvetica", "B", 16);
+
+            var zpl = new PdfZpl(pdf, 203);
+            zpl.SetVariableFont("helvetica", "B");
+            zpl.SetMonospaceFont("robotomonob");
+            zpl.SetCondensedFont("robotocondensed");
+            zpl.Print(File.ReadAllText(zplPath));
+            pdf.Close();
+        }
+
+
         [Fact]
         public void DoSample1()
         {

@@ -86,6 +86,9 @@
 	  <None Include="..\WebDemo\Fonts\Roboto_Mono\static\RobotoMono-Bold.ttf" Link="Fonts\Roboto_Mono\Static\RobotoMono-Bold.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
+	  <None Include="..\WebDemo\Fonts\Roboto Condensed\RobotoCondensed-VariableFont_wght.ttf" Link="Fonts\Roboto_Condensed\RobotoCondensed-VariableFont_wght.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	  <None Include="..\WebDemo\Fonts\Ceviche\CevicheOne-Regular.ttf" Link="Fonts\Ceviche\CevicheOne-Regular.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>

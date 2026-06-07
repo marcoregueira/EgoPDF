@@ -19,6 +19,8 @@ public class PdfZpl
     public string MonospaceStyle { get; private set; } = "";
     public string VariableFont { get; private set; }
     public string VariableStyle { get; private set; } = "";
+    public string CondensedFont { get; private set; }
+    public string CondensedStyle { get; private set; } = "";
     public Dictionary<string, string> Values { get; private set; }
     private readonly Dictionary<string, string> _graphics = new(StringComparer.OrdinalIgnoreCase);
 
@@ -311,6 +313,8 @@ public class PdfZpl
         this.CurrentField.MonospaceStyle = MonospaceStyle;
         this.CurrentField.VariableFont = VariableFont;
         this.CurrentField.VariableStyle = VariableStyle;
+        this.CurrentField.CondensedFont = CondensedFont;
+        this.CurrentField.CondensedStyle = CondensedStyle;
         this.CurrentField.FrameBox = null;
         this.CurrentField.Reverse = false;
     }
@@ -354,7 +358,12 @@ public class PdfZpl
             foreach (var part in parts)
             {
                 var command = "^" + part;
-                var token = command.Substring(0, Math.Min(3, command.Length));
+                // ZPL command names are case-insensitive in the spec, and
+                // real printers (and Labelary) accept lowercase variants
+                // like ^Ae or ^FdHello. Uppercase the 3-char dispatch key
+                // so we don't miss them; the field handlers normalise
+                // further down (e.g. SetFont uppercases the font slot).
+                var token = command.Substring(0, Math.Min(3, command.Length)).ToUpperInvariant();
                 if (Tokens.ContainsKey(token))
                 {
                     try
@@ -731,8 +740,10 @@ public class PdfZpl
             Example (full usage): ^CF0,50,50          
         */
 
-        this.CurrentField.Font = arg2[ 3 ].ToString();
-        this.DefaultFont = arg2[ 3 ].ToString();
+        // Same case normalisation as the ^A? path.
+        var fontSlot = char.ToUpperInvariant(arg2[ 3 ]).ToString();
+        this.CurrentField.Font = fontSlot;
+        this.DefaultFont = fontSlot;
         var body = arg2.Remove(0, 5);
         var parts = body.Split(',');
         if (parts.Length > 3)
@@ -855,7 +866,9 @@ public class PdfZpl
             • 25,18 would not be a valid size. The printer rounds to the next recognizable s
         */
 
-        this.CurrentField.Font = arg2[ 2 ].ToString();
+        // Font slot identifier is case-insensitive: ^AeN must end up
+        // selecting the same "E" entry that ^AEN does.
+        this.CurrentField.Font = char.ToUpperInvariant(arg2[ 2 ]).ToString();
         var body = arg2.Remove(0, 2);
         var parts = body.Split(',');
         if (parts.Length != 3)
@@ -870,15 +883,14 @@ public class PdfZpl
 
         decimal height = parts.ToInt(1, size.DotsH);
         decimal width = parts.ToInt(2, size.DotsW);
-        var scalex = Math.Round(width / size.DotsW, 0, MidpointRounding.AwayFromZero);
-        if (scalex > 10)
-            scalex = 10;
-        width = size.DotsW * scalex;
-
-        var scaley = Math.Round(height / size.DotsH, 0, MidpointRounding.AwayFromZero);
-        if (scaley > 10)
-            scaley = 10;
-        height = size.DotsH * scaley;
+        // Real Zebra printers quantize sizes to integer multiples of
+        // the font's natural bitmap dimensions (rounding 1.5x up to 2x
+        // visibly oversized our ^AVN,120,100 fields). Vector rendering
+        // in PDF has no such limitation, so we honour the requested
+        // height/width exactly. Cap at 10x natural per the published
+        // Zebra ceiling.
+        width  = Math.Min(width,  size.DotsW * 10);
+        height = Math.Min(height, size.DotsH * 10);
 
         CurrentField.DotsW = Convert.ToInt32(width);
         CurrentField.DotsH = Convert.ToInt32(height);
@@ -934,6 +946,22 @@ public class PdfZpl
         this.MonospaceStyle = style;
         this.CurrentField.MonospaceFont = monospaceFont;
         this.CurrentField.MonospaceStyle = style;
+    }
+
+    /// <summary>
+    /// Register a condensed font to back the scalable proportional ZPL slots
+    /// (P, Q, R, S, T, U, V). When set, those slots render with this font
+    /// at the requested aspect ratio. When unset, they fall back to the
+    /// variable/monospace font and the renderer fakes the narrow shape with
+    /// the PDF horizontal text scale (Tz) — readable but visibly squeezed
+    /// at aggressive width settings.
+    /// </summary>
+    public void SetCondensedFont(string condensedFont, string style = "")
+    {
+        this.CondensedFont = condensedFont;
+        this.CondensedStyle = style;
+        this.CurrentField.CondensedFont = condensedFont;
+        this.CurrentField.CondensedStyle = style;
     }
 
     public class CharSize
