@@ -183,7 +183,7 @@ public class FieldDefinition
         }
         else
         {
-            pdf.WriteRotatedText(pdf.X, pdf.Y, baselineOffset, this.Orientation, text, tracking);
+            pdf.WriteRotatedTextZpl(pdf.X, pdf.Y, baselineOffset, this.Orientation, text, tracking);
         }
         pdf.GetPos();
     }
@@ -267,7 +267,7 @@ public class FieldDefinition
                     break;
             }
 
-            pdf.WriteRotatedText(lineX, lineY, baselineOffset, this.Orientation, line, tracking);
+            pdf.WriteRotatedTextZpl(lineX, lineY, baselineOffset, this.Orientation, line, tracking);
         }
     }
 

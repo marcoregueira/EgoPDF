@@ -1114,6 +1114,75 @@ public class FPdf: IDisposable
         WriteRotatedText(x, y, lineHeight, rotation, txt, 0);
     }
 
+    public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt)
+    {
+        WriteRotatedTextZpl(foX, foY, ascent, rotation, txt, 0);
+    }
+
+    /// <summary>
+    /// Place a rotated text field with ZPL ^FO semantics: (foX, foY) anchors the
+    /// top-left of the ROTATED bounding box, not the baseline-start of the
+    /// unrotated text. Computes textWidth internally via GetStringWidth so the
+    /// "B" / "R" / "I" branches can offset the PDF text matrix correctly. For
+    /// "N" the result is identical to <see cref="WriteRotatedText"/>; the
+    /// difference shows up only when the field is rotated. Use this from ZPL
+    /// rendering paths. For PostScript-style baseline-start anchoring keep
+    /// <see cref="WriteRotatedText"/>.
+    /// </summary>
+    /// <param name="tracking">Extra inter-character advance, in PDF user units. 0 = font-native.</param>
+    public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt, double tracking)
+    {
+        // textWidth covers the rotated bbox dimension that's parallel to the
+        // reading direction. Native horizontal advance plus inter-char tracking
+        // (tracking only contributes between chars, hence Length - 1).
+        var textWidth = GetStringWidth(txt);
+        if (tracking > 0 && !string.IsNullOrEmpty(txt) && txt.Length > 1)
+            textWidth += tracking * (txt.Length - 1);
+
+        string result = rotation switch
+        {
+            // Baseline at (foX, foY + ascent) → glyph top lands at foY. Same as
+            // the legacy WriteRotatedText for the normal-orientation path.
+            "N" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 0,
+                                    foX * k,
+                                    (H - foY - ascent) * k),
+            // 90° CW rotation. Chars advance downward; ascent extends to the
+            // right of the baseline column. FO top-left = (baseline column, top
+            // of first char).
+            "R" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 270,
+                                    foX * k,
+                                    (H - foY) * k),
+            // 180° rotation. Chars advance leftward; ascent points downward
+            // (upside-down glyphs). FO top-left = (left edge = first char minus
+            // textWidth + textWidth... = first char's left in PDF, which is the
+            // last char's right in page terms). Baseline ends up on the TOP of
+            // the visible bbox; visible height = ascent.
+            "I" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 180,
+                                    (foX + textWidth) * k,
+                                    (H - foY) * k),
+            // 90° CCW rotation (ZPL "read from bottom up"). Chars advance
+            // upward; ascent extends to the left of the baseline column. FO
+            // top-left = (baseline column - ascent, top of last char).
+            "B" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 90,
+                                    (foX + ascent) * k,
+                                    (H - foY - textWidth) * k),
+            _ => throw new ArgumentException("Código de rotación no válido."),
+        };
+
+        var tcPrefix = tracking > 0 ? sprintf("%.3f Tc ", tracking * k) : "";
+        var tcSuffix = tracking > 0 ? " 0 Tc" : "";
+        var s = sprintf($"BT {tcPrefix}{result} (%s) Tj{tcSuffix} ET", Escape(txt));
+        if (Underline && TypeSupport.ToString(txt) != "")
+        {
+            s = TypeSupport.ToString(s) + " " + DoUnderline(foX, foY, txt);
+        }
+        if (ColorFlag)
+        {
+            s = "q " + TypeSupport.ToString(TextColor) + " " + TypeSupport.ToString(s) + " Q";
+        }
+        Out(s);
+    }
+
     /// <param name="tracking">Extra inter-character advance, in PDF user units. 0 = font-native.</param>
     public void WriteRotatedText(double x, double y, double lineHeight, string rotation, string txt, double tracking)
     {
