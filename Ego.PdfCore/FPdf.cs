@@ -3082,9 +3082,18 @@ public class FPdf: IDisposable
             Out("/F" + font.i + " " + font.n + " 0 R");
         }
         Out(">>");
-        Out("/XObject <<");
-        PutXObjectDictionary();
-        Out(">>");
+        // Don't emit /XObject <<>> when there are no images. PDF spec
+        // permits empty dictionaries, but Acrobat treats them as a
+        // structural defect and silently rewrites the file on open --
+        // which is the third source of the "save?" prompt this label
+        // was hitting (after /CreationDate, the binary marker and the
+        // /ID).
+        if (Images.Count > 0)
+        {
+            Out("/XObject <<");
+            PutXObjectDictionary();
+            Out(">>");
+        }
     }
 
     internal virtual void PutResources()
