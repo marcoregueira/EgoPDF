@@ -123,50 +123,65 @@ public class FieldDefinition
 
             if (explicitSize)
             {
-                // ZPL "height" empirically lines up with the em size of the
-                // chosen PDF font (visible cap-height ≈ 0.7 × charH). The
-                // cap-height interpretation (charH × k / 0.7) draws chars
-                // tall enough to overlap adjacent fields; the em
-                // interpretation matches Labelary's apparent sizing.
-                // For the condensed proportional slot we shrink em a bit
-                // more so ^AV* fields with limited vertical room (27004 at
-                // FO Y=750 with the next ^GB at Y=820 = 70 dots clear)
-                // don't visibly spill past the decorative line beneath.
-                var emFactor = (isProportional && hasCondensed) ? 0.8 : 1.0;
-                fontPoints = charH * emFactor * pdf.k;
-                pdf.SetFontSize(fontPoints);
-                // Re-anchor baselineOffset to the actual em (was charH-based
-                // upstream): a smaller em deserves a smaller offset, or the
-                // chars float visibly below where the ^FO point implies.
                 if (isProportional && hasCondensed)
+                {
+                    // Zebra V honours the bitmap's native aspect (h=80,
+                    // w=71 -> h/w = 80/71 ≈ 1.127): when the caller asks
+                    // for a w narrower than w_natural_for_h the whole
+                    // glyph scales down proportionally (so the h drops
+                    // too). When w is wider than natural the chars
+                    // stretch horizontally while h stays. This explains
+                    // why the GLS tracking ^AVN,120,100 renders ~2x
+                    // taller than 27004 ^AVN,105,50: the second hits the
+                    // narrow branch and h collapses to 56 dots.
+                    const double nativeVAspectHW = 80.0 / 71.0;
+                    const double nativeVAspectWH = 71.0 / 80.0;
+                    var requestedAspect = (double)charW / charH;
+                    double effectiveEm;
+                    if (requestedAspect < nativeVAspectWH)
+                    {
+                        // Narrow request -> aspect-locked: h scales with w.
+                        effectiveEm = charW * nativeVAspectHW;
+                        this.ScaleX = 1.0;
+                    }
+                    else
+                    {
+                        // Wide request -> keep h, stretch chars.
+                        effectiveEm = charH;
+                        this.ScaleX = requestedAspect;
+                    }
+                    fontPoints = effectiveEm * pdf.k;
+                    pdf.SetFontSize(fontPoints);
                     baselineOffset = Origin == OriginEnum.LeftBottom
                         ? 0
-                        : (fontPoints / pdf.k) * ascentRatio;
-                if (isProportional)
-                {
-                    // ZPL "w" is the requested per-char advance in dots.
-                    // ScaleX = aspect (= w/h) makes the rendered advance
-                    // land at digitAspect × w -- Labelary's apparent rule
-                    // per the GLS measurements (XXX ^AVN,120,200 → 108
-                    // per-char observed, 110 predicted; "1/1" ^AVN,110,50
-                    // → 27 observed, 28 predicted).
-                    //
-                    // When per-spec rendering would overflow the remaining
-                    // label width from the current X (the GLS tracking row
-                    // is the classic case: 14 chars × spec 50 ≈ 700 dots
-                    // into a 549-dot strip), auto-compress ScaleX to fit.
-                    // Labelary appears to do the same.
-                    var requestedAspect = (double)charW / charH;
-                    this.ScaleX = requestedAspect;
-                    pdf.FontScale.ScaleX = this.ScaleX; // affects no GetStringWidth, just kept in sync
+                        : effectiveEm * ascentRatio;
+
+                    // Auto-compress if the per-spec render would overflow
+                    // the remaining strip (tracking spills 14 * 100 dots
+                    // into the 549-dot space and has to fit somehow).
+                    // Target 85% of the strip so the GLS tracking row
+                    // lands near Labelary's ~700-dot endpoint instead of
+                    // the page edge.
+                    pdf.FontScale.ScaleX = this.ScaleX; // for GetStringWidth callers reading current scale
                     var naturalTextWidth = pdf.GetStringWidth(text);
                     var renderedWidth = naturalTextWidth * this.ScaleX;
-                    // Target 85% of the actual available strip rather than
-                    // 100%: GetStringWidth ignores the rightmost glyph's
-                    // right-side bearing, and visually the tracking row
-                    // looks too loose when it stretches to the page edge.
-                    // 0.85 lands the GLS tracking near Labelary's ~700-dot
-                    // endpoint instead of the 800-dot edge.
+                    var available = (pdf.W - pdf.X) * 0.85;
+                    if (renderedWidth > available && available > 0)
+                        this.ScaleX *= available / renderedWidth;
+                }
+                else if (isProportional)
+                {
+                    // Helvetica fallback (no condensed font registered).
+                    // Keep the older aspect-direct rule -- without a font
+                    // designed for V's proportions we have nothing better
+                    // to mimic.
+                    fontPoints = charH * pdf.k;
+                    pdf.SetFontSize(fontPoints);
+                    var requestedAspect = (double)charW / charH;
+                    this.ScaleX = requestedAspect;
+                    pdf.FontScale.ScaleX = this.ScaleX;
+                    var naturalTextWidth = pdf.GetStringWidth(text);
+                    var renderedWidth = naturalTextWidth * this.ScaleX;
                     var available = (pdf.W - pdf.X) * 0.85;
                     if (renderedWidth > available && available > 0)
                         this.ScaleX *= available / renderedWidth;
@@ -175,6 +190,8 @@ public class FieldDefinition
                 {
                     // Monospace bitmap fonts (A-H, O): width parameter is
                     // the per-char advance, so stretch every glyph to charW.
+                    fontPoints = charH * pdf.k;
+                    pdf.SetFontSize(fontPoints);
                     var naturalAdvancePt = 0.6 * fontPoints;
                     var targetAdvancePt = charW * pdf.k;
                     this.ScaleX = naturalAdvancePt > 0 ? targetAdvancePt / naturalAdvancePt : 1;
