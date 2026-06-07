@@ -80,7 +80,13 @@ public class FieldDefinition
         double ascentRatio = 0.7;
         if (this.Font is "P" or "Q" or "R" or "S" or "T" or "U" or "V")
         {
-            ascentRatio = !string.IsNullOrEmpty(this.CondensedFont) ? 0.93 : 0.72;
+            // 0.85 is a compromise between helvetica's 0.72-ish ascent and
+            // Roboto Condensed's ~0.93. Lower numbers (like 0.7) leave the
+            // tracking glyphs glued to the page edge with a big gap to the
+            // separator line below; higher numbers (0.93) drop fields like
+            // 27004 visibly below where Labelary renders them. 0.85 keeps
+            // both within a few dots of expected.
+            ascentRatio = !string.IsNullOrEmpty(this.CondensedFont) ? 0.85 : 0.72;
         }
         var baselineOffset = Origin == OriginEnum.LeftBottom ? 0 : this.Thickness * ascentRatio;
 
@@ -126,15 +132,21 @@ public class FieldDefinition
                 pdf.SetFontSize(fontPoints);
                 if (isProportional)
                 {
-                    // Same compression heuristic in both paths: pull glyph
-                    // width down (Tz < 1) when the ZPL asks for an aspect
-                    // narrower than the font's natural digit advance, leave
-                    // them at native width otherwise. Only ever compress;
-                    // we never stretch a proportional font wider than its
-                    // designer drew it.
+                    // Compress glyph width (Tz < 1) so the rendered per-char
+                    // advance lands near Zebra V's visually tight pitch even
+                    // when the ZPL spec asks for far wider chars. The GLS
+                    // courier label requests ^AVN,120,100 → aspect 0.83,
+                    // while Roboto Condensed natural digit aspect is ~0.51:
+                    // taking the inverse gives Tz ≈ 0.61, which packs 14
+                    // digits inside the available 549 dots instead of
+                    // spilling past the page edge. Helvetica fallback uses
+                    // the same logic with its ~0.6 natural aspect. Clamp at
+                    // 1.0 so very narrow ZPL widths (already tighter than
+                    // the font) leave the glyphs at native size rather than
+                    // stretching them.
                     var digitAspect = hasCondensed ? 0.51 : 0.6;
                     var requestedAspect = (double)charW / charH;
-                    this.ScaleX = Math.Min(requestedAspect / digitAspect, 1.0);
+                    this.ScaleX = Math.Min(digitAspect / requestedAspect, 1.0);
                 }
                 else
                 {
