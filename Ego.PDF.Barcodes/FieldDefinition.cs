@@ -413,16 +413,32 @@ public class FieldDefinition
 
         if (this.Barcode128Options.Line && !this.Barcode128Options.LineAbove)
         {
-            // ^BC respects a leading ^A?h,w so the author can pick a
-            // smaller / different font for the caption (^FO50,940^ADN,20,5
-            // ^BC... is the GLS courier pattern). Leave Thickness alone so
-            // ^A? wins; fall back to the field default (50) when no ^A?
-            // precedes ^BC. Left-align rather than centre — Zebra labels
-            // typically print the interpretation line starting at the
-            // barcode's left edge.
-            pdf.Ln(this.Barcode128Options.Height + 4);
+            // Two styles of caption depending on whether ^BC carries its
+            // own height parameter:
+            //  - ^BC with height (^BCN,150,...): the author is opting in
+            //    to a specific layout (often paired with a leading
+            //    ^A?h,w that picks the caption font, as on the GLS
+            //    courier ^ADN,20,5^BCN,150,...). Honour both the ^A?
+            //    sized Thickness and a left-aligned caption that starts
+            //    at the barcode's left edge.
+            //  - ^BC without height: legacy behaviour. The author hasn't
+            //    chosen a font for the caption so a leftover ^CFA from
+            //    higher up the label would render it microscopic. Use
+            //    Thickness=50 and centre the text under the bars so the
+            //    horizontal-shipping sample's ^BC^FD98765432 reads as
+            //    before.
             this.TextMode = FieldMode.Text;
-            DrawHumanReadable(pdf, arg2, barcodeLeft: x, barcodeWidth: width, centerText: false);
+            if (this.Barcode128Options.Height > 0)
+            {
+                pdf.Ln(this.Barcode128Options.Height + 4);
+                DrawHumanReadable(pdf, arg2, barcodeLeft: x, barcodeWidth: width, centerText: false);
+            }
+            else
+            {
+                pdf.Ln(this.BarcodeOptions.Height + 4);
+                this.Thickness = 50;
+                DrawHumanReadable(pdf, arg2, barcodeLeft: x, barcodeWidth: width);
+            }
         }
     }
 
