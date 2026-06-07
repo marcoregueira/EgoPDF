@@ -1132,12 +1132,17 @@ public class FPdf: IDisposable
     /// <param name="tracking">Extra inter-character advance, in PDF user units. 0 = font-native.</param>
     public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt, double tracking)
     {
-        // textWidth covers the rotated bbox dimension that's parallel to the
-        // reading direction. Native horizontal advance plus inter-char tracking
-        // (tracking only contributes between chars, hence Length - 1).
+        // textWidth covers the rotated bbox dimension parallel to the reading
+        // direction. GetStringWidth returns the NATURAL advance; the PDF text
+        // matrix then applies FontScale.ScaleX on top, so the rendered width
+        // is textWidth * ScaleX. Bbox math has to use the rendered value, not
+        // the natural one, or the FO point ends up offset by (ScaleX - 1) *
+        // textWidth -- which is what pushed DESTINATARIO above the Y=130
+        // separator on the GLS courier label (ScaleX=1.67 for ^ABB,10,10).
         var textWidth = GetStringWidth(txt);
         if (tracking > 0 && !string.IsNullOrEmpty(txt) && txt.Length > 1)
             textWidth += tracking * (txt.Length - 1);
+        var renderedWidth = textWidth * this.FontScale.ScaleX;
 
         string result = rotation switch
         {
@@ -1148,24 +1153,23 @@ public class FPdf: IDisposable
                                     (H - foY - ascent) * k),
             // 90° CW rotation. Chars advance downward; ascent extends to the
             // right of the baseline column. FO top-left = (baseline column, top
-            // of first char).
+            // of first char). Rendered width grows downward from foY so the
+            // base translation doesn't need it.
             "R" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 270,
                                     foX * k,
                                     (H - foY) * k),
-            // 180° rotation. Chars advance leftward; ascent points downward
-            // (upside-down glyphs). FO top-left = (left edge = first char minus
-            // textWidth + textWidth... = first char's left in PDF, which is the
-            // last char's right in page terms). Baseline ends up on the TOP of
-            // the visible bbox; visible height = ascent.
+            // 180° rotation. Chars advance leftward (rendered width subtracts
+            // from x); ascent points downward. FO top-left = (left edge,
+            // baseline level).
             "I" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 180,
-                                    (foX + textWidth) * k,
+                                    (foX + renderedWidth) * k,
                                     (H - foY) * k),
             // 90° CCW rotation (ZPL "read from bottom up"). Chars advance
             // upward; ascent extends to the left of the baseline column. FO
             // top-left = (baseline column - ascent, top of last char).
             "B" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 90,
                                     (foX + ascent) * k,
-                                    (H - foY - textWidth) * k),
+                                    (H - foY - renderedWidth) * k),
             _ => throw new ArgumentException("Código de rotación no válido."),
         };
 

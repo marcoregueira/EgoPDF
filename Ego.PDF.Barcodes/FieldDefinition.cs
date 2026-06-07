@@ -648,10 +648,10 @@ public class FieldDefinition
                 { "B", new CharSize( "B", 11, 7, 0.036, 0.030, 33.8, 0.91, 0.75, 1.32 ) },
                 { "C", new CharSize( "C", 18, 10, 0.059, 0.040, 25.4, 1.50, 1.00, 1.00 ) },
                 { "D", new CharSize( "D", 18, 10, 0.059, 0.040, 25.4, 1.50, 1.00, 1.00 ) },
-                { "E", new CharSize( "E", 42, 20, 0.138, 0.085, 23.4, 1.75, 1.08, 0.92 ) },
+                { "E", new CharSize( "E", 28, 15, 0.138, 0.085, 23.4, 1.75, 1.08, 0.92 ) },
                 { "F", new CharSize( "F", 26, 13, 0.085, 0.053, 19.06, 2.16, 1.34, 0.74 ) },
                 { "G", new CharSize( "G", 60, 40, 0.197, 0.158, 6.36, 5.00, 4.00, 0.25 ) },
-                { "H", new CharSize( "H", 34, 22, 0.111, 0.098, 10.20, 2.81, 2.48, 0.40 ) },
+                { "H", new CharSize( "H", 17, 11, 0.111, 0.098, 10.20, 2.81, 2.48, 0.40 ) },
                 { "GS",new CharSize( "GS", 24, 24, 0.079, 0.079, 12.70, 1.99, 1.99, 0.52 ) },
                 { "P", new CharSize( "P", 20, 18, 0.067, 0.060, 0, 1.69, 1.52, 0 ) },
                 // Q-V are proportional U-L-D scalable; CharsPerInch is N/A
@@ -662,7 +662,7 @@ public class FieldDefinition
                 { "T", new CharSize( "T", 48, 42, 0.160, 0.140, 0, 4.06, 3.56, 0 ) },
                 { "U", new CharSize( "U", 59, 53, 0.197, 0.177, 0, 5.00, 4.49, 0 ) },
                 { "V", new CharSize( "V", 80, 71, 0.267, 0.237, 0, 6.77, 6.01, 0 ) },
-                { "0", new CharSize( "0", 26, 13, 0.085, 0.053, 19.06, 2.16, 1.34, 0.74 ) },
+                { "0", new CharSize( "0", 15, 12, 0.075, 0.060, 0, 1.88, 1.88, 0 ) },
             };
 
             // Fall back to "A" rather than KeyNotFoundException for any
