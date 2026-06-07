@@ -1165,11 +1165,16 @@ public class FPdf: IDisposable
                                     (foX + renderedWidth) * k,
                                     (H - foY) * k),
             // 90° CCW rotation (ZPL "read from bottom up"). Chars advance
-            // upward; ascent extends to the left of the baseline column. FO
-            // top-left = (baseline column - ascent, top of last char).
+            // upward; ascent extends to the left of the baseline column.
+            // FO is anchored at the FIRST char's baseline-origin (bottom-left
+            // of the rotated column): the user sees "DESTINATARIO" starting
+            // at foY and extending upward, the way Labelary places it. The
+            // ZPL spec is loose enough that both "FO at bbox top" and "FO at
+            // first char" are defensible, but the latter matches how this
+            // codepath has been used in our test corpus.
             "B" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 90,
                                     (foX + ascent) * k,
-                                    (H - foY - renderedWidth) * k),
+                                    (H - foY) * k),
             _ => throw new ArgumentException("Código de rotación no válido."),
         };
 
