@@ -400,18 +400,33 @@ public class FieldDefinition
         var barcode = new Code128Writer();
         var code128 = barcode.encode(arg2, new Dictionary<EncodeHintType, object>() { { hint, (true) } });
         var x = pdf.X;
-        var width = AddBarcode(pdf, code128, pdf.X, y: null) - pdf.X;
+        // ^BC height (Barcode128Options.Height) wins over the ^BY default
+        // (BarcodeOptions.Height) when the field specifies one. Without
+        // this swap "324f" rendered at the 20-dot ^BY height instead of
+        // the 150-dot ^BCN,150 height -- bars looked like tall ticks.
+        var savedHeight = this.BarcodeOptions.Height;
+        if (this.Barcode128Options.Height > 0)
+            this.BarcodeOptions.Height = this.Barcode128Options.Height;
+        double width;
+        try { width = AddBarcode(pdf, code128, pdf.X, y: null) - pdf.X; }
+        finally { this.BarcodeOptions.Height = savedHeight; }
 
         if (this.Barcode128Options.Line && !this.Barcode128Options.LineAbove)
         {
-            pdf.Ln(this.BarcodeOptions.Height + 4);
+            // ^BC respects a leading ^A?h,w so the author can pick a
+            // smaller / different font for the caption (^FO50,940^ADN,20,5
+            // ^BC... is the GLS courier pattern). Leave Thickness alone so
+            // ^A? wins; fall back to the field default (50) when no ^A?
+            // precedes ^BC. Left-align rather than centre — Zebra labels
+            // typically print the interpretation line starting at the
+            // barcode's left edge.
+            pdf.Ln(this.Barcode128Options.Height + 4);
             this.TextMode = FieldMode.Text;
-            this.Thickness = 50;
-            DrawHumanReadable(pdf, arg2, barcodeLeft: x, barcodeWidth: width);
+            DrawHumanReadable(pdf, arg2, barcodeLeft: x, barcodeWidth: width, centerText: false);
         }
     }
 
-    private void DrawHumanReadable(FPdf pdf, string text, double barcodeLeft, double barcodeWidth)
+    private void DrawHumanReadable(FPdf pdf, string text, double barcodeLeft, double barcodeWidth, bool centerText = true)
     {
         var fontPoints = (Convert.ToDouble(this.Thickness) / Dpi) * 25.4 * 2.54;
         pdf.SetFont(this.MonospaceFont, this.MonospaceStyle ?? "", 0, null);
@@ -419,11 +434,15 @@ public class FieldDefinition
         pdf.FontScale.ScaleX = 1;
         pdf.FontScale.ScaleY = 1;
         var tracking = ZebraTracking(pdf);
-        // GetStringWidth already returns the width in user units (FontSize is
-        // stored divided by k). Account for the per-char tracking so the
-        // centring stays correct.
-        var textWidthUser = pdf.GetStringWidth(text) + tracking * Math.Max(0, text.Length - 1);
-        var indent = Math.Max(0, (barcodeWidth - textWidthUser) / 2);
+        double indent = 0;
+        if (centerText)
+        {
+            // GetStringWidth already returns the width in user units (FontSize is
+            // stored divided by k). Account for the per-char tracking so the
+            // centring stays correct.
+            var textWidthUser = pdf.GetStringWidth(text) + tracking * Math.Max(0, text.Length - 1);
+            indent = Math.Max(0, (barcodeWidth - textWidthUser) / 2);
+        }
         pdf.SetX(barcodeLeft + indent);
         pdf.WriteRotatedText(pdf.X, pdf.Y, this.Thickness * 0.7, "N", text, tracking);
     }

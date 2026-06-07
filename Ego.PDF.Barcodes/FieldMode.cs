@@ -44,7 +44,13 @@ public class Barcode1DOptions
 {
     /// <summary>Empty, N, R, I, B.</summary>
     public string Orientation { get; set; } = "";
-    public int Height { get; set; } = 10;
+    /// <summary>
+    /// Barcode bar height in dots, or 0 when the ^B? field didn't carry
+    /// a height parameter -- in that case the renderer falls back to the
+    /// ^BY default (BarcodeOptions.Height) so plain "^BC^FD..." still
+    /// inherits the chain's last ^BY,h height.
+    /// </summary>
+    public int Height { get; set; } = 0;
     public bool Line { get; set; } = true;
     public bool LineAbove { get; set; } = false;
     public bool CheckDigit { get; set; } = false;
