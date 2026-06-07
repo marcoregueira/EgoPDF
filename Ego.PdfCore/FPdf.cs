@@ -1116,7 +1116,12 @@ public class FPdf: IDisposable
 
     public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt)
     {
-        WriteRotatedTextZpl(foX, foY, ascent, rotation, txt, 0);
+        WriteRotatedTextZpl(foX, foY, ascent, rotation, txt, 0, false);
+    }
+
+    public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt, double tracking)
+    {
+        WriteRotatedTextZpl(foX, foY, ascent, rotation, txt, tracking, false);
     }
 
     /// <summary>
@@ -1130,7 +1135,16 @@ public class FPdf: IDisposable
     /// <see cref="WriteRotatedText"/>.
     /// </summary>
     /// <param name="tracking">Extra inter-character advance, in PDF user units. 0 = font-native.</param>
-    public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt, double tracking)
+    /// <param name="useTopLeftBboxAnchor">
+    /// When true and rotation = "B" the (foX, foY) anchors the top-left of the
+    /// rotated bounding box -- text extends DOWN from foY, still reading
+    /// upward. Use this for ^FO + ^A?B without ^FB (the GLS courier label
+    /// pattern). When false (the default) the FO point anchors the FIRST
+    /// char's baseline-origin -- text extends UP from foY. Use that for
+    /// ^FT + ^A?B and for per-line calls coming out of DrawFramed (where the
+    /// field-level Origin is already absorbed into the line position).
+    /// </param>
+    public void WriteRotatedTextZpl(double foX, double foY, double ascent, string rotation, string txt, double tracking, bool useTopLeftBboxAnchor)
     {
         // textWidth covers the rotated bbox dimension parallel to the reading
         // direction. GetStringWidth returns the NATURAL advance; the PDF text
@@ -1166,15 +1180,17 @@ public class FPdf: IDisposable
                                     (H - foY) * k),
             // 90° CCW rotation (ZPL "read from bottom up"). Chars advance
             // upward; ascent extends to the left of the baseline column.
-            // FO is anchored at the FIRST char's baseline-origin (bottom-left
-            // of the rotated column): the user sees "DESTINATARIO" starting
-            // at foY and extending upward, the way Labelary places it. The
-            // ZPL spec is loose enough that both "FO at bbox top" and "FO at
-            // first char" are defensible, but the latter matches how this
-            // codepath has been used in our test corpus.
+            // Default anchor is the FIRST char's baseline-origin (text
+            // extends UP from foY) -- ^FT semantics and the SEUR vertical1
+            // sample's per-line DrawFramed calls all expect this.
+            // When useTopLeftBboxAnchor is true, foY anchors the TOP of the
+            // rotated bbox instead -- text extends DOWN from foY, still
+            // reading upward inside the strip. ^FO without ^FB on the GLS
+            // courier label needs this so DESTINATARIO sits below foY=150
+            // rather than climbing above the Y=130 separator.
             "B" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 90,
                                     (foX + ascent) * k,
-                                    (H - foY) * k),
+                                    (H - foY - (useTopLeftBboxAnchor ? renderedWidth : 0)) * k),
             _ => throw new ArgumentException("Código de rotación no válido."),
         };
 

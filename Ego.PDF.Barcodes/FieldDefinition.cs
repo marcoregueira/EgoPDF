@@ -245,7 +245,13 @@ public class FieldDefinition
         }
         else
         {
-            pdf.WriteRotatedTextZpl(pdf.X, pdf.Y, baselineOffset, this.Orientation, text, tracking);
+            // Non-^FB path: ^FO + B should anchor the rotated bbox top-left
+            // (GLS courier label DESTINATARIO et al.). ^FT + B keeps the
+            // first-char baseline anchor by passing useTopLeftBboxAnchor=
+            // false. DrawFramed's per-line calls below pass false too --
+            // the field-level Origin is already absorbed into lineY.
+            pdf.WriteRotatedTextZpl(pdf.X, pdf.Y, baselineOffset, this.Orientation, text, tracking,
+                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop);
         }
         pdf.GetPos();
     }
