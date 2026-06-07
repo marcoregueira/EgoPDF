@@ -3125,9 +3125,16 @@ public class FPdf: IDisposable
         {
             Out("/Creator " + TextString(Creator));
         }
-        //CONVERSION_WARNING: Method 'date' was converted to 'System.DateTime.ToString' which has a different behavior. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/date.htm 
-        //CONVERSION_ISSUE: Operator '@' was not converted. Copy this link in your browser for more info: ms-its:C:\Program Files\Microsoft Corporation\PHP to ASP.NET Migration Assistant\PHPToAspNet.chm::/1000.htm 
-        Out("/CreationDate " + TextString("D:" + DateTime.Now.ToString("YmdHis")));
+        // PDF date format (PDF 1.7 §7.9.4): D:YYYYMMDDHHmmSSOHH'mm'
+        // where O is +, - or Z. The PHP-era format string "YmdHis" got
+        // copy-pasted as a .NET format and rendered nonsense like
+        // "D:Y4721i12" -- not parseable as a date, which made Acrobat
+        // offer to "save the repaired file" every time you opened ours.
+        var now = DateTime.Now;
+        var tz = TimeZoneInfo.Local.GetUtcOffset(now);
+        var tzSign = tz.Ticks >= 0 ? "+" : "-";
+        var dateStr = $"D:{now:yyyyMMddHHmmss}{tzSign}{Math.Abs(tz.Hours):D2}'{Math.Abs(tz.Minutes):D2}'";
+        Out("/CreationDate " + TextString(dateStr));
     }
 
     internal virtual void PutCatalog()
@@ -3166,6 +3173,14 @@ public class FPdf: IDisposable
     internal virtual void PutHeader()
     {
         Out("%PDF-" + PdfVersion);
+        // PDF 1.7 §7.5.2: emit a comment line whose body contains at
+        // least four bytes >= 128 so any tool that sniffs the file as
+        // text (FTP transfers, line-ending converters, mail gateways)
+        // recognises it as binary and leaves the bytes alone. Acrobat
+        // also expects this marker and considers files without it as
+        // needing "repair" -- one of the reasons it asked to save the
+        // file on open.
+        Out("%\xE2\xE3\xCF\xD3");
     }
 
     internal virtual void PutTrailer()
