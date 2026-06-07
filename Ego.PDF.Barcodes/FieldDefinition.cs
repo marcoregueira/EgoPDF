@@ -427,6 +427,34 @@ public class FieldDefinition
         pdf.SetX(barcodeLeft + indent);
         pdf.WriteRotatedText(pdf.X, pdf.Y, this.Thickness * 0.7, "N", text, tracking);
     }
+
+    /// <summary>
+    /// Print interpretation line for a ^B?B (bottom-up rotated) barcode:
+    /// the text is drawn rotated B to the RIGHT of the bars, centered
+    /// along the stack length so it reads alongside the barcode the way
+    /// Zebra / Labelary print it. Assumes the ^FO (LeftTop) anchor mode
+    /// for the host field; ^FT-anchored rotated barcodes (vertical1
+    /// sample) don't enable Line=Y so this path doesn't need to handle
+    /// that case.
+    /// </summary>
+    private void DrawRotatedHumanReadable(FPdf pdf, string text, double barLeft, double barTop, double barLength, double barStackLength)
+    {
+        var fontPoints = (Convert.ToDouble(this.Thickness) / Dpi) * 25.4 * 2.54;
+        pdf.SetFont(this.MonospaceFont, this.MonospaceStyle ?? "", 0, null);
+        pdf.SetFontSize(fontPoints);
+        pdf.FontScale.ScaleX = 1;
+        pdf.FontScale.ScaleY = 1;
+        var tracking = ZebraTracking(pdf);
+        var textWidthUser = pdf.GetStringWidth(text) + tracking * Math.Max(0, text.Length - 1);
+        const double gap = 4.0;
+        // (textFoX, textFoY) anchors the top-left of the rotated text bbox.
+        // It sits one gap-dot to the right of the bars and is centred along
+        // the bar stack's vertical extent.
+        var textFoX = barLeft + barLength + gap;
+        var textFoY = barTop + Math.Max(0, (barStackLength - textWidthUser) / 2.0);
+        pdf.WriteRotatedTextZpl(textFoX, textFoY, this.Thickness * 0.7, "B", text, tracking,
+            useTopLeftBboxAnchor: true);
+    }
     /// <summary>
     /// Map every simple-1D BarcodeMode to the ZXing Writer + format
     /// pair the generic <see cref="DrawBarcode1D"/> pipeline drives.
@@ -523,6 +551,15 @@ public class FieldDefinition
             this.TextMode = FieldMode.Text;
             this.Thickness = 50;
             DrawHumanReadable(pdf, data, barcodeLeft: pdf.X, barcodeWidth: w * bitmap.Length);
+        }
+        else if (opts.Line && orientation == "B" && Origin == OriginEnum.LeftTop)
+        {
+            this.TextMode = FieldMode.Text;
+            this.Thickness = 50;
+            DrawRotatedHumanReadable(pdf, data,
+                barLeft: pdf.X, barTop: pdf.Y,
+                barLength: height,
+                barStackLength: w * bitmap.Length);
         }
     }
 
@@ -670,6 +707,16 @@ public class FieldDefinition
             this.Thickness = 50;
             var barcodeWidth = w * bitmap.Length;
             DrawHumanReadable(pdf, data, barcodeLeft: pdf.X, barcodeWidth: barcodeWidth);
+        }
+        else if (opts.Line && orientation == "B" && Origin == OriginEnum.LeftTop)
+        {
+            // Vertical caption to the right of the rotated bars.
+            this.TextMode = FieldMode.Text;
+            this.Thickness = 50;
+            DrawRotatedHumanReadable(pdf, data,
+                barLeft: pdf.X, barTop: pdf.Y,
+                barLength: height,
+                barStackLength: w * bitmap.Length);
         }
     }
 
