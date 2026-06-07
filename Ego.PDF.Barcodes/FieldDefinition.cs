@@ -631,8 +631,15 @@ public class FieldDefinition
         if (data.Length % 2 == 1)
             data = "0" + data;
 
-        var writer = new ITFWriter();
-        var bitmap = writer.encode(data);
+        // Custom encoder rather than ZXing.Net's ITFWriter so we can
+        // honour ^BY's wide:narrow ratio. ZXing's writer hard-codes
+        // wide = 3 modules (its END_PATTERN = {3,1,1}); ^BY4,2 asks
+        // for wide = 2, which gives noticeably thinner bars and the
+        // bar-by-bar pattern Labelary produces.
+        var wideUnits = (int)Math.Round(this.BarcodeOptions.WidthRatio, MidpointRounding.AwayFromZero);
+        if (wideUnits < 2) wideUnits = 2;
+        if (wideUnits > 3) wideUnits = 3;
+        var bitmap = EncodeI2of5(data, wideUnits);
 
         var w = this.BarcodeOptions.Width;
         var orientation = string.IsNullOrEmpty(opts.Orientation) ? "N" : opts.Orientation;
@@ -686,6 +693,61 @@ public class FieldDefinition
         }
         int check = (10 - (sum % 10)) % 10;
         return (char)('0' + check);
+    }
+
+    /// <summary>
+    /// Interleaved 2-of-5 encoder that respects ^BY's wide:narrow
+    /// ratio (ZXing.Net's ITFWriter hard-codes wide = 3). Each digit
+    /// has two wide elements and three narrow ones; in I2of5 the bars
+    /// of the first digit of a pair are interleaved with the spaces
+    /// of the second digit. Patterns are the standard ITF set: 0 =
+    /// NNWWN, 1 = WNNNW, ..., 9 = NWNWN.
+    /// </summary>
+    private static bool[] EncodeI2of5(string data, int wideUnits)
+    {
+        // Wide-position indices (0..4) for each digit's 5-element pattern.
+        int[][] wides =
+        {
+            new[]{2, 3}, // 0  NNWWN
+            new[]{0, 4}, // 1  WNNNW
+            new[]{1, 4}, // 2  NWNNW
+            new[]{0, 1}, // 3  WWNNN
+            new[]{2, 4}, // 4  NNWNW
+            new[]{0, 2}, // 5  WNWNN
+            new[]{1, 2}, // 6  NWWNN
+            new[]{3, 4}, // 7  NNNWW
+            new[]{0, 3}, // 8  WNNWN
+            new[]{1, 3}, // 9  NWNWN
+        };
+
+        var bits = new System.Collections.Generic.List<bool>();
+        bool barNext = true;
+        void Emit(int count)
+        {
+            for (int i = 0; i < count; i++) bits.Add(barNext);
+            barNext = !barNext;
+        }
+
+        // Start guard: 4 narrow elements (bar, space, bar, space).
+        Emit(1); Emit(1); Emit(1); Emit(1);
+
+        // Each digit pair: bars from d1's pattern interleaved with spaces
+        // from d2's pattern.
+        for (int i = 0; i + 1 < data.Length; i += 2)
+        {
+            var w1 = wides[ data[ i ] - '0' ];
+            var w2 = wides[ data[ i + 1 ] - '0' ];
+            for (int j = 0; j < 5; j++)
+            {
+                Emit((w1[ 0 ] == j || w1[ 1 ] == j) ? wideUnits : 1); // bar
+                Emit((w2[ 0 ] == j || w2[ 1 ] == j) ? wideUnits : 1); // space
+            }
+        }
+
+        // Stop guard: wide bar, narrow space, narrow bar.
+        Emit(wideUnits); Emit(1); Emit(1);
+
+        return bits.ToArray();
     }
 
     /// <summary>
