@@ -3,6 +3,7 @@ using Ego.PDF.Barcodes.Zpl;
 using Ego.PDF.Data;
 using Ego.PDF.Samples;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Xunit;
@@ -37,6 +38,94 @@ namespace Ego.Pdf.Test
             zpl.SetMonospaceFont("robotomonob");
             zpl.SetCondensedFont("robotocondensed");
             zpl.Print(File.ReadAllText(zplPath));
+            pdf.Close();
+        }
+
+        // Synthetic label with the ^AV* fields + separators + ^ABB rotated
+        // labels, all shifted down 40 dots to leave room for a top ruler.
+        // Full-height vertical guide lines every 25 dots (light) and every
+        // 50 dots (heavier), with the X coordinate written at the top
+        // (Y=5) and bottom (Y=1210) of each 50-dot line. The user opens
+        // the PDF, looks at where each text ends, and reports the matching
+        // X coordinate.
+        [Fact]
+        public void DoGlsLabelMeasureRuler()
+        {
+            const string outPath = @"C:\Users\Nitropc\Downloads\324f_measure.pdf";
+            const string zplOutPath = @"C:\Users\Nitropc\Downloads\324f_measure.zpl";
+
+            using var pdf = new FPdf(outPath);
+            pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
+            pdf.LoadFont("robotomonob", Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
+            pdf.AddFont("robotomonob", "");
+            pdf.LoadFont("robotocondensed", Path.Combine(GetPath(), "Fonts", "Roboto_Condensed", "RobotoCondensed-VariableFont_wght.ttf"));
+            pdf.AddFont("robotocondensed", "");
+            pdf.SetFont("helvetica", "B", 16);
+
+            var zpl = new PdfZpl(pdf, 203);
+            zpl.SetVariableFont("helvetica", "B");
+            zpl.SetMonospaceFont("robotomonob");
+            zpl.SetCondensedFont("robotocondensed");
+
+            var lines = new List<string>
+            {
+                "^XA",
+                "^PW799",
+                "^LL1230",
+                "^LS-10",
+
+                // ---- Content (shifted down 40 dots to free Y=0..30 for the top ruler labels) ----
+                "^FO250,40^AVN,120,100^FD43001306863287^FS",       // TRACKING
+                "^FO0,170^GB799,0,2^FS",                           // full-width separator
+
+                "^FO360,340^AVN,120,200^FDXXX^FS",                 // XXX
+                "^FO320,510^GB450,0,4^FS",                         // 450-dot decorative line @ X=320..770
+
+                "^FO320,640^AVN,105,50^FD27004^FS",                // 27004
+                "^FO550,640^AVN,110,50^FD    1/1^FS",              // 1/1 (with 4 leading spaces)
+                "^FO320,860^GB450,0,4^FS",                         // bottom decorative line @ X=320..770
+
+                "^FO237,950^ABB,10,10^FDDESTINATARIO^FS",          // DESTINATARIO (rotated)
+                "^FO307,950^ABB,10,10^FDREMITENTE^FS",
+                "^FO377,950^ABB,10,10^FDOBSERVACI.^FS",
+                "^FO0,940^GB799,0,1^FS",                           // top of rotated zone
+                "^FO0,1080^GB799,0,1^FS",                          // bottom of rotated zone
+            };
+
+            // ---- Vertical reference lines spanning the FULL page height ----
+            // Tick every 25 dots, heavier at 50, with X coord written at the
+            // top (Y=5) and bottom (Y=1210) of each 50-dot line.
+            for (int x = 0; x <= 799; x += 25)
+            {
+                var thickness = (x % 100 == 0) ? 1 : 1;
+                lines.Add($"^FO{x},0^GB1,1230,{thickness}^FS");
+            }
+            // Numbered labels every 50 dots, top and bottom. Two staggered
+            // rows so the labels don't overlap: multiples of 100 on the
+            // inner row (closer to the page edge), 50-offsets on the outer.
+            // Row spacing is 30 dots to clear the actual rendered glyph
+            // height of ^A0N,8 (the "font 0" path goes through helvetica
+            // with a generous ascent and lands taller than the nominal h).
+            for (int x = 0; x <= 799; x += 50)
+            {
+                var topY = (x % 100 == 0) ? 5 : 35;
+                var botY = (x % 100 == 0) ? 1195 : 1165;
+                // ^A0N,8,4 — explicit width avoids the SetFont parser
+                // early-return when only height is given (^A0N,8 alone
+                // leaves Thickness at the previous ^A?h,w value, e.g. 105
+                // from 27004, and renders the labels at ~30-dot em).
+                lines.Add($"^FO{x + 2},{topY}^A0N,8,4^FD{x}^FS");
+                lines.Add($"^FO{x + 2},{botY}^A0N,8,4^FD{x}^FS");
+            }
+            lines.Add("^FO775,5^A0N,8,4^FD799^FS");
+            lines.Add("^FO775,1195^A0N,8,4^FD799^FS");
+            lines.Add("^FO799,0^GB1,1230,2^FS");
+
+            lines.Add("^XZ");
+
+            var zplSrc = string.Join("\n", lines);
+            File.WriteAllText(zplOutPath, zplSrc);
+            zpl.Print(zplSrc);
             pdf.Close();
         }
 

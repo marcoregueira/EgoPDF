@@ -132,21 +132,26 @@ public class FieldDefinition
                 pdf.SetFontSize(fontPoints);
                 if (isProportional)
                 {
-                    // Compress glyph width (Tz < 1) so the rendered per-char
-                    // advance lands near Zebra V's visually tight pitch even
-                    // when the ZPL spec asks for far wider chars. The GLS
-                    // courier label requests ^AVN,120,100 → aspect 0.83,
-                    // while Roboto Condensed natural digit aspect is ~0.51:
-                    // taking the inverse gives Tz ≈ 0.61, which packs 14
-                    // digits inside the available 549 dots instead of
-                    // spilling past the page edge. Helvetica fallback uses
-                    // the same logic with its ~0.6 natural aspect. Clamp at
-                    // 1.0 so very narrow ZPL widths (already tighter than
-                    // the font) leave the glyphs at native size rather than
-                    // stretching them.
-                    var digitAspect = hasCondensed ? 0.51 : 0.6;
+                    // ZPL "w" is the requested per-char advance in dots.
+                    // ScaleX = aspect (= w/h) makes the rendered advance
+                    // land at digitAspect × w -- Labelary's apparent rule
+                    // per the GLS measurements (XXX ^AVN,120,200 → 108
+                    // per-char observed, 110 predicted; "1/1" ^AVN,110,50
+                    // → 27 observed, 28 predicted).
+                    //
+                    // When per-spec rendering would overflow the remaining
+                    // label width from the current X (the GLS tracking row
+                    // is the classic case: 14 chars × spec 50 ≈ 700 dots
+                    // into a 549-dot strip), auto-compress ScaleX to fit.
+                    // Labelary appears to do the same.
                     var requestedAspect = (double)charW / charH;
-                    this.ScaleX = Math.Min(digitAspect / requestedAspect, 1.0);
+                    this.ScaleX = requestedAspect;
+                    pdf.FontScale.ScaleX = this.ScaleX; // affects no GetStringWidth, just kept in sync
+                    var naturalTextWidth = pdf.GetStringWidth(text);
+                    var renderedWidth = naturalTextWidth * this.ScaleX;
+                    var available = pdf.W - pdf.X;
+                    if (renderedWidth > available && available > 0)
+                        this.ScaleX *= available / renderedWidth;
                 }
                 else
                 {
