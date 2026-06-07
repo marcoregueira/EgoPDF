@@ -506,7 +506,8 @@ public class FieldDefinition
 
         if (orientation == "B")
         {
-            DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height);
+            DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height,
+                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop);
         }
         else
         {
@@ -630,7 +631,8 @@ public class FieldDefinition
 
         if (orientation == "B")
         {
-            DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height);
+            DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height,
+                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop);
         }
         else
         {
@@ -661,8 +663,22 @@ public class FieldDefinition
     /// the ZPL convention for ^B?B (orientation B, 270° CW). Each "true"
     /// run in the bitmap becomes one bar.
     /// </summary>
-    private void DrawRotatedBars(FPdf pdf, bool[] bitmap, double anchorX, double anchorY, int moduleWidth, int barLength)
+    private void DrawRotatedBars(FPdf pdf, bool[] bitmap, double anchorX, double anchorY, int moduleWidth, int barLength,
+        bool useTopLeftBboxAnchor = false)
     {
+        // Two anchoring modes, mirroring WriteRotatedTextZpl:
+        //  - useTopLeftBboxAnchor=false (^FT path): anchor is the
+        //    bottom-right corner of the rotated barcode. Bars extend
+        //    LEFT and UP from there. Matches SampleZebra vertical1's
+        //    ^FT490,580^B2B,200 placement.
+        //  - useTopLeftBboxAnchor=true (^FO path on a portrait label,
+        //    GLS courier ^FO50,320^B2B,200): anchor is the top-left
+        //    corner of the rotated barcode. Bars extend RIGHT and DOWN
+        //    from there. With ^FT semantics, the GLS barcode landed at
+        //    X=[-150, 50] -- off the page.
+        var leftX = useTopLeftBboxAnchor ? anchorX : anchorX - barLength;
+        var topY  = useTopLeftBboxAnchor ? anchorY : (double?)null;
+
         var index = 0;
         while (index < bitmap.Length)
         {
@@ -671,14 +687,20 @@ public class FieldDefinition
                 var trueCount = bitmap.Skip(index + 1).TakeWhile(b => b).Count();
                 var thickness = moduleWidth * (trueCount + 1);
 
-                // Bar spans X = [anchorX - barLength, anchorX], Y = a
-                // moduleWidth-thick slice of (anchorY - thickness, anchorY]
-                // shifted up by the current module index.
-                var yBottom = anchorY - index * moduleWidth;
-                var yTop = yBottom - thickness;
-                var rectX = anchorX - barLength;
-                var rectW = barLength;
-                DrawAbsoluteRect(pdf, rectX, yTop, rectW, yBottom - yTop, Color.Black);
+                // Each contiguous "true" run becomes a horizontal bar
+                // (thickness moduleWidth × (trueCount+1)) stamped at the
+                // current module index.
+                double yTop;
+                if (useTopLeftBboxAnchor)
+                {
+                    yTop = topY!.Value + index * moduleWidth;
+                }
+                else
+                {
+                    var yBottom = anchorY - index * moduleWidth;
+                    yTop = yBottom - thickness;
+                }
+                DrawAbsoluteRect(pdf, leftX, yTop, barLength, thickness, Color.Black);
                 index += trueCount;
             }
             index++;
