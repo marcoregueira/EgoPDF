@@ -689,11 +689,18 @@ public class FieldDefinition
 
                 // Each contiguous "true" run becomes a horizontal bar
                 // (thickness moduleWidth × (trueCount+1)) stamped at the
-                // current module index.
+                // current module index. ZPL "B" orientation reads
+                // bottom-up: bitmap module 0 must land at the visual
+                // BOTTOM of the rotated barcode, module N at the TOP --
+                // otherwise the code is mirrored along the long axis
+                // and reads as a different (still-valid-I2of5) value.
                 double yTop;
                 if (useTopLeftBboxAnchor)
                 {
-                    yTop = topY!.Value + index * moduleWidth;
+                    // Bbox spans topY .. topY + bitmap.Length*moduleWidth.
+                    // The bar covering modules [index, index+trueCount]
+                    // has its visual TOP at the module at index+trueCount.
+                    yTop = topY!.Value + (bitmap.Length - 1 - index - trueCount) * moduleWidth;
                 }
                 else
                 {
