@@ -14,28 +14,25 @@
   <!-- NuGet package metadata -->
   <PropertyGroup>
     <PackageId>EgoPDF.Markdown</PackageId>
-    <!-- Preview release: the Markdown surface is still settling,
-         expect breaking changes between previews. preview.2 added
-         multi-line shortcodes, code-block line wrapping and the
-         built-in [[image]] shortcode. preview.3 only re-pins the
-         EgoPDF.Generator dependency to 2.2.1 (the new Generator
-         patch with the AutoFlush + FontScale fixes); Markdown
-         source is unchanged. -->
-    <Version>1.0.0-preview.3</Version>
+    <!-- 1.0.0 cuts the preview suffix: the Markdown surface has been
+         stable since preview.2, this release just picks up the
+         EgoPDF.Generator 2.3.0 PDF-spec fixes (the Acrobat repair
+         prompts). No Markdown source changes. -->
+    <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
     <Company>Marco Antonio Regueira</Company>
     <Copyright>Copyright (c) 2026 Marco Antonio Regueira</Copyright>
-    <Description>Render Markdown documents to PDF on top of EgoPDF.Generator and Markdig. Phase-1 happy path: headings (H1-H6), paragraphs with inline emphasis (bold / italic / code / links / autolinks), bullet and ordered lists (nested), fenced code blocks with background, horizontal rules and local images. Targets net8.0 and net9.0. Preview release — API and rendering output may change without notice.</Description>
-    <PackageTags>markdown;md;pdf;commonmark;markdig;preview;net8;net9</PackageTags>
+    <Description>Render Markdown documents to PDF on top of EgoPDF.Generator and Markdig. Phase-1 happy path: headings (H1-H6), paragraphs with inline emphasis (bold / italic / code / links / autolinks), bullet and ordered lists (nested), fenced code blocks with background, horizontal rules and local images. Targets net8.0 and net9.0.</Description>
+    <PackageTags>markdown;md;pdf;commonmark;markdig;net8;net9</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://egopdf.azurewebsites.net/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>1.0.0-preview.3: re-pin to EgoPDF.Generator 2.2.1 (the AutoFlush + FontScale.Default patch). No Markdown source changes since preview.2. preview.2 had added multi-line shortcodes, the built-in [[image]] shortcode (auto-registered) with src / width / align / caption / link, MarkdownTheme.ListItemSpacing for tight bullet lists, MarkdownTheme.ImageDpi (default 150) for plain-Markdown ![alt](url) sizing, line-wrapped fenced code blocks, and a fix so block images advance the cursor past the image instead of overlapping subsequent content.</PackageReleaseNotes>
+    <PackageReleaseNotes>1.0.0: first stable release. Same Markdown surface as preview.3 -- this build only picks up EgoPDF.Generator 2.3.0 (the PDF-spec fixes that stop Acrobat from offering to "save the repaired file"). preview.2 added multi-line shortcodes, the built-in [[image]] shortcode (auto-registered) with src / width / align / caption / link, MarkdownTheme.ListItemSpacing for tight bullet lists, MarkdownTheme.ImageDpi (default 150) for plain-Markdown ![alt](url) sizing, line-wrapped fenced code blocks, and a fix so block images advance the cursor past the image instead of overlapping subsequent content.</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

@@ -8,13 +8,13 @@
     .nupkg / .snupkg into ./artifacts and (unless -PackOnly is passed)
     pushes them to https://api.nuget.org/v3/index.json.
 
-    After the EgoPDF.Barcodes and EgoPDF.Markdown .nupkg files are built
-    the script rewrites their .nuspec so the EgoPDF.Generator dependency
-    becomes an EXACT version pin (`version="[X.Y.Z]"`) instead of the
-    SDK's optimistic default (`version="X.Y.Z"`, which NuGet treats as
-    `>= X.Y.Z`). This keeps both downstream packages pinned to the
-    specific Generator build they were tested against — important while
-    the project is still in motion. Disable with -NoPinDependencies.
+    By default the EgoPDF.Barcodes and EgoPDF.Markdown packages ship
+    with the SDK's optimistic `version="X.Y.Z"` dependency on
+    EgoPDF.Generator (NuGet treats it as `>= X.Y.Z`), which is what
+    most consumers want. Pass -PinDependencies to rewrite their
+    .nuspec into an exact pin (`version="[X.Y.Z]"`) -- useful when
+    cutting a release that needs to lock to a specific Generator
+    build the downstream packages were tested against.
 
     The API key can be supplied via -ApiKey or by setting the
     NUGET_API_KEY environment variable beforehand. The script never
@@ -48,10 +48,12 @@
 .PARAMETER Markdown
     Only pack/push the EgoPDF.Markdown package.
 
-.PARAMETER NoPinDependencies
-    Skip the post-pack rewrite of the Barcodes / Markdown .nuspec.
-    Their dependency on EgoPDF.Generator will be packed with the SDK's
-    default `>=` semantics.
+.PARAMETER PinDependencies
+    Rewrite the Barcodes / Markdown .nuspec so their EgoPDF.Generator
+    dependency becomes an exact pin (`[X.Y.Z]`) instead of NuGet's
+    default `>=` semantics. Off by default -- use it when you want
+    downstream consumers to absorb only the specific Generator build
+    you tested against.
 
 .EXAMPLE
     # Set the key once per shell, then publish all three packages.
@@ -67,8 +69,8 @@
     ./publish.ps1 -Barcodes
 
 .EXAMPLE
-    # Publish Markdown alone, skipping the dependency pin.
-    ./publish.ps1 -Markdown -NoPinDependencies
+    # Publish Markdown alone with an exact Generator pin.
+    ./publish.ps1 -Markdown -PinDependencies
 #>
 [CmdletBinding()]
 param(
@@ -80,7 +82,7 @@ param(
     [Alias('Zpl')]
     [switch] $Barcodes,
     [switch] $Markdown,
-    [switch] $NoPinDependencies
+    [switch] $PinDependencies
 )
 
 $ErrorActionPreference = 'Stop'
@@ -196,12 +198,14 @@ function Set-ExactDependency {
 }
 
 # Pin EgoPDF.Generator inside every freshly built downstream nupkg matching
-# $Pattern. The SDK packs ProjectReferences with `>=` semantics; we want
-# exact `[X.Y.Z]` pins so downstream consumers can't silently absorb a future
-# Generator change.
+# $Pattern. The SDK packs ProjectReferences with `>=` semantics; that's the
+# default since the 1.0.0 release because most consumers want to absorb
+# Generator bug fixes automatically. Pass -PinDependencies to opt in to the
+# exact `[X.Y.Z]` pin when a downstream package needs the specific Generator
+# build it was tested against.
 function Invoke-PinGeneratorDependency {
     param([string] $Pattern)
-    if ($NoPinDependencies) { return }
+    if (-not $PinDependencies) { return }
     $packages = Get-ChildItem -Path $artifacts -Filter $Pattern -File
     foreach ($pkg in $packages) {
         Set-ExactDependency -NupkgPath $pkg.FullName -DependencyId 'EgoPDF.Generator'
