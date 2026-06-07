@@ -171,6 +171,8 @@ namespace Ego.Pdf.Test
         {
             var s = Encoding.Latin1.GetString(pdf);
             s = Regex.Replace(s, @"/CreationDate \(D:[^)]*\)", "/CreationDate (D:NORMALIZED)");
+            // /ID hashes the wall-clock timestamp so it churns every run.
+            s = Regex.Replace(s, @"/ID \[<[0-9A-Fa-f]+><[0-9A-Fa-f]+>\]", "/ID NORMALIZED");
             s = Regex.Replace(s, @"xref(.*?)trailer", "xref\nNORMALIZED\ntrailer",
                 RegexOptions.Singleline);
             s = Regex.Replace(s, @"startxref\s*\n?\d+", "startxref\n0");

@@ -3188,6 +3188,35 @@ public class FPdf: IDisposable
         Out("/Size " + (ObjectCount + 1).ToString());
         Out("/Root " + ObjectCount.ToString() + " 0 R");
         Out("/Info " + (ObjectCount - 1).ToString() + " 0 R");
+        // PDF 1.7 §14.4: /ID is a two-element array of 16-byte file
+        // identifiers. The first ("permanent") never changes once a
+        // file is written; the second ("instance") changes on every
+        // save -- because we always write a new file, both elements
+        // are the same here. Acrobat treats trailers without /ID as
+        // needing "repair", which surfaces as the save-on-close
+        // prompt the user reported.
+        var id = ComputeFileId();
+        Out("/ID [<" + id + "><" + id + ">]");
+    }
+
+    /// <summary>
+    /// Derive a 16-byte (32 hex char) file identifier for the
+    /// trailer's /ID entry. Hash a few process-stable bits so the
+    /// same document content reliably gives the same ID, but a fresh
+    /// run produces a fresh one -- matches what Acrobat would write.
+    /// </summary>
+    private string ComputeFileId()
+    {
+        var seed = string.Concat(
+            DateTime.UtcNow.Ticks.ToString(),
+            Title ?? "",
+            Author ?? "",
+            Subject ?? "",
+            Creator ?? "",
+            ObjectCount.ToString());
+        using var md5 = System.Security.Cryptography.MD5.Create();
+        var bytes = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(seed));
+        return Convert.ToHexString(bytes);
     }
 
     internal virtual void EndDoc()
