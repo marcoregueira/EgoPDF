@@ -128,8 +128,20 @@ public class FieldDefinition
                 // cap-height interpretation (charH × k / 0.7) draws chars
                 // tall enough to overlap adjacent fields; the em
                 // interpretation matches Labelary's apparent sizing.
-                fontPoints = charH * pdf.k;
+                // For the condensed proportional slot we shrink em a bit
+                // more so ^AV* fields with limited vertical room (27004 at
+                // FO Y=750 with the next ^GB at Y=820 = 70 dots clear)
+                // don't visibly spill past the decorative line beneath.
+                var emFactor = (isProportional && hasCondensed) ? 0.8 : 1.0;
+                fontPoints = charH * emFactor * pdf.k;
                 pdf.SetFontSize(fontPoints);
+                // Re-anchor baselineOffset to the actual em (was charH-based
+                // upstream): a smaller em deserves a smaller offset, or the
+                // chars float visibly below where the ^FO point implies.
+                if (isProportional && hasCondensed)
+                    baselineOffset = Origin == OriginEnum.LeftBottom
+                        ? 0
+                        : (fontPoints / pdf.k) * ascentRatio;
                 if (isProportional)
                 {
                     // ZPL "w" is the requested per-char advance in dots.
@@ -149,7 +161,13 @@ public class FieldDefinition
                     pdf.FontScale.ScaleX = this.ScaleX; // affects no GetStringWidth, just kept in sync
                     var naturalTextWidth = pdf.GetStringWidth(text);
                     var renderedWidth = naturalTextWidth * this.ScaleX;
-                    var available = pdf.W - pdf.X;
+                    // Target 85% of the actual available strip rather than
+                    // 100%: GetStringWidth ignores the rightmost glyph's
+                    // right-side bearing, and visually the tracking row
+                    // looks too loose when it stretches to the page edge.
+                    // 0.85 lands the GLS tracking near Labelary's ~700-dot
+                    // endpoint instead of the 800-dot edge.
+                    var available = (pdf.W - pdf.X) * 0.85;
                     if (renderedWidth > available && available > 0)
                         this.ScaleX *= available / renderedWidth;
                 }
