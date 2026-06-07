@@ -439,8 +439,20 @@ public class FieldDefinition
     /// </summary>
     private void DrawRotatedHumanReadable(FPdf pdf, string text, double barLeft, double barTop, double barLength, double barStackLength)
     {
-        var fontPoints = (Convert.ToDouble(this.Thickness) / Dpi) * 25.4 * 2.54;
-        pdf.SetFont(this.MonospaceFont, this.MonospaceStyle ?? "", 0, null);
+        // Slightly smaller + condensed compared to the N path: the
+        // rotated caption sits next to the bars in a narrow vertical
+        // column and the monospace Roboto Mono in regular size both
+        // visibly overflows the bar stack and leaves the digits
+        // floating with too much air between them. CondensedFont
+        // (Roboto Condensed when the host configured it) closes the
+        // gap; falling back to MonospaceFont keeps the code working
+        // when no condensed slot is registered.
+        var rotatedThickness = this.Thickness * 0.9;
+        var fontPoints = (rotatedThickness / Dpi) * 25.4 * 2.54;
+        if (!string.IsNullOrEmpty(this.CondensedFont))
+            pdf.SetFont(this.CondensedFont, this.CondensedStyle ?? "", 0, null);
+        else
+            pdf.SetFont(this.MonospaceFont, this.MonospaceStyle ?? "", 0, null);
         pdf.SetFontSize(fontPoints);
         pdf.FontScale.ScaleX = 1;
         pdf.FontScale.ScaleY = 1;
@@ -452,7 +464,7 @@ public class FieldDefinition
         // the bar stack's vertical extent.
         var textFoX = barLeft + barLength + gap;
         var textFoY = barTop + Math.Max(0, (barStackLength - textWidthUser) / 2.0);
-        pdf.WriteRotatedTextZpl(textFoX, textFoY, this.Thickness * 0.7, "B", text, tracking,
+        pdf.WriteRotatedTextZpl(textFoX, textFoY, rotatedThickness * 0.7, "B", text, tracking,
             useTopLeftBboxAnchor: true);
     }
     /// <summary>
