@@ -46,6 +46,25 @@
         </tr>
         <tr>
             <td>
+                <b>Form &amp; data table</b>
+            </td>
+            <td>
+                Fluent <code>TableRow</code> / <code>TableCell</code> API
+                end-to-end: a pen-and-ink "instancia" form (heterogeneous
+                rows, label-on-top / value-below pairs sharing borders via
+                <code>Borders.All &amp; ~Borders.Bottom</code> +
+                <code>~Borders.Top</code>, wrapping <code>DOMICILIO</code>,
+                date / place / signature row with ink space) followed by a
+                data table whose loop calls <code>row.Measure</code>
+                before each row and forces a page break + header reprint
+                when the next row + the <code>TOTAL</code> wouldn't fit.
+            </td>
+            <td>
+                <a (click)="download($event)" href="/api/SampleData/GetSampleFormAndTable">Form &amp; table</a>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <b>Markdown to PDF</b>
             </td>
             <td>

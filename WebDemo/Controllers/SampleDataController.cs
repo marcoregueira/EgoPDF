@@ -152,6 +152,21 @@ namespace WebDemo.Controllers
             return result;
         }
 
+        /// <summary>
+        /// Showcase the fluent TableRow / TableCell API: a pen-and-ink
+        /// "instancia" form (heterogeneous rows with label-on-top /
+        /// value-below pairs sharing borders) plus a data table that
+        /// page-breaks correctly by calling <c>row.Measure</c> before
+        /// each row.
+        /// </summary>
+        [HttpGet()]
+        public FileStreamResult GetSampleFormAndTable()
+        {
+            var buffer = SampleFormAndTable.GetSample(null);
+            buffer.Seek(0, SeekOrigin.Begin);
+            return new FileStreamResult(buffer, "application/pdf");
+        }
+
         [HttpGet()]
         public FileStreamResult GetSampleZebra([FromQuery] int id)
         {
