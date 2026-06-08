@@ -99,37 +99,52 @@ namespace Ego.PDF.Samples
             double width = pdf.CurrentPageSize.Width - 2 * PageMargin;
             pdf.SetX(PageMargin);
 
-            // Title band: one cell, all width, centred header.
+            // The default FPdf line width (~0.2 dots at this scale) draws
+            // borders that look fragmented next to bold text and grey fill;
+            // 0.3 pt is still a hairline but reads as a deliberate stroke.
+            pdf.SetLineWidth(0.3);
+
+            // Title band.
             new TableRow(1).Width(width).SetCellHeight(10)
                 .Bordered(Borders.All)
                 .Render(pdf, c => c.Header("SOLICITUD DE INSCRIPCIÓN").BackgroundColor(FormStyle.TitleFill));
 
-            pdf.Ln(2);
+            pdf.Ln(BlockGap);
 
-            // Two-column form pairs. Each pair = a label row (no bottom
-            // border, light-grey filled) on top of a value row (no top
-            // border) so the pair looks like one box with the label as a
-            // small caption sitting on a header strip.
+            // ---- Personal data block ---------------------------------
+            // Row 1: NOMBRE | APELLIDO 1 | APELLIDO 2 | DNI
             pdf.SetX(PageMargin);
-            FormPair(pdf, width, leftLabel: "NOMBRE", leftValue: "MARÍA",
-                                 rightLabel: "APELLIDOS", rightValue: "GARCÍA LÓPEZ");
+            FormPair4(pdf, width, props: (3, 3, 3, 2),
+                labels: ("NOMBRE", "APELLIDO 1", "APELLIDO 2", "DNI"),
+                values: ("MARÍA",  "GARCÍA",     "LÓPEZ",      "12345678X"));
 
+            // Row 2: FECHA NACIMIENTO | LOCALIDAD | ESTADO CIVIL
             pdf.SetX(PageMargin);
-            FormPair(pdf, width, leftLabel: "DNI", leftValue: "12345678X",
-                                 rightLabel: "FECHA DE NACIMIENTO", rightValue: "1992-04-17");
+            FormPair3(pdf, width, props: (3, 4, 3),
+                labels: ("FECHA DE NACIMIENTO", "LOCALIDAD",     "ESTADO CIVIL"),
+                values: ("1992-04-17",          "PORRIÑO",       "Soltera"));
 
-            // One-column wide row — domicilio wraps onto two lines.
+            pdf.Ln(BlockGap);
+
+            // ---- Address block ---------------------------------------
+            // Row 3a: TIPO DE VÍA | NOMBRE DE LA VÍA | Nº | Piso | Pta.
+            // Short labels for the narrow trailing columns so they don't
+            // wrap onto a second line — the same shorthand a paper
+            // instancia would use.
             pdf.SetX(PageMargin);
-            new TableRow(1).Width(width).SetCellHeight(LabelHeight)
-                .Render(pdf, c => Label("DOMICILIO", c).Bordered(Borders.All & ~Borders.Bottom));
+            FormPair5(pdf, width, props: (2, 6, 1, 1, 1),
+                labels: ("TIPO DE VÍA", "NOMBRE DE LA VÍA",    "Nº", "PISO", "PTA."),
+                values: ("CALLE",       "MAYOR",               "1",  "3º",   "B"));
+
+            // Row 3b: CÓDIGO POSTAL | LOCALIDAD | PROVINCIA | PAÍS
             pdf.SetX(PageMargin);
-            new TableRow(1).Width(width).SetCellHeight(ValueHeight)
-                .Render(pdf, c => c.Data("CALLE MAYOR 1, 3º B — 28013 MADRID (MADRID), ESPAÑA")
-                                    .Bordered(Borders.All & ~Borders.Top));
+            FormPair4(pdf, width, props: (2, 3, 3, 3),
+                labels: ("CÓDIGO POSTAL", "LOCALIDAD", "PROVINCIA", "PAÍS"),
+                values: ("28013",         "MADRID",    "MADRID",    "ESPAÑA"));
 
-            pdf.Ln(2);
+            pdf.Ln(SignatureGap);
 
-            // Three-column row for date + place + signature.
+            // ---- Signature block (extra gap above) -------------------
             pdf.SetX(PageMargin);
             new TableRow(2, 2, 3).Width(width).SetCellHeight(LabelHeight)
                 .Render(pdf,
@@ -145,9 +160,73 @@ namespace Ego.PDF.Samples
                     c => c.Data("").Bordered(Borders.All & ~Borders.Top));   // ink space
         }
 
+        private static void FormPair3(FPdf pdf, double width,
+            (double, double, double) props,
+            (string, string, string) labels,
+            (string, string, string) values)
+        {
+            new TableRow(props.Item1, props.Item2, props.Item3).Width(width).SetCellHeight(LabelHeight)
+                .Render(pdf,
+                    c => Label(labels.Item1, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item2, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item3, c).Bordered(Borders.All & ~Borders.Bottom));
+            pdf.SetX(PageMargin);
+            new TableRow(props.Item1, props.Item2, props.Item3).Width(width).SetCellHeight(ValueHeight)
+                .Render(pdf,
+                    c => c.Data(values.Item1).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item2).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item3).Bordered(Borders.All & ~Borders.Top));
+        }
+
+        private static void FormPair4(FPdf pdf, double width,
+            (double, double, double, double) props,
+            (string, string, string, string) labels,
+            (string, string, string, string) values)
+        {
+            new TableRow(props.Item1, props.Item2, props.Item3, props.Item4).Width(width).SetCellHeight(LabelHeight)
+                .Render(pdf,
+                    c => Label(labels.Item1, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item2, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item3, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item4, c).Bordered(Borders.All & ~Borders.Bottom));
+            pdf.SetX(PageMargin);
+            new TableRow(props.Item1, props.Item2, props.Item3, props.Item4).Width(width).SetCellHeight(ValueHeight)
+                .Render(pdf,
+                    c => c.Data(values.Item1).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item2).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item3).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item4).Bordered(Borders.All & ~Borders.Top));
+        }
+
+        private static void FormPair5(FPdf pdf, double width,
+            (double, double, double, double, double) props,
+            (string, string, string, string, string) labels,
+            (string, string, string, string, string) values)
+        {
+            new TableRow(props.Item1, props.Item2, props.Item3, props.Item4, props.Item5)
+                .Width(width).SetCellHeight(LabelHeight)
+                .Render(pdf,
+                    c => Label(labels.Item1, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item2, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item3, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item4, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(labels.Item5, c).Bordered(Borders.All & ~Borders.Bottom));
+            pdf.SetX(PageMargin);
+            new TableRow(props.Item1, props.Item2, props.Item3, props.Item4, props.Item5)
+                .Width(width).SetCellHeight(ValueHeight)
+                .Render(pdf,
+                    c => c.Data(values.Item1).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item2).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item3).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item4).Bordered(Borders.All & ~Borders.Top),
+                    c => c.Data(values.Item5).Bordered(Borders.All & ~Borders.Top));
+        }
+
         private const double LabelHeight     = 6;     // taller than the old 4 so the text breathes
         private const double ValueHeight     = 8;
         private const double SignatureHeight = 16;
+        private const double BlockGap        = 3;     // between thematic blocks (personal / address / signature)
+        private const double SignatureGap    = 10;    // bigger separation before the signature block
 
         /// <summary>
         /// Convenience wrapper around <see cref="TableCell.Label(string)"/>
