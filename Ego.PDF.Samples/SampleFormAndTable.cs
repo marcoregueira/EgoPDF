@@ -19,7 +19,8 @@ namespace Ego.PDF.Samples
     /// End-to-end exercise of the new <see cref="TableRow"/> /
     /// <see cref="TableCell"/> fluent API. Two halves:
     ///
-    ///  1. A pen-and-ink "instancia" form. Heterogeneous rows: a title
+    ///  1. A pen-and-ink application form (instancia in Spanish admin
+    ///     vocabulary). Heterogeneous rows: a title
     ///     band, label + value pairs across two columns, a wide
     ///     domicilio field that wraps, a signature row at the bottom.
     ///     Uses the new <c>Borders.All &amp; ~Borders.Bottom</c> /
@@ -83,7 +84,7 @@ namespace Ego.PDF.Samples
             pdf.SetFont("Helvetica", "", 9);
             pdf.SetTextColor(EgoPdfBrand.SubText);
             pdf.SetXY(20, 28);
-            pdf.Cell(pdf.W - 40, 6, "Pen-and-ink instancia + paginated data table", "0", 0, AlignEnum.Right);
+            pdf.Cell(pdf.W - 40, 6, "Pen-and-ink application form + paginated data table", "0", 0, AlignEnum.Right);
 
             pdf.SetY(bandHeight + 10);
             pdf.SetX(PageMargin);
@@ -130,7 +131,7 @@ namespace Ego.PDF.Samples
             // Row 3a: TIPO DE VÍA | NOMBRE DE LA VÍA | Nº | Piso | Pta.
             // Short labels for the narrow trailing columns so they don't
             // wrap onto a second line — the same shorthand a paper
-            // instancia would use.
+            // paper application form would use.
             pdf.SetX(PageMargin);
             FormPair5(pdf, width, props: (2, 6, 1, 1, 1),
                 labels: ("TIPO DE VÍA", "NOMBRE DE LA VÍA",    "Nº", "PISO", "PTA."),

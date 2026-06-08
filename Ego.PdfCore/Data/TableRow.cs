@@ -88,7 +88,7 @@ namespace Ego.PDF.Data
 
         /// <summary>
         /// Apply the same set of border flags to every cell. Mostly useful
-        /// for the "instancia" pattern -- pair two rows with
+        /// for the label-on-top / value-below form pattern -- pair two rows with
         /// <c>Borders.All &amp; ~Borders.Bottom</c> on the labels and
         /// <c>Borders.All &amp; ~Borders.Top</c> on the values to get a
         /// merged-looking two-line box.

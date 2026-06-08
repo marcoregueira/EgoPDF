@@ -154,7 +154,7 @@ namespace WebDemo.Controllers
 
         /// <summary>
         /// Showcase the fluent TableRow / TableCell API: a pen-and-ink
-        /// "instancia" form (heterogeneous rows with label-on-top /
+        /// application form (heterogeneous rows with label-on-top /
         /// value-below pairs sharing borders) plus a data table that
         /// page-breaks correctly by calling <c>row.Measure</c> before
         /// each row.
