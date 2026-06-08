@@ -220,6 +220,12 @@ namespace Ego.Pdf.Test
             SamplePhotovoltaic.GetSample("sample-photovoltaic.pdf", GetPath());
         }
 
+        [Fact]
+        public void DoSampleFormAndTable()
+        {
+            SampleFormAndTable.GetSample("sample-form-and-table.pdf");
+        }
+
         // --------------------------------------------------------------
         // Zebra "tests" (visual smoke tests, not assertions)
         //
