@@ -6,6 +6,15 @@ using System.IO;
 
 namespace Ego.PDF.Samples
 {
+    // Light grey used as the label background so the field captions read
+    // as headings without overpowering the value beneath them. Same shade
+    // for both halves of the form so the layout reads as one block.
+    static class FormStyle
+    {
+        public static readonly Color LabelFill = new Color(238, 240, 244);
+        public static readonly Color TitleFill = new Color(220, 224, 232);
+    }
+
     /// <summary>
     /// End-to-end exercise of the new <see cref="TableRow"/> /
     /// <see cref="TableCell"/> fluent API. Two halves:
@@ -36,8 +45,11 @@ namespace Ego.PDF.Samples
         public static Stream GetSample(string file)
         {
             using var pdf = new SampleFormAndTable(file);
+            EgoPdfBrand.LoadPoppins(pdf);
             pdf.SetAutoPageBreak(true, PageMargin);
             pdf.AddPage(PageOrientation.Portrait, PageSizeEnum.A4);
+
+            DrawBrandBand(pdf);
             pdf.SetFont("helvetica", "", 10);
 
             DrawInstanciaForm(pdf);
@@ -46,6 +58,36 @@ namespace Ego.PDF.Samples
 
             pdf.Close();
             return pdf.Buffer.BaseStream;
+        }
+
+        /// <summary>
+        /// EgoPDF brand band, same shape the Markdown / PV samples use:
+        /// dark strip across the top, wordmark on the left, document
+        /// title + subtitle on the right. The form starts a few dots
+        /// below it.
+        /// </summary>
+        private static void DrawBrandBand(SampleFormAndTable pdf)
+        {
+            const double bandHeight = 44;
+            pdf.SetFillColor(EgoPdfBrand.Dark);
+            pdf.Rect(0, 0, pdf.W, bandHeight, "F");
+
+            EgoPdfBrand.DrawWordmark(pdf, x: 20, y: 14, sizePt: 22,
+                egoColor: Color.White, pdfColor: EgoPdfBrand.Accent, cellHeight: 11);
+
+            pdf.SetFont("Poppins", "", 22);
+            pdf.SetTextColor(Color.White);
+            pdf.SetXY(20, 12);
+            pdf.Cell(pdf.W - 40, 12, "FORM & DATA TABLE", "0", 0, AlignEnum.Right);
+
+            pdf.SetFont("Helvetica", "", 9);
+            pdf.SetTextColor(EgoPdfBrand.SubText);
+            pdf.SetXY(20, 28);
+            pdf.Cell(pdf.W - 40, 6, "Pen-and-ink instancia + paginated data table", "0", 0, AlignEnum.Right);
+
+            pdf.SetY(bandHeight + 10);
+            pdf.SetX(PageMargin);
+            pdf.SetTextColor(EgoPdfBrand.Dark);
         }
 
         // -----------------------------------------------------------------
@@ -60,13 +102,14 @@ namespace Ego.PDF.Samples
             // Title band: one cell, all width, centred header.
             new TableRow(1).Width(width).SetCellHeight(10)
                 .Bordered(Borders.All)
-                .Render(pdf, c => c.Header("SOLICITUD DE INSCRIPCIÓN").BackgroundColor(new Color(230, 230, 240)));
+                .Render(pdf, c => c.Header("SOLICITUD DE INSCRIPCIÓN").BackgroundColor(FormStyle.TitleFill));
 
             pdf.Ln(2);
 
             // Two-column form pairs. Each pair = a label row (no bottom
-            // border) on top of a value row (no top border) so the pair
-            // looks like one box with the label as a small caption.
+            // border, light-grey filled) on top of a value row (no top
+            // border) so the pair looks like one box with the label as a
+            // small caption sitting on a header strip.
             pdf.SetX(PageMargin);
             FormPair(pdf, width, leftLabel: "NOMBRE", leftValue: "MARÍA",
                                  rightLabel: "APELLIDOS", rightValue: "GARCÍA LÓPEZ");
@@ -77,10 +120,10 @@ namespace Ego.PDF.Samples
 
             // One-column wide row — domicilio wraps onto two lines.
             pdf.SetX(PageMargin);
-            new TableRow(1).Width(width).SetCellHeight(4)
-                .Render(pdf, c => c.Label("DOMICILIO").Bordered(Borders.All & ~Borders.Bottom));
+            new TableRow(1).Width(width).SetCellHeight(LabelHeight)
+                .Render(pdf, c => Label("DOMICILIO", c).Bordered(Borders.All & ~Borders.Bottom));
             pdf.SetX(PageMargin);
-            new TableRow(1).Width(width).SetCellHeight(6)
+            new TableRow(1).Width(width).SetCellHeight(ValueHeight)
                 .Render(pdf, c => c.Data("CALLE MAYOR 1, 3º B — 28013 MADRID (MADRID), ESPAÑA")
                                     .Bordered(Borders.All & ~Borders.Top));
 
@@ -88,19 +131,33 @@ namespace Ego.PDF.Samples
 
             // Three-column row for date + place + signature.
             pdf.SetX(PageMargin);
-            new TableRow(2, 2, 3).Width(width).SetCellHeight(4)
+            new TableRow(2, 2, 3).Width(width).SetCellHeight(LabelHeight)
                 .Render(pdf,
-                    c => c.Label("FECHA").Bordered(Borders.All & ~Borders.Bottom),
-                    c => c.Label("LUGAR").Bordered(Borders.All & ~Borders.Bottom),
-                    c => c.Label("FIRMA").Bordered(Borders.All & ~Borders.Bottom));
+                    c => Label("FECHA", c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label("LUGAR", c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label("FIRMA", c).Bordered(Borders.All & ~Borders.Bottom));
 
             pdf.SetX(PageMargin);
-            new TableRow(2, 2, 3).Width(width).SetCellHeight(14)   // taller — room for ink
+            new TableRow(2, 2, 3).Width(width).SetCellHeight(SignatureHeight)
                 .Render(pdf,
                     c => c.Data("2026-06-08").Bordered(Borders.All & ~Borders.Top),
                     c => c.Data("MADRID").Bordered(Borders.All & ~Borders.Top),
                     c => c.Data("").Bordered(Borders.All & ~Borders.Top));   // ink space
         }
+
+        private const double LabelHeight     = 6;     // taller than the old 4 so the text breathes
+        private const double ValueHeight     = 8;
+        private const double SignatureHeight = 16;
+
+        /// <summary>
+        /// Convenience wrapper around <see cref="TableCell.Label(string)"/>
+        /// that also paints the light-grey fill the form uses for every
+        /// caption. Kept as a local helper rather than baking the colour
+        /// into <c>TableCell.Label</c> because the colour is a per-document
+        /// style decision, not a library default.
+        /// </summary>
+        private static TableCell Label(string text, TableCell c) =>
+            c.Label(text).BackgroundColor(FormStyle.LabelFill);
 
         /// <summary>
         /// Helper for the two-column label-on-top / value-below pair. Two
@@ -111,12 +168,12 @@ namespace Ego.PDF.Samples
         private static void FormPair(FPdf pdf, double width,
             string leftLabel, string leftValue, string rightLabel, string rightValue)
         {
-            new TableRow(1, 1).Width(width).SetCellHeight(4)
+            new TableRow(1, 1).Width(width).SetCellHeight(LabelHeight)
                 .Render(pdf,
-                    c => c.Label(leftLabel).Bordered(Borders.All & ~Borders.Bottom),
-                    c => c.Label(rightLabel).Bordered(Borders.All & ~Borders.Bottom));
+                    c => Label(leftLabel, c).Bordered(Borders.All & ~Borders.Bottom),
+                    c => Label(rightLabel, c).Bordered(Borders.All & ~Borders.Bottom));
             pdf.SetX(PageMargin);
-            new TableRow(1, 1).Width(width).SetCellHeight(7)
+            new TableRow(1, 1).Width(width).SetCellHeight(ValueHeight)
                 .Render(pdf,
                     c => c.Data(leftValue).Bordered(Borders.All & ~Borders.Top),
                     c => c.Data(rightValue).Bordered(Borders.All & ~Borders.Top));
