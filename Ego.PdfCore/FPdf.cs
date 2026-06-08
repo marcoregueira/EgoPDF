@@ -1688,6 +1688,18 @@ public class FPdf: IDisposable
         var preserveY = Y;
         var preserveX = X;
         var oldPage = Page;
+
+        // Paint the fill FIRST as a flat rect so it doesn't bleed into the
+        // border on the inside edge. The previous order -- Cell draws the
+        // border, MultiCell then paints fill + text -- made the MultiCell
+        // background overpaint the border by half a stroke width, which
+        // showed up as little bites at every cell corner once the form's
+        // labels got a grey BackgroundColor.
+        if (fill)
+        {
+            Rect(preserveX, preserveY, cellWidth, fullCellHeight, "F");
+        }
+
         Cell(cellWidth, fullCellHeight, string.Empty, border, line);
         var newX = X;
         var newY = Y;
@@ -1698,7 +1710,9 @@ public class FPdf: IDisposable
             Y = BelowHeaderY;
         }
 
-        MultiCell(cellWidth, cellHeight, text, "", align, fill);
+        // No more fill from MultiCell -- the rect above already painted
+        // the background.
+        MultiCell(cellWidth, cellHeight, text, "", align, fill: false);
         X = newX;
         Y = newY;
         Lasth = fullCellHeight;
