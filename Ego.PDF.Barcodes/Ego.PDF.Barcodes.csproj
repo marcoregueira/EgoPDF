@@ -25,10 +25,16 @@
          rule we reverse-engineered from Labelary's rendered PDF (em
          and Tz now match within ~5% across Fonts P, Q, S), adds
          ~DG + ^XG support for inline bitmaps, and ships several other
-         ZPL fidelity fixes. -->
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+         ZPL fidelity fixes. 1.2.0 retires ZXing.Net's Code128Writer
+         in favour of a hand-rolled Code 128 encoder that honours
+         Zebra ^BC mid-stream ">x" escapes (>5 = Code C switch
+         caught by the 15420-E-2026 label), fixes the long-standing
+         "^BO" typo so real Aztec ^B0 fields render, makes the ^FN
+         data harvester multi-line + ^FH-aware, and decodes ^FH hex
+         escapes when substituting field values. -->
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
     <Company>Marco Antonio Regueira</Company>
     <Copyright>Copyright (c) 2025-2026 Marco Antonio Regueira</Copyright>
@@ -40,7 +46,14 @@
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>1.1.0: major ZPL ^A?h,w fidelity pass.
+    <PackageReleaseNotes>1.2.0: ZPL fidelity follow-up driven by a real-world Spanish-courier portrait label (15420-E-2026) where Code 128, Aztec, multi-line ^FN values and ^FH hex escapes all failed in different ways.
+
+* ^BC Code 128: replaced ZXing.Net's Code128Writer with a hand-rolled Code128Encoder so ZPL's mid-stream ">x" escapes survive. The label's data ">:%000115007>5084025789914327040" was meant to render in 23 symbols (Start A + % + 9 digits A + Code C switch + 9 pairs C + check + stop = 759 dots, matching the ^GB0,765,8 width ruler the author placed next to it). ZXing's auto-pick compressed all 27 digits and landed at 18; FORCE_CODESET_B blew up to 30. Code128Encoder peels the leading ">:" / ">;" / ">>" selector and locks the layout (no further automatic Subset C compression), maps ">5" as a mid-stream Code C switch (the smoking gun on that label), ">1".."&gt;4" as FNC1..FNC4, and re-applies ">:" / ">;" / ">>" as switches when they appear after the start. For ^BC Mode A / empty mode with no selector the encoder still auto-switches into Subset C on digit runs of 4+, matching the prior ZXing compaction behaviour.
+* ^B0 Aztec dispatcher: token was registered as "^BO" (letter O) since forever, but the actual ZPL II spec command is "^B0" (digit zero) — the 15420 label's ^B0R,4,N,0,N,1,0 silently rendered as nothing because the dispatcher key never matched. Fixed in PdfZpl.cs, FieldMode.cs comment, README.md table and the SampleZebra catalogue.
+* ^FN value extraction: the regex "\^FN(\d+)\^FD(.*?)\^FS" missed two real patterns. (a) "^FH&lt;x&gt;" can sit between ^FN and ^FD when the data block re-declares the hex-escape character (the 15420 Aztec line: "^FN034^FH\^FD…"). (b) ^FD bodies can span newlines for large 2D payloads. Now uses an optional "(?:\^FH.)?" between ^FN and ^FD plus RegexOptions.Singleline.
+* ^FH hex decoding: ^FH&lt;x&gt; declared a hex-escape character but no consumer actually decoded "&lt;x&gt;HH" sequences. AddFieldValue now collapses them into single bytes when the field has an escape character set. The 15420 Aztec payload uses "\1E", "\1D", "\1F" as ASCII RS/GS/US separators and shrinks ~3x once decoded — without this the Aztec matrix rendered at ~3x the module count.
+
+1.1.0: major ZPL ^A?h,w fidelity pass.
 
 * Proportional slots (Font 0 + P-V): em and Tz now follow Labelary's pixel-perfect quantization — hMul = round(h / native_h), wMul = round(w / native_w), em = max(native_h × 0.82, 0.81 × hMul × native_h), ScaleX = wMul / hMul. Validated against a Font P probe (h=30/60/120 × w=15/30/60/120/240) plus every C.B / PUERTO / 46520 / VALENCIA / PAGADO / 0 Eur. field on the SEUR 1485 portrait label; em matches Labelary exactly and Tz within ~5%.
 * Monospace bitmap fonts (A-H, O): same hMul/wMul quantization with a dynamic Roboto Mono "M" advance, matching Labelary's renders for ^ADR,45,25 / ^ADR,40,9 / ^ADR,17,9.

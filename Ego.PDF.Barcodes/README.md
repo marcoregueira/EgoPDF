@@ -83,7 +83,7 @@ pdf.Close();
 | `^B7`       | PDF417                  |
 | `^BQ`       | QR Code                 |
 | `^BX`       | Data Matrix             |
-| `^BO`       | Aztec                   |
+| `^B0`       | Aztec                   |
 
 All 1D symbologies honour orientation `N` (no rotation) and `B`
 (rotated 90° CCW). 2D symbologies honour `N`, `B`, `R`, `I`.

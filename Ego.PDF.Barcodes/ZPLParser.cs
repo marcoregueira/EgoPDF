@@ -59,8 +59,17 @@ public class ZplParser
     {
         var result = new Dictionary<string, string>();
 
-        // Buscar pares ^FNn seguido de ^FD...^FS
-        var matches = Regex.Matches(labelContent, @"\^FN(\d+)\^FD(.*?)\^FS");
+        // ^FN<n>[^FH<x>]^FD<value>^FS. Two flex points vs the naive
+        // "^FN(\d+)^FD(.*?)^FS":
+        //  - "^FH<char>" may sit between ^FN and ^FD when the field
+        //    re-declares the hex-escape character (the 15420-E-2026
+        //    label does this on its Aztec payload: "^FN034^FH\^FD…").
+        //  - The ^FD body may span newlines for big 2D payloads.
+        //    Singleline makes "." cross "\n".
+        var matches = Regex.Matches(
+            labelContent,
+            @"\^FN(\d+)(?:\^FH.)?\^FD(.*?)\^FS",
+            RegexOptions.Singleline);
 
         foreach (Match match in matches)
         {

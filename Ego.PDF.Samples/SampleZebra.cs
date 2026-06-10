@@ -53,7 +53,7 @@ namespace Ego.PDF.Samples
         /// <summary>
         /// 4" x 6" catalogue label that exercises every ZPL barcode
         /// command the engine maps onto ZXing.Net (^BC, ^B3, ^B2, ^BK,
-        /// ^BE, ^B8, ^BU, ^B9, ^BM, ^BQ, ^BX, ^B7, ^BO). Visual smoke
+        /// ^BE, ^B8, ^BU, ^B9, ^BM, ^BQ, ^BX, ^B7, ^B0). Visual smoke
         /// test, not a regression assertion.
         /// </summary>
         public static Stream GetSampleBarcodes(string file, string resourcePath)
@@ -99,8 +99,8 @@ namespace Ego.PDF.Samples
 ^FO470,500^FDPDF417 B7^FS
 ^FO470,535^B7N,3^FDPDF417 via ZPL^FS
 
-^FO470,750^FDAztec BO^FS
-^FO470,785^BON,5^FDAztec via ZPL^FS
+^FO470,750^FDAztec B0^FS
+^FO470,785^B0N,5^FDAztec via ZPL^FS
 
 ^XZ
 ");

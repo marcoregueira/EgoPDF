@@ -65,7 +65,7 @@ public class Barcode1DOptions
 
 /// <summary>
 /// Shared options for ZPL 2D barcodes (^BQ QR Code, ^BX Data Matrix,
-/// ^B7 PDF417, ^BO Aztec). Magnification is in dots-per-module and
+/// ^B7 PDF417, ^B0 Aztec). Magnification is in dots-per-module and
 /// scales the rendered matrix proportionally.
 /// </summary>
 public class Barcode2DOptions

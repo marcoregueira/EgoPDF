@@ -159,7 +159,7 @@ public class PdfZpl
         Tokens[ "^B7" ] = Pdf417;
         Tokens[ "^BQ" ] = QrCode;
         Tokens[ "^BX" ] = DataMatrix;
-        Tokens[ "^BO" ] = Aztec;
+        Tokens[ "^B0" ] = Aztec;
 
         ResetField(Pdf);
     }
@@ -233,8 +233,44 @@ public class PdfZpl
     {
         var fieldName = arg2.Substring(3);
         var value = this.Values.TryGetValue(fieldName, out var fieldValue) ? fieldValue : string.Empty;
+        // ^FH<x> in the format declares a hex-escape character: any
+        // "<x>HH" in field data should collapse into a single byte
+        // (here U+00HH). The 15420-E-2026 Aztec payload uses "\1E",
+        // "\1D", "\1F" as ASCII RS/GS/US separators and shrinks ~3x
+        // once decoded — without this the matrix renders at ~3x the
+        // module count and looks visibly oversized.
+        var esc = this.CurrentField.EscapeCharacter;
+        if (!string.IsNullOrEmpty(esc) && value.IndexOf(esc[0]) >= 0)
+            value = DecodeHexEscapes(value, esc[0]);
         this.CurrentField.Value = value;
     }
+
+    private static string DecodeHexEscapes(string s, char esc)
+    {
+        var sb = new System.Text.StringBuilder(s.Length);
+        int i = 0;
+        while (i < s.Length)
+        {
+            if (s[i] == esc && i + 2 < s.Length
+                && IsHex(s[i + 1]) && IsHex(s[i + 2]))
+            {
+                sb.Append((char)((HexVal(s[i + 1]) << 4) | HexVal(s[i + 2])));
+                i += 3;
+            }
+            else
+            {
+                sb.Append(s[i]);
+                i++;
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static bool IsHex(char c) =>
+        (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+
+    private static int HexVal(char c) =>
+        c <= '9' ? c - '0' : (c <= 'F' ? c - 'A' + 10 : c - 'a' + 10);
 
     private void SetDefaultBarcodeOptions(FPdf pdf, string arg2)
     {
@@ -508,7 +544,11 @@ public class PdfZpl
 
     private void Aztec(FPdf pdf, string arg2)
     {
-        // ^BOa,b,c,d  — a = orientation, b = magnification (1-10).
+        // ^B0 (digit zero, not the letter O) a,b,c,d  — a = orientation,
+        // b = magnification (1-10). The 15420-E-2026 portrait label
+        // showed why the spelling matters: it carries a real
+        // ^B0R,4,N,0,N,1,0 Aztec field, which the previous "^BO" key
+        // never matched, so the field rendered as nothing.
         Set2DOptions(arg2.Substring(3));
         this.CurrentField.TextMode = FieldMode.Barcode;
         this.CurrentField.BarcodeMode = BarcodeMode.Aztec;
