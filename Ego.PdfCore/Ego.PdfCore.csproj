@@ -24,10 +24,14 @@
          constructor, FontScale.Default mutation leak, Sample3 footer
          font size matching tutorial 3. 2.3.0 fixes five header /
          trailer / xref defects that Acrobat treated as needing
-         "repair" on close (the save-when-closing prompt). -->
-    <Version>2.3.0</Version>
-    <AssemblyVersion>2.3.0.0</AssemblyVersion>
-    <FileVersion>2.3.0.0</FileVersion>
+         "repair" on close (the save-when-closing prompt). 2.3.1 adds
+         a useTopLeftBboxAnchor-gated right padding in WriteRotatedTextZpl
+         for the "R" (90° CW) text orientation: ~30% of font ascent so
+         glyphs don't sit flush against the FO column the Barcodes
+         engine uses to anchor a rotated ZPL field. -->
+    <Version>2.3.1</Version>
+    <AssemblyVersion>2.3.1.0</AssemblyVersion>
+    <FileVersion>2.3.1.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
     <Company>Marco Antonio Regueira</Company>
     <Copyright>Copyright (c) 2017-2026 Marco Antonio Regueira</Copyright>
@@ -39,7 +43,7 @@
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>2.3.0: five fixes that stop Acrobat from offering to "save the repaired file" every time you open one of our PDFs. (1) /CreationDate was rendered with the PHP date format "YmdHis" copy-pasted into DateTime.ToString, which produced unparseable values like "D:Y4721i12"; now emits a spec-compliant "D:yyyyMMddHHmmss+OH'mm'" stamp (PDF 1.7 §7.9.4). (2) After "%PDF-1.3" we now emit the recommended comment line with four 0x80+ bytes so the file is unambiguously binary (§7.5.2). (3) The trailer gains a /ID [&lt;hash&gt;&lt;hash&gt;] entry (§14.4) -- Acrobat treats trailers without /ID as needing repair. (4) Empty "/XObject &lt;&lt;&gt;&gt;" dictionaries in Resources are now omitted when the page has no XObjects. (5) Xref entries are zero-padded ("0000000211 00000 n ") instead of space-padded, matching §7.5.4 verbatim. 2.2.1 had three earlier bug fixes (AutoFlush on the file-backed constructor, FontScale.Default mutation leak, Sample3 footer font size).</PackageReleaseNotes>
+    <PackageReleaseNotes>2.3.1: tiny ^FO + R-rotated text padding tweak in WriteRotatedTextZpl. When the caller passes useTopLeftBboxAnchor=true (Barcodes engine's ^FO ^A?R path), the baseline column now sits ~30% of the font ascent to the right of the FO point instead of flush against it. Matches Labelary's spacing on the SEUR 1485 portrait label, where the previous baseline-on-FO was visibly cramped against the rotated ascender of letters like P / W / A. ^FT-anchored fields (useTopLeftBboxAnchor=false) keep the unpadded baseline so rotated-bar caption helpers stay in the column their caller picked. 2.3.0: five fixes that stop Acrobat from offering to "save the repaired file" every time you open one of our PDFs. (1) /CreationDate was rendered with the PHP date format "YmdHis" copy-pasted into DateTime.ToString, which produced unparseable values like "D:Y4721i12"; now emits a spec-compliant "D:yyyyMMddHHmmss+OH'mm'" stamp (PDF 1.7 §7.9.4). (2) After "%PDF-1.3" we now emit the recommended comment line with four 0x80+ bytes so the file is unambiguously binary (§7.5.2). (3) The trailer gains a /ID [&lt;hash&gt;&lt;hash&gt;] entry (§14.4) -- Acrobat treats trailers without /ID as needing repair. (4) Empty "/XObject &lt;&lt;&gt;&gt;" dictionaries in Resources are now omitted when the page has no XObjects. (5) Xref entries are zero-padded ("0000000211 00000 n ") instead of space-padded, matching §7.5.4 verbatim. 2.2.1 had three earlier bug fixes (AutoFlush on the file-backed constructor, FontScale.Default mutation leak, Sample3 footer font size).</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

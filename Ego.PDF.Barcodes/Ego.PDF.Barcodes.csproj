@@ -20,10 +20,15 @@
          aspect lock, ^A?B / ^B?B rotated-text and rotated-barcode
          anchor split for ^FO vs ^FT, ^B2 Mod-10 check digit and
          user-controlled wide:narrow ratio, ^BC respects its own
-         height + leading ^A? caption font, SetCondensedFont hook). -->
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+         height + leading ^A? caption font, SetCondensedFont hook).
+         1.1.0 rebuilds the proportional sizing around the pixel-perfect
+         rule we reverse-engineered from Labelary's rendered PDF (em
+         and Tz now match within ~5% across Fonts P, Q, S), adds
+         ~DG + ^XG support for inline bitmaps, and ships several other
+         ZPL fidelity fixes. -->
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
     <Authors>Marco Antonio Regueira</Authors>
     <Company>Marco Antonio Regueira</Company>
     <Copyright>Copyright (c) 2025-2026 Marco Antonio Regueira</Copyright>
@@ -35,7 +40,22 @@
     <RepositoryUrl>https://github.com/marcoregueira/egopdf.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>1.0.0: first stable release. Late-2026 ZPL fidelity pass on top of the preview series: ^AV* condensed proportional path with native aspect lock (h scales with w when w &lt; h*71/80, matching real Zebra V), SetCondensedFont hook for picking the font that backs ^AP..^AV; ^A?B and ^B?B rotated-text / rotated-barcode anchor split between ^FO (top-left of rotated bbox) and ^FT (first-char baseline) so portrait courier labels and rotated landscape labels both place fields where their authors meant; ^B2 (Interleaved 2 of 5) hand-rolled encoder honours the ^BY wide:narrow ratio (ZXing's writer was hard-coded to 1:3) and the Mod-10 check digit when the trailing checkDigit=Y flag is set; ^BC respects an explicit height parameter and a leading ^A?h,w that picks the caption font; bottom-up rotated barcodes get their interpretation line printed alongside the bars. New GetSampleCourierPortrait + visual baseline + WebDemo entry covers the pattern end-to-end. ^FR (Field Reverse) handling on text fields from preview.3 is unchanged.</PackageReleaseNotes>
+    <PackageReleaseNotes>1.1.0: major ZPL ^A?h,w fidelity pass.
+
+* Proportional slots (Font 0 + P-V): em and Tz now follow Labelary's pixel-perfect quantization — hMul = round(h / native_h), wMul = round(w / native_w), em = max(native_h × 0.82, 0.81 × hMul × native_h), ScaleX = wMul / hMul. Validated against a Font P probe (h=30/60/120 × w=15/30/60/120/240) plus every C.B / PUERTO / 46520 / VALENCIA / PAGADO / 0 Eur. field on the SEUR 1485 portrait label; em matches Labelary exactly and Tz within ~5%.
+* Monospace bitmap fonts (A-H, O): same hMul/wMul quantization with a dynamic Roboto Mono "M" advance, matching Labelary's renders for ^ADR,45,25 / ^ADR,40,9 / ^ADR,17,9.
+* ^BY parser: accepts decimal values ("3.0", "2.0") in InvariantCulture. The previous int.TryParse silently fell back to the default 2-dot module width on locales that disagreed with "3.0", halving every barcode's length.
+* ^BC: trailing mode flag parsed; mode A (Automatic) drops the FORCE_CODESET_B hint so digit-only payloads compact into Subset C. ^BC dispatches B / R orientations through DrawRotatedBars so ^BCR stops rendering horizontally on rotated labels.
+* Code 39 ^B3: hand-rolled encoder honours ^BY's wide:narrow ratio (ZXing locks 2:1), skips the 10-module quiet zone ZXing always emits, and prints the "*" start/stop chars in the human-readable line that Zebra and Labelary both show.
+* ^B?R captions: rendered on the left side of the rotated bar stack with a font size proportional to bar length; ZebraTracking takes the actual glyph height instead of the field-level Thickness.
+* ^FO + ^A?R and ^FO + ^B?R: anchor convention corrected — bars sit at print-frame top-left of the rotated bbox; text gets a 30%-of-ascent right padding so glyphs clear the FO column. Fixed ^FO + ^B?R which was previously treating the anchor as top-right and pushing bars off the left edge.
+* Font 0 (^A0): prefers the host's CondensedFont when registered and honours explicit h/w with horizontal compression so e.g. CL1 at ^A0R,140,90 lands narrower than the font's natural ~95-dot advance.
+* ~DG download-graphic + ^XG recall: ~DG payloads live OUTSIDE ^XA…^XZ so they're now harvested up at Print() before ZplParser splits on the blocks; ^XG looks up the decoded bitmap in the new _storedGraphics; ^FT shifts the anchor up by image height (Zebra's ^FT bitmap convention). SEUR 1490's ~DG000.GRF letter-mark renders.
+* New PdfZpl.SetCondensedFontScale knob: global em multiplier applied whenever a field renders with the condensed slot. Lets the host nudge an under-sized font family up a few percent without rewriting individual ^A?h,w numbers.
+* Removed the experimental SetMetricFont knob and the Liberation Sans Narrow Bold TTF that backed it — after the pixel-perfect rewrite the metric anchor was only buying ~4% width drift mitigation and not worth the extra TTF dependency.
+* ^FR (Field Reverse): sample, controller endpoint, web demo link and visual baseline removed. The white-text-over-prior-^GB approximation broke more SEUR 1485 fields than it fixed. The code path inside FieldDefinition.Draw remains commented for a future XOR strategy.
+
+1.0.0: first stable release. Late-2026 ZPL fidelity pass on top of the preview series: ^AV* condensed proportional path with native aspect lock (h scales with w when w &lt; h*71/80, matching real Zebra V), SetCondensedFont hook for picking the font that backs ^AP..^AV; ^A?B and ^B?B rotated-text / rotated-barcode anchor split between ^FO (top-left of rotated bbox) and ^FT (first-char baseline) so portrait courier labels and rotated landscape labels both place fields where their authors meant; ^B2 (Interleaved 2 of 5) hand-rolled encoder honours the ^BY wide:narrow ratio (ZXing's writer was hard-coded to 1:3) and the Mod-10 check digit when the trailing checkDigit=Y flag is set; ^BC respects an explicit height parameter and a leading ^A?h,w that picks the caption font; bottom-up rotated barcodes get their interpretation line printed alongside the bars. New GetSampleCourierPortrait + visual baseline + WebDemo entry covers the pattern end-to-end. ^FR (Field Reverse) handling on text fields from preview.3 is unchanged.</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
