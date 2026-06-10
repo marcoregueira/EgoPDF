@@ -1169,8 +1169,17 @@ public class FPdf: IDisposable
             // right of the baseline column. FO top-left = (baseline column, top
             // of first char). Rendered width grows downward from foY so the
             // base translation doesn't need it.
+            //
+            // For ^FO + R (useTopLeftBboxAnchor = true) Labelary leaves a
+            // small visible gap between the FO column and the leftmost
+            // glyph stroke -- so the L-shaped FO marks we drop next to a
+            // field don't get crushed by the rotated baseline. ~30% of
+            // ascent matches Labelary's spacing on the SEUR 1485 (lower
+            // ratios read visibly cramped). ^FT keeps the unpadded baseline
+            // so captions positioned by the rotated-bar helper land where
+            // the helper already computed them.
             "R" => BuildTextMatrix(this.FontScale.ScaleX, this.FontScale.ScaleY, 270,
-                                    foX * k,
+                                    (useTopLeftBboxAnchor ? (foX + ascent * 0.30) : foX) * k,
                                     (H - foY) * k),
             // 180° rotation. Chars advance leftward (rendered width subtracts
             // from x); ascent points downward. FO top-left = (left edge,

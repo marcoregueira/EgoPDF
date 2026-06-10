@@ -181,20 +181,6 @@ namespace WebDemo.Controllers
             return result;
         }
 
-        /// <summary>
-        /// Tiny showcase of the ^FR (Field Reverse) handling on a text
-        /// field -- "REVERSED" glyphs painted in white over a solid
-        /// black ^GB rect, plus a regular black line below for visual
-        /// comparison.
-        /// </summary>
-        [HttpGet()]
-        public FileStreamResult GetSampleZebraReverseText()
-        {
-            var buffer = SampleZebra.GetSampleReverseText(null, AppDomain.CurrentDomain.BaseDirectory);
-            buffer.Seek(0, SeekOrigin.Begin);
-            return new FileStreamResult(buffer, "application/pdf");
-        }
-
         [HttpGet()]
         public FileStreamResult GetSample9()
         {

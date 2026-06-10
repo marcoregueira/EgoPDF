@@ -53,6 +53,9 @@
 	  <None Update="Roboto\RobotoSlab-VariableFont_wght.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
+	  <None Update="Roboto\RobotoCondensed-Bold.ttf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	  <None Update="Roboto\static\RobotoSlab-Black.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>

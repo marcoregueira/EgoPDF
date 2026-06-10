@@ -54,6 +54,13 @@ public class Barcode1DOptions
     public bool Line { get; set; } = true;
     public bool LineAbove { get; set; } = false;
     public bool CheckDigit { get; set; } = false;
+    /// <summary>
+    /// ZPL ^BC mode flag (last argument): "N" (no selected mode, default),
+    /// "U" (UCC Case Mode), "A" (Automatic — pick the most compact subset),
+    /// "D" (UCC/EAN). Empty for non-^BC barcodes. Only the ^BC renderer
+    /// consults this — Code 39 / I2of5 don't carry a mode.
+    /// </summary>
+    public string Mode { get; set; } = "";
 }
 
 /// <summary>

@@ -49,28 +49,6 @@ namespace Ego.PDF.Samples
             return zpl;
         }
 
-        /// <summary>
-        /// Minimal smoke / regression for the ^FR (Field Reverse) handling on
-        /// TEXT fields. Paints a solid black ^GB rectangle, drops a ^FR-marked
-        /// text on top of it (which should render white -- the engine inverts
-        /// the glyph colour against the dark fill), and below it a plain black
-        /// text for visual comparison. If the ^FR path regresses, the top
-        /// text disappears (black-on-black) and the byte hash shifts.
-        /// </summary>
-        public static Stream GetSampleReverseText(string file, string resourcePath)
-        {
-            using var pdf = new SampleZebra(file);
-            var zpl = OpenLabel(pdf, (LabelW, LabelH));
-            zpl.Print(@"
-^XA
-^FO40,40^GB360,80,80,B,0^FS
-^FT60,100^A0N,40^FR^FDREVERSED^FS
-^FT40,200^A0N,40^FDNORMAL TEXT^FS
-^XZ
-");
-            pdf.Close();
-            return pdf.Buffer.BaseStream;
-        }
 
         /// <summary>
         /// 4" x 6" catalogue label that exercises every ZPL barcode

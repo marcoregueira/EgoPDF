@@ -21,8 +21,18 @@ public class PdfZpl
     public string VariableStyle { get; private set; } = "";
     public string CondensedFont { get; private set; }
     public string CondensedStyle { get; private set; } = "";
+    /// <summary>
+    /// Global em-size multiplier applied whenever a field renders with
+    /// the CondensedFont slot (Font 0 and the P-V proportional slots).
+    /// 1.10 nudges Roboto Condensed up ~10% so it lands closer to
+    /// Labelary's reference width on labels where the host font sits
+    /// visibly thinner than the reference. Default 1.0 keeps existing
+    /// calibrations (GLS courier, web samples) unchanged.
+    /// </summary>
+    public double CondensedFontScale { get; private set; } = 1.0;
     public Dictionary<string, string> Values { get; private set; }
     private readonly Dictionary<string, string> _graphics = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (List<byte[]> rows, int bytesPerRow)> _storedGraphics = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Map a ZPL graphic name (the one used in ^XG) to a local image file.
@@ -33,6 +43,15 @@ public class PdfZpl
     {
         _graphics[ name ] = filePath;
     }
+
+    /// <summary>
+    /// Regex extracting one <c>~DG&lt;name&gt;,&lt;total_bytes&gt;,&lt;bytes_per_row&gt;,&lt;data&gt;</c>
+    /// segment. Data runs until the next ZPL command (introduced by <c>^</c>
+    /// or another <c>~</c>) or the end of the string.
+    /// </summary>
+    private static readonly System.Text.RegularExpressions.Regex DgPattern =
+        new(@"~DG\s*([^,]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,([^~^]*)",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
 
     // Page geometry (in dots). Defaults match Labelary's default label.
     public int LabelWidthDots { get; private set; } = 812;
@@ -185,6 +204,15 @@ public class PdfZpl
     {
         Apply1DOptions(spec.OptionsTarget(this.CurrentField), commandLine.Substring(3),
             spec.HeightIdx, spec.LineIdx, spec.LineAboveIdx, spec.CheckDigitIdx);
+        // ^BC carries a trailing "mode" param (N/U/A/D) that picks the
+        // Code 128 encoding strategy. Only ^BC reads it — the other 1D
+        // commands don't have a mode param.
+        if (spec.Mode == BarcodeMode.Code128)
+        {
+            var parts = commandLine.Substring(3).Split(',');
+            if (parts.Length > 5 && !string.IsNullOrEmpty(parts[ 5 ]))
+                this.CurrentField.Barcode128Options.Mode = parts[ 5 ].ToUpperInvariant();
+        }
         this.CurrentField.TextMode = FieldMode.Barcode;
         this.CurrentField.BarcodeMode = spec.Mode;
     }
@@ -213,17 +241,24 @@ public class PdfZpl
         arg2 = arg2.Substring(3);
         var parts = arg2.Split(',');
 
+        // ^BY accepts decimal-typed values ("3.0", "2.0") even on the int
+        // params. Parse as decimal first and round to int so "^BY3.0,2.0"
+        // sets Width=3 (not the default 2 due to a strict int.TryParse
+        // rejecting "3.0"). Use InvariantCulture so a comma-decimal
+        // OS locale (es-ES) doesn't reject "2.0" as a ratio.
         if (parts.Length > 0 && !string.IsNullOrEmpty(parts[ 0 ]))
         {
-            if (int.TryParse(parts[ 0 ], out var w))
+            if (decimal.TryParse(parts[ 0 ], System.Globalization.NumberStyles.Float,
+                                 System.Globalization.CultureInfo.InvariantCulture, out var w))
             {
-                this.CurrentField.BarcodeOptions.Width = w;
+                this.CurrentField.BarcodeOptions.Width = (int)Math.Round(w, MidpointRounding.AwayFromZero);
             }
         }
 
         if (parts.Length > 1 && !string.IsNullOrEmpty(parts[ 1 ]))
         {
-            if (decimal.TryParse(parts[ 1 ], out var w))
+            if (decimal.TryParse(parts[ 1 ], System.Globalization.NumberStyles.Float,
+                                 System.Globalization.CultureInfo.InvariantCulture, out var w))
             {
                 w = Math.Round(w, 1);
                 if (w >= 2 && w <= 3)
@@ -233,9 +268,10 @@ public class PdfZpl
 
         if (parts.Length > 2 && !string.IsNullOrEmpty(parts[ 2 ]))
         {
-            if (int.TryParse(parts[ 2 ], out var h))
+            if (decimal.TryParse(parts[ 2 ], System.Globalization.NumberStyles.Float,
+                                 System.Globalization.CultureInfo.InvariantCulture, out var h))
             {
-                this.CurrentField.BarcodeOptions.Height = h;
+                this.CurrentField.BarcodeOptions.Height = (int)Math.Round(h, MidpointRounding.AwayFromZero);
             }
         }
     }
@@ -315,12 +351,17 @@ public class PdfZpl
         this.CurrentField.VariableStyle = VariableStyle;
         this.CurrentField.CondensedFont = CondensedFont;
         this.CurrentField.CondensedStyle = CondensedStyle;
+        this.CurrentField.CondensedFontScale = CondensedFontScale;
         this.CurrentField.FrameBox = null;
         this.CurrentField.Reverse = false;
     }
 
     public void Print(string zpl)
     {
+        // ~DG download-graphic commands live OUTSIDE the ^XA…^XZ blocks
+        // ZplParser keeps, so harvest them up here before the block
+        // splitter discards their payload.
+        zpl = PreprocessDownloadGraphics(zpl);
         var parser = new ZplParser();
         parser.Parse(zpl);
         foreach (var label in parser.ReferencingLabels)
@@ -653,9 +694,7 @@ public class PdfZpl
     private void RecallGraphic(FPdf pdf, string arg2)
     {
         // ^XG<name>,<mx>,<my> — draw a previously-registered image at the
-        // current ^FO. mx / my are integer magnification factors (1..10);
-        // we treat 1 px in the source image as 1 dot at the current Dpi
-        // and scale up by mx, my for larger printouts.
+        // current ^FO. mx / my are integer magnification factors (1..10).
         EnsurePage();
         var body = arg2.Substring(3).Trim();
         var parts = body.Split(',');
@@ -663,6 +702,19 @@ public class PdfZpl
         var name = parts[ 0 ];
         var mx = parts.ToInt(1, 1);
         var my = parts.ToInt(2, 1);
+
+        // ZPL ~DG-loaded bitmap stored from the same label stream takes
+        // precedence over an externally-registered image file. ^FT
+        // anchors the bottom-left of the bitmap instead of the top-left;
+        // shift the anchor up by the rendered image height in that case.
+        if (_storedGraphics.TryGetValue(name, out var stored))
+        {
+            var anchorY = pdf.Y;
+            if (this.CurrentField.Origin == FieldDefinition.OriginEnum.LeftBottom)
+                anchorY -= stored.rows.Count * my;
+            DrawBitmapRowsScaled(pdf, stored.rows, stored.bytesPerRow, pdf.X, anchorY, mx, my);
+            return;
+        }
         if (!_graphics.TryGetValue(name, out var path) || !System.IO.File.Exists(path)) return;
 
         try
@@ -676,6 +728,76 @@ public class PdfZpl
         {
             // ignore unreadable images — the rest of the label should still
             // print.
+        }
+    }
+
+    /// <summary>
+    /// Extract every <c>~DG</c> download-graphic from the ZPL stream, decode
+    /// the compressed hex payload via <see cref="DecodeAsciiGraphicField"/>
+    /// (same encoding as ^GFA) and stash the resulting rows under the
+    /// graphic name so ^XG can recall it. Returns the ZPL with the ~DG
+    /// segments stripped — the main parser splits on '^' and would
+    /// otherwise drop the data on the floor and start interpreting the
+    /// hex pairs as commands.
+    /// </summary>
+    private string PreprocessDownloadGraphics(string zpl)
+    {
+        return DgPattern.Replace(zpl, m =>
+        {
+            try
+            {
+                var name = m.Groups[ 1 ].Value.Trim();
+                var bpr = int.Parse(m.Groups[ 3 ].Value);
+                var data = m.Groups[ 4 ].Value;
+                if (bpr <= 0) return string.Empty;
+                var rows = DecodeAsciiGraphicField(data, bpr);
+                _storedGraphics[ name ] = (rows, bpr);
+            }
+            catch
+            {
+                // skip malformed ~DG, the rest of the label should still print
+            }
+            return string.Empty;
+        });
+    }
+
+    /// <summary>
+    /// Variant of <see cref="DrawBitmapRows"/> that magnifies each source
+    /// pixel by <paramref name="mx"/> × <paramref name="my"/>. ^XG's
+    /// integer scale factors map a 1×1 source pixel onto an mx×my dot
+    /// rect.
+    /// </summary>
+    private static void DrawBitmapRowsScaled(FPdf pdf, List<byte[]> rows, int bytesPerRow, double anchorX, double anchorY, int mx, int my)
+    {
+        if (mx < 1) mx = 1;
+        if (my < 1) my = 1;
+        var color = Microsoft.Xna.Framework.Color.Black;
+        for (int row = 0; row < rows.Count; row++)
+        {
+            var rowBytes = rows[ row ];
+            for (int b = 0; b < bytesPerRow; b++)
+            {
+                var dataByte = rowBytes[ b ];
+                if (dataByte == 0) continue;
+                int colBase = b * 8;
+                int startX = -1;
+                for (int bit = 7; bit >= 0; bit--)
+                {
+                    bool isSet = (dataByte & (1 << bit)) != 0;
+                    int x = colBase + (7 - bit);
+                    if (isSet)
+                    {
+                        if (startX == -1) startX = x;
+                    }
+                    else if (startX != -1)
+                    {
+                        DrawFilledRect(pdf, anchorX + startX * mx, anchorY + row * my, (x - startX) * mx, my, color);
+                        startX = -1;
+                    }
+                }
+                if (startX != -1)
+                    DrawFilledRect(pdf, anchorX + startX * mx, anchorY + row * my, ((colBase + 8) - startX) * mx, my, color);
+            }
         }
     }
 
@@ -962,6 +1084,17 @@ public class PdfZpl
         this.CondensedStyle = style;
         this.CurrentField.CondensedFont = condensedFont;
         this.CurrentField.CondensedStyle = style;
+    }
+
+    /// <summary>
+    /// Tune the global em multiplier the renderer applies whenever a
+    /// field lands on the condensed font slot. See
+    /// <see cref="CondensedFontScale"/> for the rationale.
+    /// </summary>
+    public void SetCondensedFontScale(double scale)
+    {
+        this.CondensedFontScale = scale;
+        this.CurrentField.CondensedFontScale = scale;
     }
 
     public class CharSize

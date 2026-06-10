@@ -47,6 +47,14 @@ public class FieldDefinition
     /// <summary>ZPL ^FR: invert the next graphic field's fill (black ↔ white).</summary>
     public bool Reverse { get; set; }
 
+    /// <summary>
+    /// Per-field copy of <see cref="PdfZpl.CondensedFontScale"/>: a 1.0+
+    /// multiplier applied to fontPoints whenever this field renders with
+    /// the condensed slot, so a host can dial Roboto Condensed +10%
+    /// without touching individual ^A?h,w numbers.
+    /// </summary>
+    public double CondensedFontScale { get; set; } = 1.0;
+
     internal void Draw(FPdf pdf)
     {
         pdf.FontScale.ScaleX = this.ScaleX;
@@ -93,8 +101,46 @@ public class FieldDefinition
         double tracking;
         if (this.Font == "0")
         {
-            if (!string.IsNullOrEmpty(this.VariableFont))
+            // Zebra's Font 0 is Triumvirate Bold Condensed — a CONDENSED
+            // proportional sans, not the wider Helvetica-style VariableFont
+            // would otherwise pick. Prefer the host's CondensedFont when
+            // one is registered (matches the P-V proportional slots), and
+            // only fall back to VariableFont when no condensed asset is
+            // available.
+            if (!string.IsNullOrEmpty(this.CondensedFont))
+            {
+                pdf.SetFont(this.CondensedFont, this.CondensedStyle ?? "", 0, null);
+                if (this.CondensedFontScale != 1.0)
+                    pdf.SetFontSize(fontPoints * this.CondensedFontScale);
+            }
+            else if (!string.IsNullOrEmpty(this.VariableFont))
                 pdf.SetFont(this.VariableFont, this.VariableStyle ?? "", 0, null);
+
+            // ^A0h,w with an explicit width parameter: COMPRESS glyphs
+            // horizontally when the requested w is narrower than the
+            // font's natural "M" advance at em=DotsH. Without this, large
+            // fields (CL1 at ^A0R,140,90) render the CondensedFont at its
+            // natural ~95-dot advance — visibly wider than Labelary, which
+            // honours the ZPL w parameter. We only clamp DOWN (Math.Min):
+            // small body text like ^A0R,25,28 would otherwise be stretched
+            // far past Labelary's render because DotsW for body text is
+            // typically much larger than the condensed M advance, and
+            // expansion to match it doesn't reflect what Zebra does in
+            // practice. Only kicks in when both h and w are explicit;
+            // single-arg ^A0R,25 falls back to the font's natural metrics.
+            if (DotsH > 0 && DotsW > 0)
+            {
+                var naturalAdvanceUU = pdf.GetStringWidth("M");
+                var emUU = pdf.FontSize;
+                var naturalAspectWH = emUU > 0 ? naturalAdvanceUU / emUU : 0.6;
+                var requestedAspectWH = (double)DotsW / DotsH;
+                this.ScaleX = naturalAspectWH > 0
+                    ? Math.Min(1.0, requestedAspectWH / naturalAspectWH)
+                    : 1;
+                this.ScaleY = 1;
+                pdf.FontScale.ScaleX = this.ScaleX;
+                pdf.FontScale.ScaleY = this.ScaleY;
+            }
             tracking = 0;
         }
         else
@@ -125,59 +171,83 @@ public class FieldDefinition
             {
                 if (isProportional && hasCondensed)
                 {
-                    // Zebra V honours the bitmap's native aspect (h=80,
-                    // w=71 -> h/w = 80/71 ≈ 1.127): when the caller asks
-                    // for a w narrower than w_natural_for_h the whole
-                    // glyph scales down proportionally (so the h drops
-                    // too). When w is wider than natural the chars
-                    // stretch horizontally while h stays. This explains
-                    // why the GLS tracking ^AVN,120,100 renders ~2x
-                    // taller than 27004 ^AVN,105,50: the second hits the
-                    // narrow branch and h collapses to 56 dots.
-                    const double nativeVAspectHW = 80.0 / 71.0;
-                    const double nativeVAspectWH = 71.0 / 80.0;
-                    var requestedAspect = (double)charW / charH;
-                    double effectiveEm;
-                    if (requestedAspect < nativeVAspectWH)
-                    {
-                        // Narrow request -> aspect-locked: h scales with w.
-                        effectiveEm = charW * nativeVAspectHW;
-                        this.ScaleX = 1.0;
-                    }
-                    else
-                    {
-                        // Wide request -> keep h, stretch chars.
-                        effectiveEm = charH;
-                        this.ScaleX = requestedAspect;
-                    }
-                    fontPoints = effectiveEm * pdf.k;
+                    // ZPL ^A?h,w sizing for proportional slots (Font 0 +
+                    // P-V) using Labelary's pixel-perfect quantization
+                    // rule, reverse-engineered from its rendered PDFs.
+                    // Derived from inspecting Labelary's PDF (Font2 Tf/Tz
+                    // ops) on the SEUR 1485:
+                    //
+                    //   WIDE (w > h × native_aspect):
+                    //     em = h² × native_aspect / w   (= h × native / ratio)
+                    //     Tz = ratio² / native
+                    //     ⇒ em × Tz = h × native × ratio = w * native
+                    //   NARROW (w ≤ h × native_aspect):
+                    //     em = h × ~0.92    (Font2 cap-height-ish constant)
+                    //     Tz = sqrt(w/h) / 0.92
+                    //
+                    // Wide validated by: VALENCIA ^ASR,50,70 → em=31.25
+                    // (Labelary 33.8), Tz=2.24 (Labelary 1.98); 46520
+                    // ^AQR,130,132 → em=109.7 (115), Tz=1.20 (1.188).
+                    // Narrow Q validated by: C.B ^AQR,50,40 → em=46
+                    // (matches Labelary), Tz=0.972 (0.99); PUERTO
+                    // ^AQR,50,9 → em=46, Tz=0.461 (0.495).
+                    // Narrow P (0 Eur ^APR,57,42) still off: predicted
+                    // em=52.4 / Tz=0.93, observed 48.6 / 0.667. Likely
+                    // a Font P-specific extra compression that we haven't
+                    // reverse-engineered yet.
+                    var nativeAspectWH = fontsize.DotsH > 0
+                        ? (double)fontsize.DotsW / fontsize.DotsH
+                        : 0.875;
+                    // Labelary's pixel-perfect quantization rule, same as
+                    // the monospace bitmap path: quantize h and w to
+                    // integer multiples of the slot's native cell, then
+                    // build em / Tz from those multiples.
+                    //   hMul  = round(h / native_h)
+                    //   wMul  = round(w / native_w)
+                    //   em    = max(native_h × 0.82,  0.81 × hMul × native_h)
+                    //   Tz    = wMul / hMul
+                    // The 0.81 / 0.82 factors are empirical from a Font P
+                    // probe (h=30/60/120 × w=15/30/60/120/240) plus all
+                    // the SEUR 1485 fields; predicted vs observed em is
+                    // exact for Font P and within ~2% for Font Q / S /
+                    // narrow Q-small-h. Predicted vs observed Tz is exact
+                    // for ratio ≤ 1 and ~5% off for moderate wide cases;
+                    // only very wide w (rendered_M > 10 × hMul) misbehaves
+                    // (Labelary appears to cap N there).
+                    // AwayFromZero matters at midpoints: round(60/28 =
+                    // 2.143) is 2 with either rule, but round(70/28 = 2.5)
+                    // should be 3 (Zebra) not 2 (banker's).
+                    var nativeH = Math.Max(1, fontsize.DotsH);
+                    var nativeW = Math.Max(1, fontsize.DotsW);
+                    var hMul = Math.Max(1, (int)Math.Round((double)charH / nativeH, MidpointRounding.AwayFromZero));
+                    var wMul = Math.Max(1, (int)Math.Round((double)charW / nativeW, MidpointRounding.AwayFromZero));
+                    var emQuant = 0.81 * hMul * nativeH;
+                    var emFloor = nativeH * 0.82;
+                    var emDots = Math.Max(emFloor, emQuant);
+                    double emFactor = emDots / charH;
+                    double wScale = (double)wMul / hMul;
+                    wScale *= this.CondensedFontScale;
+
+                    // Measure both fonts at the squat em so the resulting
+                    // ScaleX produces a render that matches the metric
+                    // font's per-text proportional width × wScale.
+                    fontPoints = charH * pdf.k * this.CondensedFontScale * emFactor;
                     pdf.SetFontSize(fontPoints);
-                    // For the narrow branch (effective em < charH) the
-                    // glyph fits inside a smaller cell than the ZPL ^h
-                    // would imply; bottom-align inside the em cell so
-                    // the digits sit on FO_y + em rather than floating
-                    // high. The wide branch keeps the original ratio
-                    // because there the cell IS the em and bumping the
-                    // baseline further down (1.0) would push XXX into
-                    // the next field below (^AEN,90 PRUEBAS at +120).
-                    var narrowBranch = requestedAspect < nativeVAspectWH;
-                    var emRatio = narrowBranch ? 1.0 : ascentRatio;
+                    // wScale (= wMul/hMul, Labelary's pixel-perfect Tz)
+                    // applied directly to the render font's own width.
+                    // We used to anchor the target width to Liberation Sans
+                    // Narrow Bold (a free Triumvirate proxy) so the cell
+                    // matched Labelary regardless of which family the
+                    // host registered as CondensedFont, but the residual
+                    // Roboto-vs-Liberation drift (~4% on most fields) was
+                    // smaller than the inherent slot-to-slot mismatch and
+                    // not worth the extra TTF dependency.
+                    this.ScaleX = wScale;
+                    this.ScaleY = 1.0;
                     baselineOffset = Origin == OriginEnum.LeftBottom
                         ? 0
-                        : effectiveEm * emRatio;
-
-                    // Auto-compress if the per-spec render would overflow
-                    // the remaining strip (tracking spills 14 * 100 dots
-                    // into the 549-dot space and has to fit somehow).
-                    // Target 85% of the strip so the GLS tracking row
-                    // lands near Labelary's ~700-dot endpoint instead of
-                    // the page edge.
-                    pdf.FontScale.ScaleX = this.ScaleX; // for GetStringWidth callers reading current scale
-                    var naturalTextWidth = pdf.GetStringWidth(text);
-                    var renderedWidth = naturalTextWidth * this.ScaleX;
-                    var available = (pdf.W - pdf.X) * 0.85;
-                    if (renderedWidth > available && available > 0)
-                        this.ScaleX *= available / renderedWidth;
+                        : charH * ascentRatio * emFactor;
+                    pdf.FontScale.ScaleX = this.ScaleX;
                 }
                 else if (isProportional)
                 {
@@ -190,27 +260,54 @@ public class FieldDefinition
                     var requestedAspect = (double)charW / charH;
                     this.ScaleX = requestedAspect;
                     pdf.FontScale.ScaleX = this.ScaleX;
-                    var naturalTextWidth = pdf.GetStringWidth(text);
-                    var renderedWidth = naturalTextWidth * this.ScaleX;
-                    var available = (pdf.W - pdf.X) * 0.85;
-                    if (renderedWidth > available && available > 0)
-                        this.ScaleX *= available / renderedWidth;
+                    if (this.Orientation == "N" || string.IsNullOrEmpty(this.Orientation))
+                    {
+                        var naturalTextWidth = pdf.GetStringWidth(text);
+                        var renderedWidth = naturalTextWidth * this.ScaleX;
+                        var available = (pdf.W - pdf.X) * 0.85;
+                        if (renderedWidth > available && available > 0)
+                            this.ScaleX *= available / renderedWidth;
+                    }
                 }
                 else
                 {
-                    // Monospace bitmap fonts (A-H, O): width parameter is
-                    // the per-char advance, so stretch every glyph to charW.
-                    fontPoints = charH * pdf.k;
+                    // Monospace bitmap fonts (A-H, O): Labelary's pixel-
+                    // perfect rule, extracted from its rendered PDF on the
+                    // SEUR 1485:
+                    //     em      = hMul × native_h   where hMul = round(h/native_h)
+                    //     Tz      = wMul / hMul       where wMul = round(w/native_w)
+                    // Labelary's Font1 (monospace) advances 0.667 of em per
+                    // char, so each rendered glyph occupies
+                    //   em × 0.667 × Tz = wMul × native_h × 0.667 dots.
+                    // For our Roboto Mono Bold the advance ratio is slightly
+                    // lower, so derive ScaleX by measuring and matching the
+                    // Labelary target width per char. ^ADR,45,25 → hMul=3,
+                    // wMul=3, em=54, target advance = 3 × 18 × 0.667 = 36
+                    // dots; matches Labelary's F1 19.15pt Tz=100% render.
+                    const double labelaryFont1AdvanceRatio = 0.667;
+                    // C#'s default Math.Round is banker's rounding
+                    // (ties-to-even): 45/18 = 2.5 rounds to 2 instead of 3.
+                    // Real Zebra printers round half-up — explicit
+                    // MidpointRounding.AwayFromZero matches that and lands
+                    // ^ADR,45,25 at hMul=3 (em=54) as Labelary does.
+                    var hMul = Math.Max(1, (int)Math.Round((double)charH / Math.Max(1, fontsize.DotsH), MidpointRounding.AwayFromZero));
+                    var wMul = Math.Max(1, (int)Math.Round((double)charW / Math.Max(1, fontsize.DotsW), MidpointRounding.AwayFromZero));
+                    fontPoints = hMul * fontsize.DotsH * pdf.k;
                     pdf.SetFontSize(fontPoints);
-                    var naturalAdvancePt = 0.6 * fontPoints;
-                    var targetAdvancePt = charW * pdf.k;
-                    this.ScaleX = naturalAdvancePt > 0 ? targetAdvancePt / naturalAdvancePt : 1;
+                    var naturalAdvance = pdf.GetStringWidth("M");
+                    var targetAdvance = wMul * fontsize.DotsH * labelaryFont1AdvanceRatio;
+                    this.ScaleX = naturalAdvance > 0 ? targetAdvance / naturalAdvance : 1.0;
                 }
                 this.ScaleY = 1;
             }
             else
             {
-                pdf.SetFontSize(fontPoints);
+                // Mirror the explicit-size branch above: when the field is
+                // landing on the condensed slot, scale the size by the
+                // host's CondensedFontScale (1.0 by default).
+                var hasCondensedHere = (this.Font is "P" or "Q" or "R" or "S" or "T" or "U" or "V")
+                                       && !string.IsNullOrEmpty(this.CondensedFont);
+                pdf.SetFontSize(hasCondensedHere ? fontPoints * this.CondensedFontScale : fontPoints);
                 this.ScaleX = 1;
                 this.ScaleY = 1;
             }
@@ -236,8 +333,14 @@ public class FieldDefinition
         // sitting over something opaque, which mirrors a real ZPL author
         // error rather than an engine bug. PushState snapshots and
         // restores the text colour so the next field is unaffected.
-        using var reverseScope = this.Reverse ? pdf.PushState() : null;
-        if (this.Reverse) pdf.SetTextColor(Color.White);
+        // Temporarily disabled — the "fake XOR via white text on prior
+        // black ^GB" approximation makes more fields look wrong than
+        // right when the host label uses ^FR pervasively (the SEUR 1485
+        // had 12 ^FR fields, most of which had no underlying ^GB). Kept
+        // here so we can re-enable once we have a real strategy (e.g.
+        // rasterising the field group and XORing the mask).
+        // using var reverseScope = this.Reverse ? pdf.PushState() : null;
+        // if (this.Reverse) pdf.SetTextColor(Color.White);
 
         if (FrameBox != null && FrameBox.MaxWidth > 0)
         {
@@ -370,11 +473,24 @@ public class FieldDefinition
         return lines;
     }
 
-    private double ZebraTracking(FPdf pdf)
+    private double ZebraTracking(FPdf pdf) => ZebraTracking(pdf, this.Thickness);
+
+    /// <summary>
+    /// Extra inter-character advance (in PDF user units) so a variable-width
+    /// host font sits on Zebra's font A pitch grid. Font A at height 9 dots
+    /// has a 6-dot pitch (5-dot glyph + 1-dot gap); scale that by the actual
+    /// rendered glyph height to get the target pitch. The naturalAdvance of
+    /// "M" stands in for the average rendered glyph width.
+    ///
+    /// <paramref name="heightDots"/> is the actual rendered glyph height in
+    /// dots; for the rotated caption path that's the per-call captionAscent
+    /// (not the field-level Thickness, which over-estimates because the
+    /// caption font is intentionally shrunk for short ^B?R bars).
+    /// </summary>
+    private double ZebraTracking(FPdf pdf, double heightDots)
     {
         if (this.Font == "0") return 0;
-        // Zebra font A pitch at native height 9 is 6 dots (5 glyph + 1 gap).
-        var targetPitch = this.Thickness * 6.0 / 9.0;
+        var targetPitch = heightDots * 6.0 / 9.0;
         var naturalAdvance = pdf.GetStringWidth("M");
         return Math.Max(0, targetPitch - naturalAdvance);
     }
@@ -382,11 +498,21 @@ public class FieldDefinition
 
     private void DrawBarcodeCode128(FPdf pdf, string arg2)
     {
-        // ZPL lets the field data pick the Code 128 subset via a ">x" prefix:
-        //   >; = Subset C (digits in pairs)
-        //   >: = Subset A
-        //   >> = Subset B (the default)
-        var hint = EncodeHintType.CODE128_FORCE_CODESET_B;
+        // Choice of codeset:
+        //  - ZPL lets the field data pick a subset via a ">x" prefix:
+        //      >; = Subset C (digits in pairs)
+        //      >: = Subset A
+        //      >> = Subset B (the default)
+        //  - ^BC's trailing mode param overrides when no prefix wins:
+        //      A (Automatic) / "" -> let ZXing pick the most compact
+        //                            subset (codeset C for digit pairs)
+        //      N / U / D -> keep the safe-default subset B (legacy
+        //                   behaviour; UCC/EAN special handling not
+        //                   implemented).
+        // The 1485 SEUR label sets mode=A on a 23-digit field; forcing
+        // subset B there nearly DOUBLES the bar count vs Labelary, which
+        // honours the automatic codeset-C compression.
+        EncodeHintType? hint = EncodeHintType.CODE128_FORCE_CODESET_B;
         if (arg2.StartsWith(">;"))
         {
             hint = EncodeHintType.CODE128_COMPACT;
@@ -396,9 +522,18 @@ public class FieldDefinition
         {
             arg2 = arg2.Substring(2);
         }
+        else
+        {
+            var mode = this.Barcode128Options.Mode;
+            if (string.IsNullOrEmpty(mode) || mode == "A")
+                hint = null; // let ZXing's writer auto-pick the codeset
+        }
 
         var barcode = new Code128Writer();
-        var code128 = barcode.encode(arg2, new Dictionary<EncodeHintType, object>() { { hint, (true) } });
+        var hints = hint.HasValue
+            ? new Dictionary<EncodeHintType, object>() { { hint.Value, true } }
+            : new Dictionary<EncodeHintType, object>();
+        var code128 = barcode.encode(arg2, hints);
         var x = pdf.X;
         // ^BC height (Barcode128Options.Height) wins over the ^BY default
         // (BarcodeOptions.Height) when the field specifies one. Without
@@ -407,8 +542,24 @@ public class FieldDefinition
         var savedHeight = this.BarcodeOptions.Height;
         if (this.Barcode128Options.Height > 0)
             this.BarcodeOptions.Height = this.Barcode128Options.Height;
+        var w = this.BarcodeOptions.Width;
+        var height = this.Barcode128Options.Height > 0 ? this.Barcode128Options.Height : this.BarcodeOptions.Height;
+        var orientation = string.IsNullOrEmpty(this.Barcode128Options.Orientation) ? "N" : this.Barcode128Options.Orientation;
         double width;
-        try { width = AddBarcode(pdf, code128, pdf.X, y: null) - pdf.X; }
+        try
+        {
+            if (orientation == "B" || orientation == "R")
+            {
+                DrawRotatedBars(pdf, code128, pdf.X, pdf.Y, w, height,
+                    useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop,
+                    orientation: orientation);
+                width = w * code128.Length;
+            }
+            else
+            {
+                width = AddBarcode(pdf, code128, pdf.X, y: null) - pdf.X;
+            }
+        }
         finally { this.BarcodeOptions.Height = savedHeight; }
 
         if (this.Barcode128Options.Line && !this.Barcode128Options.LineAbove)
@@ -428,7 +579,19 @@ public class FieldDefinition
             //    horizontal-shipping sample's ^BC^FD98765432 reads as
             //    before.
             this.TextMode = FieldMode.Text;
-            if (this.Barcode128Options.Height > 0)
+            if (orientation == "B" || orientation == "R")
+            {
+                this.Thickness = 50;
+                var stackLength = w * code128.Length;
+                var (barLeft, barTop) = ComputeRotatedBboxTopLeft(pdf, height, stackLength, orientation);
+                DrawRotatedHumanReadable(pdf, arg2,
+                    barLeft: barLeft, barTop: barTop,
+                    barLength: height,
+                    barStackLength: stackLength,
+                    captionAscent: ComputeRotatedCaptionAscent(height),
+                    orientation: orientation);
+            }
+            else if (this.Barcode128Options.Height > 0)
             {
                 pdf.Ln(this.Barcode128Options.Height + 4);
                 DrawHumanReadable(pdf, arg2, barcodeLeft: x, barcodeWidth: width, centerText: false);
@@ -464,26 +627,31 @@ public class FieldDefinition
     }
 
     /// <summary>
-    /// Print interpretation line for a ^B?B (bottom-up rotated) barcode:
-    /// the text is drawn rotated B to the RIGHT of the bars, centered
-    /// along the stack length so it reads alongside the barcode the way
-    /// Zebra / Labelary print it. Assumes the ^FO (LeftTop) anchor mode
-    /// for the host field; ^FT-anchored rotated barcodes (vertical1
-    /// sample) don't enable Line=Y so this path doesn't need to handle
-    /// that case.
+    /// Print interpretation line for a rotated barcode (^B?B bottom-up
+    /// or ^B?R top-down). The caption sits one gap-dot away from the bar
+    /// bbox and reads in the same direction as the bars. ZPL printAbove=N
+    /// places the caption "below" the bars in the rotated reading frame,
+    /// which maps to:
+    ///   - B (90° CCW): "below" in rotated frame = RIGHT in absolute.
+    ///   - R (90° CW):  "below" in rotated frame = LEFT in absolute.
+    /// (barLeft, barTop) is the bar bbox's top-left in absolute coords;
+    /// the caller computes it via <see cref="ComputeRotatedBboxTopLeft"/>.
+    /// <paramref name="captionAscent"/> is the desired font ascent in dots;
+    /// the caller scales it from the bar length so the digits don't
+    /// dwarf small bars (default ^Bxh,YN with h=88 dots produced a ~17pt
+    /// caption next to 11mm bars, dominating the strip).
     /// </summary>
-    private void DrawRotatedHumanReadable(FPdf pdf, string text, double barLeft, double barTop, double barLength, double barStackLength)
+    private void DrawRotatedHumanReadable(FPdf pdf, string text,
+        double barLeft, double barTop, double barLength, double barStackLength,
+        double captionAscent,
+        string orientation = "B")
     {
-        // Slightly smaller + condensed compared to the N path: the
-        // rotated caption sits next to the bars in a narrow vertical
-        // column and the monospace Roboto Mono in regular size both
-        // visibly overflows the bar stack and leaves the digits
-        // floating with too much air between them. CondensedFont
-        // (Roboto Condensed when the host configured it) closes the
-        // gap; falling back to MonospaceFont keeps the code working
-        // when no condensed slot is registered.
-        var rotatedThickness = this.Thickness * 0.9;
-        var fontPoints = (rotatedThickness / Dpi) * 25.4 * 2.54;
+        // Condensed font when the host configured one (Roboto Condensed)
+        // keeps the rotated digits packed; otherwise fall back to the
+        // monospace slot. The host's caption font choice survives across
+        // call sites because we restore nothing -- the caller has already
+        // done what it needs the host font for.
+        var fontPoints = (captionAscent / Dpi) * 25.4 * 2.54;
         if (!string.IsNullOrEmpty(this.CondensedFont))
             pdf.SetFont(this.CondensedFont, this.CondensedStyle ?? "", 0, null);
         else
@@ -491,28 +659,87 @@ public class FieldDefinition
         pdf.SetFontSize(fontPoints);
         pdf.FontScale.ScaleX = 1;
         pdf.FontScale.ScaleY = 1;
-        var tracking = ZebraTracking(pdf);
+        // Tracking has to follow the actual caption font height, not the
+        // field-level Thickness (which the callers leave at 50 for the
+        // legacy N-orientation path). Otherwise a small ^B?R caption gets
+        // pitch padding sized for a much larger font and the digits
+        // visibly drift apart.
+        var tracking = ZebraTracking(pdf, captionAscent);
         var textWidthUser = pdf.GetStringWidth(text) + tracking * Math.Max(0, text.Length - 1);
         const double gap = 4.0;
-        // (textFoX, textFoY) anchors the top-left of the rotated text bbox.
-        // It sits one gap-dot to the right of the bars and is centred along
-        // the bar stack's vertical extent.
-        var textFoX = barLeft + barLength + gap;
+        // captionStripWidth = horizontal absolute extent of the rotated
+        // glyph strip. The strip is "captionAscent" tall in the unrotated
+        // frame, which becomes a horizontal extent after the 90° rotation.
+        var captionStripWidth = captionAscent * 0.7;
         var textFoY = barTop + Math.Max(0, (barStackLength - textWidthUser) / 2.0);
-        pdf.WriteRotatedTextZpl(textFoX, textFoY, rotatedThickness * 0.7, "B", text, tracking,
-            useTopLeftBboxAnchor: true);
+        double textFoX;
+        if (orientation == "R")
+        {
+            // Caption to the LEFT of bars. WriteRotatedTextZpl "R" with
+            // useTopLeftBboxAnchor=false treats foX as the baseline column
+            // (= print LEFT edge of bbox), so to put the visible glyphs at
+            // [barLeft-gap-strip, barLeft-gap] we anchor at
+            // barLeft - gap - strip. Use the unpadded path because the
+            // caption's textFoX is already the column we want.
+            textFoX = barLeft - gap - captionStripWidth;
+        }
+        else // "B"
+        {
+            textFoX = barLeft + barLength + gap;
+        }
+        pdf.WriteRotatedTextZpl(textFoX, textFoY, captionStripWidth, orientation, text, tracking,
+            useTopLeftBboxAnchor: orientation == "B");
     }
+
+    /// <summary>
+    /// For a rotated barcode (B or R), compute the top-left corner of
+    /// the bar bounding box in absolute coords from the raw anchor at
+    /// (pdf.X, pdf.Y). The mapping is:
+    ///                   ^FT (LeftBottom)              ^FO (LeftTop)
+    ///   B (90° CCW):    bottom-right of rotated       top-left
+    ///   R (90° CW):     top-left of rotated           top-left
+    /// For R, ^FO and ^FT both land at the print-frame top-left of the
+    /// bbox: ^FO because the ZPL spec defines the field origin as the
+    /// upper-left of the field in print coordinates; ^FT because the
+    /// lower-left of the rotated character box collapses to the top of
+    /// the stack for a barcode (the stack grows downward in print).
+    /// </summary>
+    private (double left, double top) ComputeRotatedBboxTopLeft(FPdf pdf, double barLength, double stackLength, string orientation)
+    {
+        var useTopLeftAnchor = Origin == OriginEnum.LeftTop;
+        if (orientation == "R")
+        {
+            return (pdf.X, pdf.Y);
+        }
+        else // "B"
+        {
+            var left = useTopLeftAnchor ? pdf.X : pdf.X - barLength;
+            var top  = useTopLeftAnchor ? pdf.Y : pdf.Y - stackLength;
+            return (left, top);
+        }
+    }
+
+    /// <summary>
+    /// Caption ascent (in dots) for a rotated barcode of length
+    /// <paramref name="barLength"/>. Scales the strip to ~33% of the bar
+    /// length so a short ^B3R,N,88,Y caption sits at ~29 dots (≈9pt, close
+    /// to Labelary's reference render) without dwarfing the bars, and
+    /// tall bars on the GLS courier ^B2B,200 still get clamped to the
+    /// 45-dot cap rather than ballooning past the bars.
+    /// </summary>
+    private static double ComputeRotatedCaptionAscent(double barLength)
+        => Math.Min(45.0, Math.Max(12.0, barLength * 0.33));
     /// <summary>
     /// Map every simple-1D BarcodeMode to the ZXing Writer + format
     /// pair the generic <see cref="DrawBarcode1D"/> pipeline drives.
     /// Adding a new symbology that fits the "single Writer, single
     /// format, no codeset hint" pattern is a one-line entry here.
-    /// Code 128 and Interleaved 2 of 5 have their own renderers (codeset
-    /// prefix and odd-length padding) so they stay out of the table.
+    /// Code 128, Code 39 and Interleaved 2 of 5 have their own renderers
+    /// (codeset prefix / wide:narrow ratio / start-stop captioning) so
+    /// they stay out of the table.
     /// </summary>
     private static readonly Dictionary<BarcodeMode, (Func<ZXing.Writer> writer, ZXing.BarcodeFormat format)> Simple1DWriters = new()
     {
-        [BarcodeMode.Code39]  = (() => new ZXing.OneD.Code39Writer(),  ZXing.BarcodeFormat.CODE_39),
         [BarcodeMode.Codabar] = (() => new ZXing.OneD.CodaBarWriter(), ZXing.BarcodeFormat.CODABAR),
         [BarcodeMode.EAN13]   = (() => new ZXing.OneD.EAN13Writer(),   ZXing.BarcodeFormat.EAN_13),
         [BarcodeMode.EAN8]    = (() => new ZXing.OneD.EAN8Writer(),    ZXing.BarcodeFormat.EAN_8),
@@ -553,6 +780,7 @@ public class FieldDefinition
         switch (this.BarcodeMode)
         {
             case BarcodeMode.Code128:         DrawBarcodeCode128(pdf, text); break;
+            case BarcodeMode.Code39:          DrawBarcodeCode39(pdf, text); break;
             case BarcodeMode.Interleaved2of5: DrawBarcodeI2of5(pdf, text); break;
         }
     }
@@ -579,10 +807,11 @@ public class FieldDefinition
         var height = opts.Height > 0 ? opts.Height : this.BarcodeOptions.Height;
         var orientation = string.IsNullOrEmpty(opts.Orientation) ? "N" : opts.Orientation;
 
-        if (orientation == "B")
+        if (orientation == "B" || orientation == "R")
         {
             DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height,
-                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop);
+                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop,
+                orientation: orientation);
         }
         else
         {
@@ -599,14 +828,18 @@ public class FieldDefinition
             this.Thickness = 50;
             DrawHumanReadable(pdf, data, barcodeLeft: pdf.X, barcodeWidth: w * bitmap.Length);
         }
-        else if (opts.Line && orientation == "B" && Origin == OriginEnum.LeftTop)
+        else if (opts.Line && (orientation == "B" || orientation == "R"))
         {
             this.TextMode = FieldMode.Text;
             this.Thickness = 50;
+            var stackLength = w * bitmap.Length;
+            var (barLeft, barTop) = ComputeRotatedBboxTopLeft(pdf, height, stackLength, orientation);
             DrawRotatedHumanReadable(pdf, data,
-                barLeft: pdf.X, barTop: pdf.Y,
+                barLeft: barLeft, barTop: barTop,
                 barLength: height,
-                barStackLength: w * bitmap.Length);
+                barStackLength: stackLength,
+                captionAscent: ComputeRotatedCaptionAscent(height),
+                orientation: orientation);
         }
     }
 
@@ -729,10 +962,11 @@ public class FieldDefinition
         var orientation = string.IsNullOrEmpty(opts.Orientation) ? "N" : opts.Orientation;
         var height = opts.Height > 0 ? opts.Height : this.BarcodeOptions.Height;
 
-        if (orientation == "B")
+        if (orientation == "B" || orientation == "R")
         {
             DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height,
-                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop);
+                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop,
+                orientation: orientation);
         }
         else
         {
@@ -755,15 +989,20 @@ public class FieldDefinition
             var barcodeWidth = w * bitmap.Length;
             DrawHumanReadable(pdf, data, barcodeLeft: pdf.X, barcodeWidth: barcodeWidth);
         }
-        else if (opts.Line && orientation == "B" && Origin == OriginEnum.LeftTop)
+        else if (opts.Line && (orientation == "B" || orientation == "R"))
         {
-            // Vertical caption to the right of the rotated bars.
+            // Vertical caption to the side of the rotated bars (R left,
+            // B right, both centred along the stack).
             this.TextMode = FieldMode.Text;
             this.Thickness = 50;
+            var stackLength = w * bitmap.Length;
+            var (barLeft, barTop) = ComputeRotatedBboxTopLeft(pdf, height, stackLength, orientation);
             DrawRotatedHumanReadable(pdf, data,
-                barLeft: pdf.X, barTop: pdf.Y,
+                barLeft: barLeft, barTop: barTop,
                 barLength: height,
-                barStackLength: w * bitmap.Length);
+                barStackLength: stackLength,
+                captionAscent: ComputeRotatedCaptionAscent(height),
+                orientation: orientation);
         }
     }
 
@@ -787,6 +1026,162 @@ public class FieldDefinition
         }
         int check = (10 - (sum % 10)) % 10;
         return (char)('0' + check);
+    }
+
+    /// <summary>
+    /// Render a Code 39 barcode through our own encoder rather than
+    /// ZXing.Net's Code39Writer. The custom path lets us
+    ///  - honour ^BY's wide:narrow ratio (ZXing locks it at 2:1),
+    ///  - skip the 10-module quiet zone ZXing always emits (so the bar
+    ///    stack matches Labelary's length when ratio matches),
+    ///  - render the start/stop '*' chars in the human-readable line,
+    ///    which Zebra prints and ZXing's encoded data does not surface.
+    /// Mirrors the dispatch shape of <see cref="DrawBarcodeI2of5"/>.
+    /// </summary>
+    private void DrawBarcodeCode39(FPdf pdf, string data)
+    {
+        var opts = this.Barcode1DOptions;
+        // Code 39 is case-insensitive in the alphabet but the encoding
+        // table is upper-case only.
+        var payload = (data ?? "").ToUpperInvariant();
+
+        // ^BY's r param: 2.0..3.0 → wide bars in narrow-module units.
+        var wideUnits = (int)Math.Round(this.BarcodeOptions.WidthRatio, MidpointRounding.AwayFromZero);
+        if (wideUnits < 2) wideUnits = 2;
+        if (wideUnits > 3) wideUnits = 3;
+        var bitmap = EncodeCode39(payload, wideUnits);
+        if (bitmap == null) return; // unsupported char — drop the field
+
+        var w = this.BarcodeOptions.Width;
+        var height = opts.Height > 0 ? opts.Height : this.BarcodeOptions.Height;
+        var orientation = string.IsNullOrEmpty(opts.Orientation) ? "N" : opts.Orientation;
+
+        if (orientation == "B" || orientation == "R")
+        {
+            DrawRotatedBars(pdf, bitmap, pdf.X, pdf.Y, w, height,
+                useTopLeftBboxAnchor: Origin == OriginEnum.LeftTop,
+                orientation: orientation);
+        }
+        else
+        {
+            var saved = this.BarcodeOptions.Height;
+            this.BarcodeOptions.Height = height;
+            try { AddBarcode(pdf, bitmap, pdf.X, y: null); }
+            finally { this.BarcodeOptions.Height = saved; }
+        }
+
+        // Caption — Code 39 prints the '*' start/stop chars alongside
+        // the data (^FD07504004485275 → "*07504004485275*").
+        if (opts.Line)
+        {
+            var captionText = "*" + payload + "*";
+            if (orientation == "N")
+            {
+                pdf.Ln(height + 4);
+                this.TextMode = FieldMode.Text;
+                this.Thickness = 50;
+                DrawHumanReadable(pdf, captionText, barcodeLeft: pdf.X, barcodeWidth: w * bitmap.Length);
+            }
+            else if (orientation == "B" || orientation == "R")
+            {
+                this.TextMode = FieldMode.Text;
+                this.Thickness = 50;
+                var stackLength = w * bitmap.Length;
+                var (barLeft, barTop) = ComputeRotatedBboxTopLeft(pdf, height, stackLength, orientation);
+                DrawRotatedHumanReadable(pdf, captionText,
+                    barLeft: barLeft, barTop: barTop,
+                    barLength: height,
+                    barStackLength: stackLength,
+                    captionAscent: ComputeRotatedCaptionAscent(height),
+                    orientation: orientation);
+            }
+        }
+    }
+
+    // 44-char Code 39 alphabet, ending with the '*' start/stop sentinel.
+    private const string Code39Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*";
+
+    // 9-element bar/space patterns (5 bars + 4 spaces, alternating
+    // B S B S B S B S B). Each entry is a 9-char string where 'n' marks
+    // a narrow element and 'w' marks a wide one. Exactly three elements
+    // per char are wide (Code 39 spec). Indexed parallel to
+    // <see cref="Code39Alphabet"/>.
+    private static readonly string[] Code39Patterns =
+    {
+        "nnnwwnwnn", // 0
+        "wnnwnnnnw", // 1
+        "nnwwnnnnw", // 2
+        "wnwwnnnnn", // 3
+        "nnnwwnnnw", // 4
+        "wnnwwnnnn", // 5
+        "nnwwwnnnn", // 6
+        "nnnwnnwnw", // 7
+        "wnnwnnwnn", // 8
+        "nnwwnnwnn", // 9
+        "wnnnnwnnw", // A
+        "nnwnnwnnw", // B
+        "wnwnnwnnn", // C
+        "nnnnwwnnw", // D
+        "wnnnwwnnn", // E
+        "nnwnwwnnn", // F
+        "nnnnnwwnw", // G
+        "wnnnnwwnn", // H
+        "nnwnnwwnn", // I
+        "nnnnwwwnn", // J
+        "wnnnnnnww", // K
+        "nnwnnnnww", // L
+        "wnwnnnnwn", // M
+        "nnnnwnnww", // N
+        "wnnnwnnwn", // O
+        "nnwnwnnwn", // P
+        "nnnnnnwww", // Q
+        "wnnnnnwwn", // R
+        "nnwnnnwwn", // S
+        "nnnnwnwwn", // T
+        "wwnnnnnnw", // U
+        "nwwnnnnnw", // V
+        "wwwnnnnnn", // W
+        "nwnnwnnnw", // X
+        "wwnnwnnnn", // Y
+        "nwwnwnnnn", // Z
+        "nwnnnnwnw", // -
+        "wwnnnnwnn", // .
+        "nwwnnnwnn", // (space)
+        "nwnwnwnnn", // $
+        "nwnwnnnwn", // /
+        "nwnnnwnwn", // +
+        "nnnwnwnwn", // %
+        "nwnnwnwnn", // *
+    };
+
+    /// <summary>
+    /// Encode a Code 39 payload to a bare bitmap (no quiet zones), with
+    /// '*' start/stop chars prepended/appended automatically. Each
+    /// character contributes 9 bar/space elements + 1 narrow inter-char
+    /// gap; wide elements are rendered as <paramref name="wideUnits"/>
+    /// narrow modules so ^BY's r param drives the visual ratio.
+    /// Returns null if any payload char isn't in the Code 39 alphabet.
+    /// </summary>
+    private static bool[] EncodeCode39(string data, int wideUnits)
+    {
+        var bits = new System.Collections.Generic.List<bool>();
+        var toEncode = "*" + data + "*";
+        for (int ci = 0; ci < toEncode.Length; ci++)
+        {
+            var c = toEncode[ ci ];
+            var idx = Code39Alphabet.IndexOf(c);
+            if (idx < 0) return null;
+            var pattern = Code39Patterns[ idx ];
+            for (int el = 0; el < 9; el++)
+            {
+                bool isBar = (el % 2) == 0; // elements 0,2,4,6,8 are bars
+                int count = pattern[ el ] == 'w' ? wideUnits : 1;
+                for (int k = 0; k < count; k++) bits.Add(isBar);
+            }
+            // 1 narrow inter-char space after every char EXCEPT the last
+            if (ci < toEncode.Length - 1) bits.Add(false);
+        }
+        return bits.ToArray();
     }
 
     /// <summary>
@@ -851,20 +1246,32 @@ public class FieldDefinition
     /// run in the bitmap becomes one bar.
     /// </summary>
     private void DrawRotatedBars(FPdf pdf, bool[] bitmap, double anchorX, double anchorY, int moduleWidth, int barLength,
-        bool useTopLeftBboxAnchor = false)
+        bool useTopLeftBboxAnchor = false,
+        string orientation = "B")
     {
-        // Two anchoring modes, mirroring WriteRotatedTextZpl:
-        //  - useTopLeftBboxAnchor=false (^FT path): anchor is the
-        //    bottom-right corner of the rotated barcode. Bars extend
-        //    LEFT and UP from there. Matches SampleZebra vertical1's
-        //    ^FT490,580^B2B,200 placement.
-        //  - useTopLeftBboxAnchor=true (^FO path on a portrait label,
-        //    GLS courier ^FO50,320^B2B,200): anchor is the top-left
-        //    corner of the rotated barcode. Bars extend RIGHT and DOWN
-        //    from there. With ^FT semantics, the GLS barcode landed at
-        //    X=[-150, 50] -- off the page.
-        var leftX = useTopLeftBboxAnchor ? anchorX : anchorX - barLength;
-        var topY  = useTopLeftBboxAnchor ? anchorY : (double?)null;
+        // Both B (read bottom-up) and R (read top-down) produce vertical
+        // barcodes whose bars are horizontal stripes. The difference is:
+        //  - B: bitmap module 0 sits at the visual BOTTOM.
+        //  - R: bitmap module 0 sits at the visual TOP.
+        // Anchor corner (per ZPL):
+        //                   ^FT (LeftBottom)              ^FO (LeftTop)
+        //   B (90° CCW):    bottom-right of rotated       top-left
+        //   R (90° CW):     top-left of rotated           top-left
+        // For R, both ^FT and ^FO collapse to the print-frame top-left of
+        // the bbox (the field is anchored at the top of the stack), so the
+        // anchor-mode flag doesn't change the math.
+        var stackLength = bitmap.Length * moduleWidth;
+        double leftX, topY;
+        if (orientation == "R")
+        {
+            leftX = anchorX;
+            topY  = anchorY;
+        }
+        else // "B"
+        {
+            leftX = useTopLeftBboxAnchor ? anchorX : anchorX - barLength;
+            topY  = useTopLeftBboxAnchor ? anchorY : anchorY - stackLength;
+        }
 
         var index = 0;
         while (index < bitmap.Length)
@@ -874,26 +1281,15 @@ public class FieldDefinition
                 var trueCount = bitmap.Skip(index + 1).TakeWhile(b => b).Count();
                 var thickness = moduleWidth * (trueCount + 1);
 
-                // Each contiguous "true" run becomes a horizontal bar
-                // (thickness moduleWidth × (trueCount+1)) stamped at the
-                // current module index. ZPL "B" orientation reads
-                // bottom-up: bitmap module 0 must land at the visual
-                // BOTTOM of the rotated barcode, module N at the TOP --
-                // otherwise the code is mirrored along the long axis
-                // and reads as a different (still-valid-I2of5) value.
-                double yTop;
-                if (useTopLeftBboxAnchor)
-                {
-                    // Bbox spans topY .. topY + bitmap.Length*moduleWidth.
-                    // The bar covering modules [index, index+trueCount]
-                    // has its visual TOP at the module at index+trueCount.
-                    yTop = topY!.Value + (bitmap.Length - 1 - index - trueCount) * moduleWidth;
-                }
-                else
-                {
-                    var yBottom = anchorY - index * moduleWidth;
-                    yTop = yBottom - thickness;
-                }
+                // Place the bar covering modules [index, index+trueCount]
+                // along the bbox's vertical axis. For B the module 0 is
+                // at the bottom, so the bar's top is offset from the bbox
+                // bottom; for R module 0 is at the top so the offset
+                // walks down from the bbox top.
+                double yTop = orientation == "R"
+                    ? topY + index * moduleWidth
+                    : topY + (bitmap.Length - 1 - index - trueCount) * moduleWidth;
+
                 DrawAbsoluteRect(pdf, leftX, yTop, barLength, thickness, Color.Black);
                 index += trueCount;
             }
