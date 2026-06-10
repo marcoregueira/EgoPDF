@@ -13,6 +13,29 @@ namespace Ego.Pdf.Test
     public class SampleTests
     {
         [Fact]
+        public void DoLocalDebug()
+        {
+            const string zplPath = @"C:\Users\Nitropc\Downloads\15420-E-2026_1.zpl";
+            const string outPath = @"C:\Users\Nitropc\Downloads\15420-E-2026_1.pdf";
+            if (!File.Exists(zplPath)) return;
+            using var pdf = new FPdf(outPath);
+            pdf.SetUnitConverionFactor(UnitEnum.Point, 203);
+            pdf.LoadFont("robotomonob", Path.Combine(GetPath(), "Fonts", "Roboto_Mono", "Static", "RobotoMono-Bold.ttf"));
+            pdf.AddFont("robotomonob", "");
+            pdf.LoadFont("robotocondensed", Path.Combine(GetPath(), "Fonts", "Roboto_Condensed", "RobotoCondensed-VariableFont_wght.ttf"));
+            pdf.AddFont("robotocondensed", "");
+            pdf.LoadFont("robotocondensedb", Path.Combine(GetPath(), "Roboto", "RobotoCondensed-Bold.ttf"));
+            pdf.AddFont("robotocondensed", "B");
+            pdf.SetFont("helvetica", "B", 16);
+            var zpl = new PdfZpl(pdf, 203);
+            zpl.SetVariableFont("helvetica", "B");
+            zpl.SetMonospaceFont("robotomonob");
+            zpl.SetCondensedFont("robotocondensed", "B");
+            zpl.Print(File.ReadAllText(zplPath));
+            pdf.Close();
+        }
+
+        [Fact]
         public void DoSample1()
         {
             Sample1.GetSample("sample1.pdf");

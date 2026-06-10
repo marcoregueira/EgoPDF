@@ -498,42 +498,34 @@ public class FieldDefinition
 
     private void DrawBarcodeCode128(FPdf pdf, string arg2)
     {
-        // Choice of codeset:
-        //  - ZPL lets the field data pick a subset via a ">x" prefix:
-        //      >; = Subset C (digits in pairs)
-        //      >: = Subset A
-        //      >> = Subset B (the default)
-        //  - ^BC's trailing mode param overrides when no prefix wins:
-        //      A (Automatic) / "" -> let ZXing pick the most compact
-        //                            subset (codeset C for digit pairs)
-        //      N / U / D -> keep the safe-default subset B (legacy
-        //                   behaviour; UCC/EAN special handling not
-        //                   implemented).
-        // The 1485 SEUR label sets mode=A on a 23-digit field; forcing
-        // subset B there nearly DOUBLES the bar count vs Labelary, which
-        // honours the automatic codeset-C compression.
-        EncodeHintType? hint = EncodeHintType.CODE128_FORCE_CODESET_B;
-        if (arg2.StartsWith(">;"))
+        // Subset choice mirrors Zebra ^BC semantics:
+        //  - Leading ">x" selector (">:", ">;", ">>") forces the start
+        //    subset (A / C / B) and locks the layout: the encoder does
+        //    NOT add automatic Code-C compression on top, so the bar
+        //    count matches what the ZPL author intended.
+        //  - ^BC trailing mode otherwise: A (Automatic) and "" allow
+        //    the encoder to switch into Subset C for digit runs of 4+,
+        //    matching Labelary's compaction; N/U/D keep Subset B for
+        //    the whole field.
+        // Code128Encoder also honours mid-stream ">x" tokens (">5",
+        // ">1".."4", and the selectors re-applied as switches) so
+        // labels like 15420-E-2026 render their 23-symbol layout
+        // exactly instead of the 18-symbol auto-compressed version
+        // ZXing produced.
+        bool autoCompress;
+        var mode = this.Barcode128Options.Mode;
+        if (arg2.Length >= 2 && arg2[0] == '>' && (arg2[1] == ':' || arg2[1] == ';' || arg2[1] == '>'))
         {
-            hint = EncodeHintType.CODE128_COMPACT;
-            arg2 = arg2.Substring(2);
-        }
-        else if (arg2.StartsWith(">:") || arg2.StartsWith(">>"))
-        {
-            arg2 = arg2.Substring(2);
+            // Leading selector — encoder will peel it off and ignore
+            // autoCompress per its own rules.
+            autoCompress = false;
         }
         else
         {
-            var mode = this.Barcode128Options.Mode;
-            if (string.IsNullOrEmpty(mode) || mode == "A")
-                hint = null; // let ZXing's writer auto-pick the codeset
+            autoCompress = string.IsNullOrEmpty(mode) || mode == "A";
         }
 
-        var barcode = new Code128Writer();
-        var hints = hint.HasValue
-            ? new Dictionary<EncodeHintType, object>() { { hint.Value, true } }
-            : new Dictionary<EncodeHintType, object>();
-        var code128 = barcode.encode(arg2, hints);
+        var code128 = Code128Encoder.Encode(arg2, autoCompress);
         var x = pdf.X;
         // ^BC height (Barcode128Options.Height) wins over the ^BY default
         // (BarcodeOptions.Height) when the field specifies one. Without
@@ -542,7 +534,7 @@ public class FieldDefinition
         var savedHeight = this.BarcodeOptions.Height;
         if (this.Barcode128Options.Height > 0)
             this.BarcodeOptions.Height = this.Barcode128Options.Height;
-        var w = this.BarcodeOptions.Width;
+        var w = (double)this.BarcodeOptions.Width;
         var height = this.Barcode128Options.Height > 0 ? this.Barcode128Options.Height : this.BarcodeOptions.Height;
         var orientation = string.IsNullOrEmpty(this.Barcode128Options.Orientation) ? "N" : this.Barcode128Options.Orientation;
         double width;
@@ -1245,7 +1237,7 @@ public class FieldDefinition
     /// the ZPL convention for ^B?B (orientation B, 270° CW). Each "true"
     /// run in the bitmap becomes one bar.
     /// </summary>
-    private void DrawRotatedBars(FPdf pdf, bool[] bitmap, double anchorX, double anchorY, int moduleWidth, int barLength,
+    private void DrawRotatedBars(FPdf pdf, bool[] bitmap, double anchorX, double anchorY, double moduleWidth, int barLength,
         bool useTopLeftBboxAnchor = false,
         string orientation = "B")
     {
